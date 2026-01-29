@@ -2,6 +2,12 @@ import React, { useState, useEffect, useRef } from 'react';
 import { createStore, createIndexes } from 'tinybase';
 import { createLocalPersister } from 'tinybase/persisters/persister-browser';
 import { Provider, useRow, useSliceRowIds } from 'tinybase/ui-react';
+import {
+  copyStoreToClipboard,
+  downloadStoreAsJson,
+  importStoreFromJson,
+  readFileAsText,
+} from './utils/storeExport';
 
 const STORAGE_KEY = 'tb-solid-pod';
 const BASE_URL = 'https://myapp.com/pod/';
@@ -301,6 +307,8 @@ export default function App() {
   const [newFileName, setNewFileName] = useState('');
   const [newFileContent, setNewFileContent] = useState('');
   const uploadImageInputRef = useRef(null);
+  const importFileInputRef = useRef(null);
+  const [copyStatus, setCopyStatus] = useState(null); // 'success' | 'error' | null
 
   // Determine resource type to decide which widget to show
   const row = useRow('resources', currentUrl, store);
@@ -350,6 +358,38 @@ export default function App() {
   // Action: Create a new file using the "API"
   const createNote = () => openNewFileDialog();
 
+  // Export/Import actions
+  const handleCopyToClipboard = async () => {
+    const success = await copyStoreToClipboard(store);
+    setCopyStatus(success ? 'success' : 'error');
+    setTimeout(() => setCopyStatus(null), 2000);
+  };
+
+  const handleDownload = () => {
+    downloadStoreAsJson(store);
+  };
+
+  const handleImportClick = () => {
+    importFileInputRef.current?.click();
+  };
+
+  const handleImportFile = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      const json = await readFileAsText(file);
+      const result = importStoreFromJson(store, json, { merge: false });
+      if (result.success) {
+        alert('Import successful!');
+      } else {
+        alert(`Import failed: ${result.error}`);
+      }
+    } catch (err) {
+      alert('Failed to read file');
+    }
+    e.target.value = '';
+  };
+
   if (!ready || !store) {
     return <div style={styles.loading}>Loading…</div>;
   }
@@ -394,6 +434,36 @@ export default function App() {
              aria-hidden
            />
            <button style={styles.actionBtn} onClick={createFolder}>+ New Folder</button>
+           <span style={styles.actionDivider}>|</span>
+           <button
+             style={styles.exportBtn}
+             onClick={handleCopyToClipboard}
+             title="Copy store data to clipboard"
+           >
+             {copyStatus === 'success' ? 'Copied!' : copyStatus === 'error' ? 'Failed' : 'Copy to Clipboard'}
+           </button>
+           <button
+             style={styles.exportBtn}
+             onClick={handleDownload}
+             title="Download store as JSON file"
+           >
+             Download JSON
+           </button>
+           <button
+             style={styles.exportBtn}
+             onClick={handleImportClick}
+             title="Import store from JSON file"
+           >
+             Import
+           </button>
+           <input
+             ref={importFileInputRef}
+             type="file"
+             accept=".json,application/json"
+             onChange={handleImportFile}
+             style={{ display: 'none' }}
+             aria-hidden
+           />
         </div>
 
         {/* New File dialog */}
@@ -453,6 +523,8 @@ const styles = {
   urlBar: { flex: 1, padding: '8px 12px', background: '#f5f5f5', borderRadius: 6, fontSize: '14px', color: '#555', fontFamily: 'monospace' },
   actions: { display: 'flex', gap: 10, marginBottom: 20 },
   actionBtn: { padding: '8px 16px', cursor: 'pointer', borderRadius: 6, border: 'none', background: '#0070f3', color: '#fff', fontWeight: 500, fontSize: '13px' },
+  actionDivider: { color: '#ccc', alignSelf: 'center', margin: '0 4px' },
+  exportBtn: { padding: '8px 14px', cursor: 'pointer', borderRadius: 6, border: '1px solid #ccc', background: '#fff', color: '#333', fontWeight: 500, fontSize: '13px' },
   mainLayout: { display: 'flex', gap: 20, alignItems: 'flex-start', minHeight: 400 },
   navColumn: { width: 260, flexShrink: 0 },
   mainContent: { flex: 1, minWidth: 0, maxWidth: 700 },
