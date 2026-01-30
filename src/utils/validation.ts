@@ -10,6 +10,7 @@ import type { Store } from 'tinybase';
 import { PersonaSchema, safeParsePersona } from '../schemas/persona';
 import { ContactSchema, safeParseContact } from '../schemas/contact';
 import { GroupSchema, safeParseGroup } from '../schemas/group';
+import { TypeIndexRowSchema } from '../schemas/typeIndex';
 
 // ============================================================================
 // Validation Result Types
@@ -47,6 +48,7 @@ const TABLE_SCHEMAS: Record<string, z.ZodType<unknown>> = {
   personas: PersonaSchema,
   contacts: ContactSchema,
   groups: GroupSchema,
+  typeIndexes: TypeIndexRowSchema,
   // resources table uses a simpler validation (not JSON-LD)
 };
 
@@ -153,6 +155,29 @@ export function validateGroup(
 
   const errors: ValidationError[] = result.error.issues.map((issue) => ({
     table: 'groups',
+    rowId,
+    field: issue.path.join('.'),
+    message: issue.message,
+  }));
+
+  return { valid: false, errors };
+}
+
+/**
+ * Validate a type index row
+ */
+export function validateTypeIndexRow(
+  rowId: string,
+  data: unknown
+): { valid: boolean; errors: ValidationError[] } {
+  const result = TypeIndexRowSchema.safeParse(data);
+
+  if (result.success) {
+    return { valid: true, errors: [] };
+  }
+
+  const errors: ValidationError[] = result.error.issues.map((issue) => ({
+    table: 'typeIndexes',
     rowId,
     field: issue.path.join('.'),
     message: issue.message,

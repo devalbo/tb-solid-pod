@@ -17,6 +17,7 @@ import {
   groupCommand,
   fileCommand,
   configCommand,
+  typeindexCommand,
 } from './commands';
 
 /**
@@ -39,6 +40,7 @@ export const commands: Record<string, Command> = {
   group: groupCommand,
   file: fileCommand,
   config: configCommand,
+  typeindex: typeindexCommand,
 };
 
 /**

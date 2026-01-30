@@ -8,6 +8,7 @@ import {
   importStoreFromJson,
   readFileAsText,
 } from './utils/storeExport';
+import { initializeDefaultTypeRegistrations } from './utils/typeIndex';
 import { CliTerminal } from './cli';
 import PersonaList from './components/PersonaList';
 import PersonaForm from './components/PersonaForm';
@@ -386,6 +387,7 @@ export default function App() {
       const persister = createLocalPersister(s, STORAGE_KEY);
       persisterRef.current = persister;
       await persister.load(getDefaultContent());
+      initializeDefaultTypeRegistrations(s, BASE_URL);
       await persister.startAutoSave();
       setApp({ store: s, indexes: i, pod: p, ready: true });
     })();

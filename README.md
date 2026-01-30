@@ -36,6 +36,13 @@ This library provides a complete foundation for **user-owned social data** in we
 - Theme, history size, auto-save, hidden files toggle
 - Stored in TinyBase values with validation
 
+### Type Indexes (Phase 6)
+- Solid-style public and private type indexes for data discovery
+- Map RDF types (e.g. `vcard:Individual`, `foaf:Person`) to container or instance URLs
+- Default registrations for personas, contacts, and groups on first load
+- CLI: `typeindex list`, `show`, `register`, `unregister`
+- Persona schema includes optional `solid:publicTypeIndex` and `solid:privateTypeIndex` links
+
 ### Dual Interface
 - **Graphical UI**: Tab-based navigation with forms and lists
 - **CLI Terminal**: Full command-line interface for power users
@@ -96,7 +103,6 @@ The ACL phase is planned but not implemented. Currently:
 - No server-side rendering or API
 
 ### Missing Solid Features (Planned)
-- Type indexes for data discovery (Phase 6)
 - WebID-compliant profile documents (Phase 7)
 - Web Access Control / ACL (Phase 8)
 
@@ -151,9 +157,11 @@ src/
 │   ├── persona.ts     # Identity/profile schema
 │   ├── contact.ts     # Contact/agent schema
 │   ├── group.ts       # Organization/team schema
+│   ├── typeIndex.ts   # Type index and type registration schema
 │   └── file.ts        # File metadata schema
 ├── utils/
 │   ├── settings.ts    # Settings utilities (optional)
+│   ├── typeIndex.ts   # Type index helpers (register, lookup, defaults)
 │   └── storeExport.ts # Import/export helpers
 └── components/        # Copy what you need
     ├── PersonaList.tsx / PersonaForm.tsx
@@ -295,6 +303,7 @@ The library uses these TinyBase tables:
 | `personas` | User identities | `@id`, `foaf:name`, `foaf:mbox`, `foaf:bio` |
 | `contacts` | Address book | `@id`, `vcard:fn`, `vcard:hasEmail`, `@type` |
 | `groups` | Organizations/teams | `@id`, `vcard:fn`, `vcard:hasMember`, `@type` |
+| `typeIndexes` | Type index registrations | `forClass`, `instance`/`instanceContainer`, `indexType` (public/private) |
 | `resources` | Files and folders | URL as key, `type`, `body`, `contentType`, `parentId` |
 
 Settings are stored in TinyBase **values** (not tables):
@@ -376,6 +385,7 @@ help                          Show available commands
 persona list|create|show|edit|delete|set-default
 contact list|add|show|edit|delete|search|link
 group list|create|show|edit|delete|add-member|remove-member|list-members
+typeindex list|show|register|unregister   Type index (public/private)
 file info|set-author|set-title|set-description
 config list|get|set|reset
 pwd|cd|ls|cat|touch|mkdir|rm  File system operations

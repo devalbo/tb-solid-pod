@@ -76,6 +76,14 @@ export const PersonaSchema = JsonLdBase.extend({
   /** Public key reference */
   'http://www.w3.org/ns/auth/cert#key': NodeRef.optional(),
 
+  // ---- Type Indexes (WebID / Solid profile) ----
+
+  /** Link to public type index (discoverable types) */
+  [SOLID.publicTypeIndex]: NodeRef.optional(),
+
+  /** Link to private type index (in preferences) */
+  [SOLID.privateTypeIndex]: NodeRef.optional(),
+
   // ---- Metadata ----
 
   /** Document this is the primary topic of */
