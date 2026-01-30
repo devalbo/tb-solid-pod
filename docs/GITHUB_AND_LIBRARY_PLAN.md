@@ -35,14 +35,14 @@ Summary of what exists in the repo today.
 | **README** | Partial | Has “Getting Started (Demo App)” with `npm install` / `npm run dev`. No Node version note, no “Use as a library” install-from-GitHub section, no “Live demo” link. Integration Guide documents copy-paste and schema-only use. |
 | **Runnable on checkout** | Partial | Commands work; no `.nvmrc`; README matches commands. |
 | **Library packaging** | Done | `package.json`: version 0.1.0, description, keywords, main, types, exports, files; `src/index.ts` re-exports schemas, utils, CLI, components; README “Use as a library” section. |
-| **GitHub Pages** | Not done | No `base` in `vite.config.js`; no `.github/workflows/` (no `pages.yml` or `ci.yml`). |
+| **GitHub Pages** | Done (code) | `vite.config.js` base env-driven; `.github/workflows/pages.yml` builds with `BASE_PATH=/tb-solid-pod/` and deploys to `gh-pages`; README has Live demo link. **You must set Settings → Pages: Deploy from branch `gh-pages`.** |
 | **GitHub repo** | Done | Repo on GitHub (`devalbo/tb-solid-pod`), main pushed, LICENSE in repo. **Repo is private for now**; make public when you want install-from-GitHub or a public Live demo. |
 
 **Next steps (in order):**  
 1) ~~Confirm repo on GitHub and push if needed.~~ Done (repo is private).  
 2) ~~Add `.nvmrc` and optional Node note in README.~~ Done.  
 3) ~~Add `src/index.ts`, update `package.json` for library use, add “Use as a library” in README.~~ Done.  
-4) Set Vite `base`, add Pages workflow, enable Pages, add “Live demo” link.
+4) ~~Set Vite `base`, add Pages workflow, add "Live demo" link.~~ Done. Enable Pages in repo Settings → Pages (Deploy from branch `gh-pages`).
 
 ---
 
@@ -177,10 +177,10 @@ Deploy the built Vite app so visitors can use it at `https://<username>.github.i
 
 GitHub Pages serves project sites from `/<repo>/`, so assets must use that base.
 
-- [ ] In **`vite.config.js`** (or `vite.config.ts`), set **`base`** to the repo name with leading and trailing slash:
-  - `base: '/tb-solid-pod/'` (replace with actual repo name if different).
-- [ ] Rebuild: `npm run build`. Check that `dist/index.html` references assets like `/tb-solid-pod/assets/...` (not `/assets/...`).
-- [ ] Optional: use an env variable so local dev keeps `base: '/'` and CI sets `base: '/repo-name/'` for the Pages build.
+- [x] In **`vite.config.js`** (or `vite.config.ts`), set **`base`** to the repo name with leading and trailing slash:
+  - `base: '/tb-solid-pod/'` (replace with actual repo name if different). Implemented as env-driven: `process.env.BASE_PATH ?? '/'`; CI sets `BASE_PATH: '/tb-solid-pod/'`.
+- [x] Rebuild: `npm run build`. Check that `dist/index.html` references assets like `/tb-solid-pod/assets/...` (not `/assets/...`).
+- [x] Optional: use an env variable so local dev keeps `base: '/'` and CI sets `base: '/repo-name/'` for the Pages build.
 
 ### 3.2 Build output
 
@@ -199,7 +199,7 @@ GitHub Pages serves project sites from `/<repo>/`, so assets must use that base.
 
 Add a workflow that builds and deploys to GitHub Pages. For example:
 
-- [ ] **Trigger**: push to `main` (or only when `dist/` or source changes, if you prefer).
+- [x] **Trigger**: push to `main` (or only when `dist/` or source changes, if you prefer).
 - **Steps**:
   1. Checkout repo.
   2. Setup Node (e.g. `actions/setup-node` with version from `.nvmrc` or fixed `20`).
@@ -211,16 +211,16 @@ Result: every push to `main` (or chosen branch) updates the live demo.
 
 ### 3.5 README and base path
 
-- [ ] In README, add a **“Try it”** or **“Live demo”** link at the top or in Getting Started: `https://<username>.github.io/<repo>/`.
+- [x] In README, add a **“Try it”** or **“Live demo”** link at the top or in Getting Started: `https://<username>.github.io/<repo>/`.
 - [ ] If repo is renamed, update `base` in Vite config and the README link.
 
 ### 3.6 Checklist (GitHub Pages)
 
-- [ ] `vite.config.js` has `base: '/<repo>/'` (or env-driven) so assets load on GitHub Pages.
-- [ ] `npm run build` produces a working `dist/` when base is set.
-- [ ] GitHub Actions workflow builds with correct base and deploys `dist/` to `gh-pages` (or chosen branch).
-- [ ] Repo Settings → Pages: source = branch (e.g. `gh-pages`), root.
-- [ ] README includes “Live demo” / “Try it” link to the Pages URL.
+- [x] `vite.config.js` has `base: '/<repo>/'` (or env-driven) so assets load on GitHub Pages.
+- [x] `npm run build` produces a working `dist/` when base is set.
+- [x] GitHub Actions workflow builds with correct base and deploys `dist/` to `gh-pages` (or chosen branch).
+- [ ] Repo Settings → Pages: source = branch (e.g. `gh-pages`), root. **(Do this in GitHub UI after first push.)**
+- [x] README includes “Live demo” / “Try it” link to the Pages URL.
 
 ---
 
@@ -259,8 +259,8 @@ Result: every push to `main` (or chosen branch) updates the live demo.
 - [x] Repo created on GitHub; default branch set (e.g. main).
 - [ ] Description and topics set.
 - [x] LICENSE file present; package.json “license” matches.
-- [ ] README explains runnable app + library use + “Live demo” link.
-- [ ] GitHub Actions Pages workflow added; deploys `dist/` to `gh-pages` on push to main.
+- [x] README explains runnable app + library use + “Live demo” link.
+- [x] GitHub Actions Pages workflow added; deploys `dist/` to `gh-pages` on push to main.
 - [ ] Settings → Pages: source = branch `gh-pages`, root.
 
 ---

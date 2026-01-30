@@ -2,6 +2,8 @@
 
 A browser-based personal data pod inspired by the [Solid Project](https://solidproject.org/), built with [TinyBase](https://tinybase.org/) for reactive state management and LocalStorage persistence.
 
+**[Live demo](https://devalbo.github.io/tb-solid-pod/)** · Run locally: `npm install` then `npm run dev` · [Use as a library](#use-as-a-library)
+
 ## What This Project Does
 
 This library provides a complete foundation for **user-owned social data** in web applications. It implements core Solid/Linked Data concepts in a lightweight, browser-first package:
@@ -392,7 +394,7 @@ export function createProject(input: { name: string }, baseUrl: string) {
 
 ## Getting Started (Demo App)
 
-Requires Node 18+ (or use `nvm use` if you use nvm).
+**[Try the live demo](https://devalbo.github.io/tb-solid-pod/)** or run locally. Requires Node 18+ (or use `nvm use` if you use nvm).
 
 ```bash
 npm install
