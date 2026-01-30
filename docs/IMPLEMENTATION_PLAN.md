@@ -10,9 +10,9 @@ The app has a working browser-based CLI and file browser UI with:
 - Persona management (Phase 1 ✅)
 - Contact management with search/filter (Phase 2 ✅)
 - Group management with membership (Phase 3 ✅)
+- Rich file metadata with UI editor (Phase 4 ✅)
 
-**Schemas defined but not yet integrated:**
-- File Metadata (rich metadata)
+**All core schemas integrated!**
 
 ## Phase 1: Persona Management ✅ COMPLETE
 
@@ -125,7 +125,7 @@ group list-members <group>      # List group members
 
 ---
 
-## Phase 4: Rich File Metadata
+## Phase 4: Rich File Metadata ✅ COMPLETE
 
 ### Goal
 Enhance file storage with Solid-compatible metadata.
@@ -144,13 +144,16 @@ file set-description <path> <desc>
 - Store JSON-LD metadata alongside content
 
 ### UI Components
-- Enhanced file detail view
-- Metadata editor panel
-- Image EXIF display
+- Enhanced file detail view with "Metadata" tab
+- Metadata editor panel with title, description, author
+- Image properties display (dimensions, location)
 
-### Files to Modify
-- `src/cli/commands/files.tsx` - Add metadata commands
-- `src/App.tsx` - Enhanced FileViewTabs
+### Files Created/Modified
+- `src/cli/commands/file.tsx` - File metadata CLI commands ✅
+- `src/components/FileMetadataPanel.tsx` - Metadata viewer/editor component ✅
+- `src/App.tsx` - Enhanced FileViewTabs with Metadata tab ✅
+- `src/cli/commands/index.ts` - Export file command ✅
+- `src/cli/registry.tsx` - Register file command ✅
 
 ---
 

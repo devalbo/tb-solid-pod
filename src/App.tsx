@@ -16,6 +16,7 @@ import ContactForm from './components/ContactForm';
 import GroupList from './components/GroupList';
 import GroupForm from './components/GroupForm';
 import MembershipManager from './components/MembershipManager';
+import FileMetadataPanel from './components/FileMetadataPanel';
 
 const DEFAULT_PERSONA_KEY = 'defaultPersonaId';
 
@@ -332,11 +333,12 @@ interface FileViewTabsProps {
   url: string;
   row: ResourceRow;
   pod: VirtualPod;
+  store: Store;
   activeTab: string;
   onTabChange: (tab: string) => void;
 }
 
-const FileViewTabs: React.FC<FileViewTabsProps> = ({ url, row, pod, activeTab, onTabChange }) => {
+const FileViewTabs: React.FC<FileViewTabsProps> = ({ url, row, pod, store, activeTab, onTabChange }) => {
   const isImage = isImageContentType(row?.contentType);
 
   return (
@@ -344,13 +346,18 @@ const FileViewTabs: React.FC<FileViewTabsProps> = ({ url, row, pod, activeTab, o
       <div style={styles.tabBar}>
         <button type="button" style={{ ...styles.tabBtn, ...(activeTab === 'view' ? styles.tabBtnActive : {}) }} onClick={() => onTabChange('view')}>View</button>
         <button type="button" style={{ ...styles.tabBtn, ...(activeTab === 'edit' ? styles.tabBtnActive : {}) }} onClick={() => onTabChange('edit')}>Edit</button>
+        <button type="button" style={{ ...styles.tabBtn, ...(activeTab === 'metadata' ? styles.tabBtnActive : {}) }} onClick={() => onTabChange('metadata')}>Metadata</button>
       </div>
       {activeTab === 'view' ? (
         <FileViewContent url={url} row={row} />
-      ) : isImage ? (
-        <ImageViewer url={url} pod={pod} inline />
+      ) : activeTab === 'edit' ? (
+        isImage ? (
+          <ImageViewer url={url} pod={pod} inline />
+        ) : (
+          <TextEditor url={url} pod={pod} inline />
+        )
       ) : (
-        <TextEditor url={url} pod={pod} inline />
+        <FileMetadataPanel store={store} url={url} />
       )}
     </div>
   );
@@ -638,7 +645,7 @@ export default function App() {
                 {!row ? (
                   <div style={styles.error}>404 Not Found</div>
                 ) : !isContainer ? (
-                  <FileViewTabs url={currentUrl} row={row} pod={pod} activeTab={fileTab} onTabChange={setFileTab} />
+                  <FileViewTabs url={currentUrl} row={row} pod={pod} store={store} activeTab={fileTab} onTabChange={setFileTab} />
                 ) : null}
               </div>
             </div>

@@ -6,3 +6,4 @@ export { exportCommand, importCommand } from './data';
 export { personaCommand } from './persona';
 export { contactCommand } from './contact';
 export { groupCommand } from './group';
+export { fileCommand } from './file';
