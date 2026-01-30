@@ -9,6 +9,12 @@ import {
   readFileAsText,
 } from './utils/storeExport';
 import { CliTerminal } from './cli';
+import PersonaList from './components/PersonaList';
+import PersonaForm from './components/PersonaForm';
+import ContactList from './components/ContactList';
+import ContactForm from './components/ContactForm';
+
+const DEFAULT_PERSONA_KEY = 'defaultPersonaId';
 
 const STORAGE_KEY = 'tb-solid-pod';
 const BASE_URL = 'https://myapp.com/pod/';
@@ -386,7 +392,13 @@ export default function App() {
   const uploadImageInputRef = useRef<HTMLInputElement>(null);
   const importFileInputRef = useRef<HTMLInputElement>(null);
   const [copyStatus, setCopyStatus] = useState<'success' | 'error' | null>(null);
-  const [activeView, setActiveView] = useState<'data' | 'terminal'>('data');
+  const [activeView, setActiveView] = useState<'data' | 'terminal' | 'personas' | 'contacts'>('data');
+  const [selectedPersonaId, setSelectedPersonaId] = useState<string | undefined>();
+  const [personaFormOpen, setPersonaFormOpen] = useState(false);
+  const [editingPersonaId, setEditingPersonaId] = useState<string | undefined>();
+  const [selectedContactId, setSelectedContactId] = useState<string | undefined>();
+  const [contactFormOpen, setContactFormOpen] = useState(false);
+  const [editingContactId, setEditingContactId] = useState<string | undefined>();
 
   const row = useRow('resources', currentUrl, store) as ResourceRow | undefined;
   const isContainer = row?.type === 'Container';
@@ -492,6 +504,18 @@ export default function App() {
               onClick={() => setActiveView('data')}
             >
               Data Browser
+            </button>
+            <button
+              style={{ ...styles.topNavTab, ...(activeView === 'personas' ? styles.topNavTabActive : {}) }}
+              onClick={() => setActiveView('personas')}
+            >
+              Personas
+            </button>
+            <button
+              style={{ ...styles.topNavTab, ...(activeView === 'contacts' ? styles.topNavTabActive : {}) }}
+              onClick={() => setActiveView('contacts')}
+            >
+              Contacts
             </button>
             <button
               style={{ ...styles.topNavTab, ...(activeView === 'terminal' ? styles.topNavTabActive : {}) }}
@@ -608,6 +632,99 @@ export default function App() {
           </div>
         )}
 
+        {/* Personas View */}
+        {activeView === 'personas' && (
+          <div style={styles.personasViewContainer}>
+            <PersonaList
+              store={store}
+              selectedId={selectedPersonaId}
+              onSelect={setSelectedPersonaId}
+              onEdit={(id) => {
+                setEditingPersonaId(id);
+                setPersonaFormOpen(true);
+              }}
+              onDelete={(id) => {
+                store.delRow('personas', id);
+                if (selectedPersonaId === id) {
+                  setSelectedPersonaId(undefined);
+                }
+                // If this was the default, set a new default
+                const defaultId = store.getValue(DEFAULT_PERSONA_KEY) as string | undefined;
+                if (defaultId === id) {
+                  store.delValue(DEFAULT_PERSONA_KEY);
+                  const remaining = store.getTable('personas') || {};
+                  const remainingIds = Object.keys(remaining);
+                  if (remainingIds.length > 0) {
+                    store.setValue(DEFAULT_PERSONA_KEY, remainingIds[0]);
+                  }
+                }
+              }}
+              onSetDefault={(id) => {
+                store.setValue(DEFAULT_PERSONA_KEY, id);
+              }}
+              onCreate={() => {
+                setEditingPersonaId(undefined);
+                setPersonaFormOpen(true);
+              }}
+            />
+            {personaFormOpen && (
+              <PersonaForm
+                store={store}
+                baseUrl={BASE_URL}
+                personaId={editingPersonaId}
+                onSave={() => {
+                  setPersonaFormOpen(false);
+                  setEditingPersonaId(undefined);
+                }}
+                onCancel={() => {
+                  setPersonaFormOpen(false);
+                  setEditingPersonaId(undefined);
+                }}
+              />
+            )}
+          </div>
+        )}
+
+        {/* Contacts View */}
+        {activeView === 'contacts' && (
+          <div style={styles.contactsViewContainer}>
+            <ContactList
+              store={store}
+              selectedId={selectedContactId}
+              onSelect={setSelectedContactId}
+              onEdit={(id) => {
+                setEditingContactId(id);
+                setContactFormOpen(true);
+              }}
+              onDelete={(id) => {
+                store.delRow('contacts', id);
+                if (selectedContactId === id) {
+                  setSelectedContactId(undefined);
+                }
+              }}
+              onCreate={() => {
+                setEditingContactId(undefined);
+                setContactFormOpen(true);
+              }}
+            />
+            {contactFormOpen && (
+              <ContactForm
+                store={store}
+                baseUrl={BASE_URL}
+                contactId={editingContactId}
+                onSave={() => {
+                  setContactFormOpen(false);
+                  setEditingContactId(undefined);
+                }}
+                onCancel={() => {
+                  setContactFormOpen(false);
+                  setEditingContactId(undefined);
+                }}
+              />
+            )}
+          </div>
+        )}
+
         {/* Terminal View */}
         {activeView === 'terminal' && (
           <div style={styles.terminalView}>
@@ -637,6 +754,8 @@ const styles: Record<string, CSSProperties> = {
   topNavTab: { padding: '14px 24px', border: 'none', background: 'transparent', color: '#888', cursor: 'pointer', fontSize: 14, fontWeight: 500, borderBottom: '2px solid transparent', transition: 'all 0.2s' },
   topNavTabActive: { color: '#4ecdc4', borderBottom: '2px solid #4ecdc4' },
   terminalView: { padding: 0, height: 'calc(100vh - 49px)', background: '#1e1e1e' },
+  personasViewContainer: { padding: 24, flex: 1, maxWidth: 800, margin: '0 auto', width: '100%', boxSizing: 'border-box' },
+  contactsViewContainer: { padding: 24, flex: 1, maxWidth: 800, margin: '0 auto', width: '100%', boxSizing: 'border-box' },
   dataViewContainer: { width: '100%', flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' },
   toolbar: { display: 'flex', alignItems: 'center', marginBottom: 20, gap: 10, padding: '20px 24px 0', width: '100%', boxSizing: 'border-box' },
   navBtn: { padding: '8px 12px', cursor: 'pointer', borderRadius: 6, border: '1px solid #ccc', background: '#fff' },

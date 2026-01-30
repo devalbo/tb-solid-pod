@@ -12,6 +12,8 @@ import {
   rmCommand,
   exportCommand,
   importCommand,
+  personaCommand,
+  contactCommand,
 } from './commands';
 
 /**
@@ -29,6 +31,8 @@ export const commands: Record<string, Command> = {
   rm: rmCommand,
   export: exportCommand,
   import: importCommand,
+  persona: personaCommand,
+  contact: contactCommand,
 };
 
 /**
