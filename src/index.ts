@@ -10,12 +10,22 @@
  * ```
  */
 
+// Store layout (stable contract: table and index names; use when setting up your store)
+export {
+  STORE_TABLES,
+  STORE_INDEXES,
+  STORE_TABLE_NAMES,
+  type StoreTableName,
+  type StoreIndexName,
+} from './storeLayout';
+
 // Schemas (Zod + factory functions + JSON Schema for personas, contacts, groups, files, type indexes, preferences)
 export * from './schemas';
 
-// Utils (settings, store export/import, type index helpers, validation)
+// Utils (settings, store export/import, type index helpers, validation, typed store accessors)
 export * from './utils/settings';
 export * from './utils/storeExport';
+export * from './utils/storeAccessors';
 export * from './utils/typeIndex';
 export * from './utils/validation';
 

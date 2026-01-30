@@ -259,7 +259,9 @@ const styles: Record<string, CSSProperties> = {
   },
   filterTab: {
     padding: '6px 12px',
-    border: '1px solid #ddd',
+    borderWidth: 1,
+    borderStyle: 'solid',
+    borderColor: '#ddd',
     background: '#fff',
     borderRadius: 4,
     cursor: 'pointer',
@@ -335,7 +337,9 @@ const styles: Record<string, CSSProperties> = {
   actionBtn: {
     padding: '4px 10px',
     background: '#f5f5f5',
-    border: '1px solid #ddd',
+    borderWidth: 1,
+    borderStyle: 'solid',
+    borderColor: '#ddd',
     borderRadius: 4,
     cursor: 'pointer',
     fontSize: 12,

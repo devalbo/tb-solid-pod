@@ -39,7 +39,7 @@ This project implements a browser-based Solid Pod that enables personal data por
 
 ### Future: Add Always-Online Sync Target
 
-**Design principle:** By default the browser instance (TinyBase) is the **authority** and the remote Solid server is a **sync target**. A **required workflow** is that users can add Solid data from **first page load** with no pod or login; **later**, they can connect a pod and synchronize that data to a permanently online server. Syncing from browser to server (and optionally back) is a **must-have** once a pod is connected. **Once the server is established**, the user may choose to make the **server the authority** (pod as source of truth, browser as cache); the design must support both modes. See [docs/SOLID_SERVER_STRATEGIES.md](SOLID_SERVER_STRATEGIES.md) for strategies, authority modes, and sync design.
+**Design principle:** By default the browser instance (TinyBase) is the **authority** and the remote Solid server is a **sync target**. A **required workflow** is that users can add Solid data from **first page load** with no pod or login; **later**, they can connect a pod and synchronize that data to a permanently online server. Syncing from browser to server (and optionally back) is a **must-have** once a pod is connected. **Once the server is established**, the user may choose to make the **server the authority** (pod as source of truth, browser as cache); the design must support both modes. See [docs/SOLID_SERVER_STRATEGIES.md](docs/SOLID_SERVER_STRATEGIES.md) for strategies, authority modes, and sync design.
 
 ```
 ┌─────────────────────────────────────────────────────┐
@@ -387,42 +387,54 @@ For API tokens and auth info:
 
 ## TinyBase Integration
 
-### Proposed Table Structure
+The store layout below is the **current implementation** and the **target shape for future sync**: the same tables and values are used locally today and will be transformed to/from LDP when the user connects a Solid pod. The mapping from this store to pod URLs is described in [docs/SOLID_SERVER_STRATEGIES.md](docs/SOLID_SERVER_STRATEGIES.md#ldp-url-layout-mapping-our-data-to-the-pod).
+
+### Store layout (tables and values)
+
+Canonical table and index names are in **`src/storeLayout.ts`** (`STORE_TABLES`, `STORE_INDEXES`); value keys for settings are in **`src/utils/settings.ts`** (`SETTINGS_KEYS`). Use these constants in code so the layout is the library’s stable contract for app authors and future sync.
 
 ```typescript
-// Documents table - stores JSON-LD documents
+// Identity and social data (JSON-LD rows keyed by @id)
 {
-  documents: {
-    [iri: string]: {
-      content: string,      // JSON-LD serialized
-      contentType: string,  // 'application/ld+json' | 'text/turtle'
-      modified: number,     // timestamp
-      etag: string,         // for sync
-    }
-  }
+  personas: { [iri: string]: PersonaRow },   // WebID-style profiles; one can be default
+  contacts: { [iri: string]: ContactRow },  // Address book (people + agents)
+  groups: { [iri: string]: GroupRow },      // Orgs, teams, groups + membership
+  typeIndexes: { [iri: string]: TypeIndexRow }, // Solid type registrations (forClass, instance, etc.)
+  resources: { [iri: string]: ResourceRow }, // Files and folders; row id = URL/path
 }
 
-// Binary files table - stores file metadata + blob references
+// Values (key-value, not tables): settings and default references
 {
-  files: {
-    [iri: string]: {
-      metadata: string,     // JSON-LD metadata
-      blobId: string,       // Reference to blob storage
-      size: number,
-      mimeType: string,
-    }
-  }
+  defaultPersonaId: string,
+  theme: 'light' | 'dark' | 'system',
+  cliHistorySize: number,
+  autoSaveInterval: number,
+  showHiddenFiles: boolean,
+  defaultContentType: string,
+  // ... other preferences
 }
 
-// Blob storage (IndexedDB via TinyBase persister)
-// Actual binary content stored separately
+// Resource row (files and folders): same shape for local use and for sync → LDP
+// - Folders: type ldp:Container/BasicContainer; parentId for hierarchy
+// - Files: type ldp:NonRDFSource; body (content), contentType (MIME), parentId; optional metadata (dc:title, dc:description, schema:author, etc.)
+// Index: byParent on resources by parentId for listing children of a folder
 ```
 
-### Sync Strategy
+This layout is **stable for sync**: a future sync layer (see [docs/SOLID_SERVER_STRATEGIES.md](docs/SOLID_SERVER_STRATEGIES.md)) will read/write these tables and values, transform to RDF for LDP PUT/GET, and map to the pod URLs (e.g. `profile/card`, `contacts/index.ttl`, `groups/index.ttl`, `resources/...`). No separate “documents” or “files” table is required; personas, contacts, groups, and type indexes are JSON-LD in place; resources hold both file/folder structure and metadata.
 
-1. TinyBase persists to IndexedDB locally
-2. TinyBase sync to remote server (future)
-3. Conflict resolution: last-write-wins or custom merge
+### Data compatibility / export format
+
+Export produces a JSON snapshot of the store. The payload is conceptually **tables + values** (the same shape TinyBase uses: table names as keys with row objects, and a values object for key-value settings). The current implementation in `src/utils/storeExport.ts` wraps that in an object with `version`, `exportedAt`, `tables`, `values`, and optional `validation`; the raw content is still tables and values.
+
+**The current export format is not considered stable.** Table names, value keys, and the wrapper shape may change in future releases. Do not rely on export/import for long-term compatibility without re-validation or migration.
+
+If we introduce versioning for breaking changes (e.g. a `schemaVersion` or format version field), it would live in the top-level export payload so import logic can detect and handle older formats.
+
+### Sync strategy (future)
+
+1. TinyBase persists locally (LocalStorage or IndexedDB via persister).
+2. When the user connects a pod, a sync layer pushes (and optionally pulls) using this store layout; transform Store ↔ LDP per the [LDP URL layout](docs/SOLID_SERVER_STRATEGIES.md#ldp-url-layout-mapping-our-data-to-the-pod); authority (browser vs server) and conflict policy are per [Authority mode](docs/SOLID_SERVER_STRATEGIES.md#authority-mode-browser-vs-server).
+3. Conflict resolution: last-write-wins or merge, depending on authority mode (see SOLID_SERVER_STRATEGIES).
 
 ---
 
@@ -683,51 +695,39 @@ const POD_CONTEXT = {
 
 ### Integration with TinyBase
 
+The app uses a **schemaless** store: table and index names come from `src/storeLayout.ts` (`STORE_TABLES`, `STORE_INDEXES`). Rows use a **flat** structure: each JSON-LD property is a cell (key = IRI, e.g. `@id`, `http://xmlns.com/foaf/0.1/name`). There is no single `content` blob; the **resources** table holds both files and folders (row id = resource URL), not a separate `files` table.
+
+**Data integrity**: Use Zod to validate on every read and write. TypeScript types (`Persona`, `Contact`, `Group`, `TypeIndexRow`) are inferred from the Zod schemas (`z.infer<typeof PersonaSchema>`). The library provides typed store accessors in `src/utils/storeAccessors.ts` that do this for you: `getPersona`, `setPersona`, `getContact`, `setContact`, `getGroup`, `setGroup`, `getTypeIndexRow`, `setTypeIndexRow`. Prefer these over raw `getRow`/`setRow` so invalid or migrated data is caught at runtime.
+
 ```typescript
 import { createStore } from 'tinybase';
+import { createIndexes } from 'tinybase/indexes';
+import { STORE_TABLES, STORE_INDEXES } from './storeLayout';
+import { getPersona, setPersona, getContact, setContact, type Persona, type Contact } from './utils/storeAccessors';
+import { createContact, ContactInputSchema } from './schemas';
 
 const store = createStore();
+const indexes = createIndexes(store);
 
-// Define tables that match our schemas
-store.setTablesSchema({
-  personas: {
-    id: { type: 'string' },        // IRI
-    content: { type: 'string' },   // JSON-LD (validated by PersonaSchema)
-    modified: { type: 'number' },
-  },
-  contacts: {
-    id: { type: 'string' },
-    content: { type: 'string' },   // JSON-LD (validated by ContactSchema)
-    modified: { type: 'number' },
-  },
-  groups: {
-    id: { type: 'string' },
-    content: { type: 'string' },   // JSON-LD (validated by GroupSchema)
-    modified: { type: 'number' },
-  },
-  files: {
-    id: { type: 'string' },
-    metadata: { type: 'string' },  // JSON-LD (validated by FileMetadataSchema)
-    blobId: { type: 'string' },
-    modified: { type: 'number' },
-  },
+// Initialize empty tables (canonical names from storeLayout)
+store.setTables({
+  [STORE_TABLES.PERSONAS]: {},
+  [STORE_TABLES.CONTACTS]: {},
+  [STORE_TABLES.GROUPS]: {},
+  [STORE_TABLES.TYPE_INDEXES]: {},
+  [STORE_TABLES.RESOURCES]: {},
 });
 
-// Helper to get typed data
-function getPersona(store: Store, id: string): Persona | null {
-  const row = store.getRow('personas', id);
-  if (!row?.content) return null;
-  return PersonaSchema.parse(JSON.parse(row.content as string));
-}
+indexes.setIndexDefinition(STORE_INDEXES.BY_PARENT, STORE_TABLES.RESOURCES, 'parentId');
 
-// Helper to set validated data
-function setContact(store: Store, contact: Contact): void {
-  ContactSchema.parse(contact);  // Validate first
-  store.setRow('contacts', contact['@id']!, {
-    id: contact['@id']!,
-    content: JSON.stringify(contact),
-    modified: Date.now(),
-  });
+// Typed, validated read: returns Persona | null (null if missing or row fails Zod)
+const persona: Persona | null = getPersona(store, 'https://pod.example.com/profile#me');
+
+// Typed, validated write: validate input with Zod, then use accessor (validates again before setRow)
+const inputResult = ContactInputSchema.safeParse({ name: 'Alice', email: 'alice@example.com' });
+if (inputResult.success) {
+  const contact = createContact(inputResult.data, 'https://pod.example.com/');
+  setContact(store, contact); // parseContact inside; throws if invalid
 }
 ```
 

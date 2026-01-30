@@ -2,14 +2,12 @@ import type { Command } from '../types';
 import { parseCliArgs, getOptionString } from '../parse-args';
 import { VCARD } from '@inrupt/vocab-common-rdf';
 import { SOLID } from '@inrupt/vocab-solid-common';
-import { createContact, type ContactInput } from '../../schemas/contact';
+import { createContact, type ContactInput, type Contact } from '../../schemas/contact';
+import { getContact, setContact } from '../../utils/storeAccessors';
+import { STORE_TABLES } from '../../storeLayout';
 
-const TABLE_NAME = 'contacts';
-
-/**
- * Get the display name from a contact record
- */
-const getContactName = (record: Record<string, unknown>): string => {
+/** Get display name from a contact (validated row or record). */
+const getContactName = (record: Contact | Record<string, unknown>): string => {
   return (record[VCARD.fn] as string) || '(unnamed)';
 };
 
@@ -89,7 +87,7 @@ const contactListExecute: Command['execute'] = (args, context) => {
   const { store, addOutput } = context;
   const { options } = parseCliArgs(args);
 
-  const contacts = store.getTable(TABLE_NAME) || {};
+  const contacts = store.getTable(STORE_TABLES.CONTACTS) || {};
   const contactIds = Object.keys(contacts);
 
   if (contactIds.length === 0) {
@@ -181,8 +179,7 @@ const contactAddExecute: Command['execute'] = (args, context) => {
   const contact = createContact(input, baseUrl);
   const id = typeof contact['@id'] === 'string' ? contact['@id'] : String((contact['@id'] as { '@id'?: string })?.['@id'] ?? '');
 
-  // Store the contact
-  store.setRow(TABLE_NAME, id, contact as import('tinybase').Row);
+  setContact(store, contact);
 
   addOutput(
     <div>
@@ -209,7 +206,7 @@ const contactShowExecute: Command['execute'] = (args, context) => {
   }
 
   // Find contact by ID or partial match
-  const contacts = store.getTable(TABLE_NAME) || {};
+  const contacts = store.getTable(STORE_TABLES.CONTACTS) || {};
   const contactId = findContactId(contacts, idArg);
 
   if (!contactId) {
@@ -298,7 +295,7 @@ const contactEditExecute: Command['execute'] = (args, context) => {
   }
 
   // Find contact
-  const contacts = store.getTable(TABLE_NAME) || {};
+  const contacts = store.getTable(STORE_TABLES.CONTACTS) || {};
   const contactId = findContactId(contacts, idArg);
 
   if (!contactId) {
@@ -345,12 +342,13 @@ const contactEditExecute: Command['execute'] = (args, context) => {
 
   // Apply updates
   for (const [key, value] of Object.entries(updates)) {
-    store.setCell(TABLE_NAME, contactId, key, value as string);
+    store.setCell(STORE_TABLES.CONTACTS, contactId, key, value as string);
   }
 
+  const updated = getContact(store, contactId);
   addOutput(
     <div style={{ color: '#2ecc71' }}>
-      Updated contact: {getContactName(store.getRow(TABLE_NAME, contactId) as Record<string, unknown>)}
+      Updated contact: {getContactName(updated ?? {})}
     </div>,
     'success'
   );
@@ -372,7 +370,7 @@ const contactDeleteExecute: Command['execute'] = (args, context) => {
   }
 
   // Find contact
-  const contacts = store.getTable(TABLE_NAME) || {};
+  const contacts = store.getTable(STORE_TABLES.CONTACTS) || {};
   const contactId = findContactId(contacts, idArg);
 
   if (!contactId) {
@@ -386,7 +384,7 @@ const contactDeleteExecute: Command['execute'] = (args, context) => {
   const name = getContactName(contacts[contactId] as Record<string, unknown>);
 
   // Remove from store
-  store.delRow(TABLE_NAME, contactId);
+  store.delRow(STORE_TABLES.CONTACTS, contactId);
 
   addOutput(
     <span style={{ color: '#2ecc71' }}>Deleted contact: {name}</span>,
@@ -409,7 +407,7 @@ const contactSearchExecute: Command['execute'] = (args, context) => {
     return;
   }
 
-  const contacts = store.getTable(TABLE_NAME) || {};
+  const contacts = store.getTable(STORE_TABLES.CONTACTS) || {};
   const results: Array<{ id: string; record: Record<string, unknown> }> = [];
 
   for (const [id, record] of Object.entries(contacts)) {
@@ -483,7 +481,7 @@ const contactLinkExecute: Command['execute'] = (args, context) => {
   }
 
   // Find contact
-  const contacts = store.getTable(TABLE_NAME) || {};
+  const contacts = store.getTable(STORE_TABLES.CONTACTS) || {};
   const contactId = findContactId(contacts, contactArg);
 
   if (!contactId) {
@@ -507,7 +505,7 @@ const contactLinkExecute: Command['execute'] = (args, context) => {
   }
 
   // Link contact to persona using vcard:hasRelated
-  const existing = store.getCell(TABLE_NAME, contactId, VCARD.hasRelated);
+  const existing = store.getCell(STORE_TABLES.CONTACTS, contactId, VCARD.hasRelated);
   let related: unknown[];
 
   if (existing) {
@@ -535,7 +533,7 @@ const contactLinkExecute: Command['execute'] = (args, context) => {
   }
 
   // Store as JSON string since TinyBase doesn't support nested objects directly
-  store.setCell(TABLE_NAME, contactId, VCARD.hasRelated, JSON.stringify(related));
+  store.setCell(STORE_TABLES.CONTACTS, contactId, VCARD.hasRelated, JSON.stringify(related));
 
   const contactName = getContactName(contacts[contactId] as Record<string, unknown>);
   const personaName = (personas[personaId] as Record<string, unknown>)['http://xmlns.com/foaf/0.1/name'] as string || 'persona';

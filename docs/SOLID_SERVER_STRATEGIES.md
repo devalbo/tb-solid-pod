@@ -71,6 +71,8 @@ When the user is **ready to sync** (they already have local data from first use)
 
 The rest of this doc details sync design, where the target can live, and implementation order — all in the context of **start local, sync later**.
 
+**How this doc is organized:** After **What We Have to Work With** (current assets), **Technical paths** (Path A, B, C) define *how* the browser syncs to a pod. **Missing features** then lists what’s not implemented, with feasibility per path and a recommended approach. **Server integration** covers provider expectations (auth, LDP). **Strategies 1–6** describe *where* the sync target lives (hosted pod, self-hosted, thin LDP, managed DB, stepping stone). **Comparison** summarizes strategies; **Access control** gives document/file-level WAC milestones; **Suggested order** is the implementation sequence. Read principles first; use **Suggested order** when you want “what to do first.”
+
 ---
 
 ## What We Have to Work With
@@ -146,6 +148,47 @@ TinyBase can attach [multiple persisters](https://tinybase.org/api/persisters/) 
 | **C** | createCustomSynchronizer + (e.g.) LocalPersister | Yes (protocol server) | MergeableStore | Sync protocol; authority = where backend sources truth (local vs pod) and who wins in merge; backend implements both modes. |
 
 For **minimal configuration**, Path A needs no extra server and supports both authority modes in one persister. Path B requires an adapter and clear load/conflict rules for each mode. Path C requires a sync-protocol server and MergeableStore; authority is expressed in backend behavior and conflict resolution.
+
+---
+
+
+---
+
+## Missing features: benefit to app authors vs difficulty to implement
+
+The following table **labels and categorizes** the missing features (Solid scenarios not fulfilled by our implementation) in two dimensions (**benefit to app authors**, **difficulty to implement**), **includes dependencies** on other features in the table, **assesses feasibility per technical approach** (Path A: browser→LDP, Path B: adapter, Path C: sync protocol, P2P: no server), and **recommends a best approach** with a short reason. Rows are **ordered for best execution**: critical path first (dependencies before dependents), then by benefit/difficulty tradeoff within each tier. Use it to prioritize what to build or integrate. The full list of shortcomings, grouped by application-author feature set, is in [SHORTCOMINGS.md](SHORTCOMINGS.md).
+
+**Dimensions:**
+
+- **Benefit to app authors** — How much the feature helps typical app authors (e.g. document-sharing apps, multi-device, collaboration). **High** = often essential for the use case; **Medium** = strong value for many apps; **Low** = niche or optional.
+- **Difficulty to implement** — Rough effort to add or integrate the feature (sync layer, server, auth, etc.). **High** = non-trivial (new protocol, real-time, or complex integration); **Medium** = moderate (sync, ACLs, auth with existing stack); **Low** = small extension (e.g. ACLs on top of existing sync).
+
+- **Depends on** — Other features in this table that should be in place first (by row label). Empty = no dependencies; start here.
+- **Feasibility by approach** — **A** = [Path A: Custom persister (browser → LDP)](#path-a-custom-persister-browser--ldp-no-adapter-server); **B** = [Path B: Adapter (RemotePersister → adapter)](#path-b-localpersister-remotepersister-to-an-adapter-two-persisters); **C** = [Path C: Sync protocol (MergeableStore + backend)](#path-c-mergeablestore-createcustomsynchronizer-peer-sync-via-custom-transport); **P2P** = No server (export/import, WebRTC). **✓** = feasible; **Partial** = feasible with extra work or limits; **✗** = not feasible or N/A.
+- **Best approach** — Recommended technical approach for this feature and brief reason.
+
+**Execution order:** Rows are ordered by **critical path** (foundation → sync → ACLs → finer sharing / real-time → niche). Within the same tier, order favors **high benefit and lower difficulty** first.
+
+| Order | Missing feature | Feature set | Benefit | Difficulty | Depends on | A | B | C | P2P | Best approach |
+|-------|-----------------|-------------|---------|------------|------------|---|---|---|-----|----------------|
+| 1 | **LDP HTTP protocol (server implements)** | Solid protocol; Link-based sharing | High | Medium | — | ✓ | ✓ | ✓ | ✗ | **Path A + hosted pod:** no server to run; pod provides LDP. |
+| 2 | **Solid OIDC / WebID auth** | Solid protocol & federation | High | Medium | — | ✓ | ✓ | ✓ | ✗ | **Path A + Solid OIDC:** standard; hosted pod IdP; one client stack. |
+| 3 | **Sync to LDP (resolvable URLs + multi-device)** | Link-based; Multi-device | High | Medium | LDP, Auth | ✓ | ✓ | ✓ | Partial | **Path A:** one persister, no adapter; sync layer sets ACLs on PUT. |
+| 4 | **WAC: public read, owner write (Milestone 1)** | Sharing & access control | High | Low–Medium | Sync, Auth | ✓ | ✓ | ✓ | ✗ | **Path A:** set ACL in same layer as PUT; no extra service. |
+| 5 | **Real-time updates / WebSockets / push** | Real-time & live updates | Medium | Medium | Sync | Partial | Partial | ✓ | ✗ | **Path C:** sync protocol has built-in message push; or Path B with server push. |
+| 6 | **Large files / chunking / streaming** | Scale & storage | Medium | Medium | LDP | Partial | ✓ | ✓ | Partial | **Path B or C:** adapter/backend can stream; server-side storage. |
+| 7 | **"Shared with me" view / inbox** | Sharing; Real-time | High | High | Sync, Auth | Partial | ✓ | ✓ | Partial | **Path B or A:** adapter or browser queries pod ACL/inbox; P2P = custom table on import. |
+| 8 | **WAC: share with contact / share with group** | Sharing & access control | High | High | WAC M1, WebIDs | ✓ | ✓ | ✓ | ✗ | **Path A or B:** set ACL with contact/group WebID when writing; same as WAC M1. |
+| 9 | **Background sync / server-side component** | Multi-device & multi-user | Medium | High | Sync | ✗ | Partial | ✓ | ✗ | **Path C:** backend runs when browser closed; Path B if adapter runs as service. |
+| 10 | **WebID-TLS / DPoP (auth details)** | Solid protocol & federation | Medium | Medium | Auth | ✓ | ✓ | ✓ | ✗ | **Path A + client lib:** same as Auth; use solid-client-authn or similar. |
+| 11 | **Remote pod federation (read/write other pods)** | Solid protocol & federation | Medium–High | High | Auth, LDP client | ✓ | ✓ | ✓ | ✗ | **Path A:** browser fetches other pods with multi-pod auth; no adapter needed. |
+| 12 | **Multi-user real-time collaboration** | Multi-device & multi-user | High | High | Sync, Real-time | Partial | Partial | ✓ | Partial | **Path C:** sync protocol supports multi-peer; or dedicated real-time layer; P2P = WebRTC. |
+| 13 | **P2P transport (WebRTC, etc.)** | Ad hoc / serverless | Medium | High | — | ✗ | ✗ | ✗ | ✓ | **P2P only:** WebRTC or export/import; no Solid pod; use when serverless is required. |
+| 14 | **SPARQL queries** | Solid protocol & federation | Low | High | LDP | Partial | Partial | Partial | ✗ | **Path A to pod with SPARQL** or self-hosted (Strategy 1): server must expose SPARQL. |
+
+*Feature set* column refers to the grouping in [SHORTCOMINGS.md](SHORTCOMINGS.md). Feasibility **A**/**B**/**C**/**P2P**: ✓ = feasible with that approach; Partial = feasible with extra work or limits; ✗ = not feasible or N/A.
+
+**Takeaways:** **Critical path:** (1) LDP + Auth → (2) Sync → (3) WAC M1. Do **LDP** and **Auth** first (no dependencies); then **Sync** (resolvable URLs + multi-device); then **WAC Milestone 1** (public read, owner write) on top of sync. After that, prioritize by need: **Real-time** and **Large files** are medium/medium; **"Shared with me"** and **WAC share with contact/group** are high benefit but high difficulty (depend on Sync and WAC M1). **P2P** is independent (no LDP); use when the app author wants serverless ad hoc sharing. **SPARQL** is low benefit, high difficulty; last.
 
 ---
 
@@ -268,6 +311,8 @@ If you use **Path B** (adapter that speaks TinyBase protocol and LDP), the adapt
    - Option A: Browser sends a token (e.g. access token or refresh token) to the adapter (e.g. in a header or cookie); adapter uses it for LDP requests to the pod (with DPoP if the pod requires it).  
    - Option B: Adapter uses client credentials or a service account that has access to the user’s pod (less common for multi-tenant).
 
+   **Token handling (Option A):** The browser may hold an access token (and optionally a refresh token) in memory, sessionStorage, or a cookie—the adapter does not dictate where. When the pod returns **401 Unauthorized**, the adapter must either refresh the token (if it has a refresh token or can obtain one from the IdP) and retry the request, or fail the operation and signal the client clearly (e.g. so the app can re-authenticate). If the token expires mid-sync (e.g. during a long save), the adapter should treat the response as 401 and apply the same refresh-and-retry or fail-clearly behavior; partial writes are an app-level concern if the adapter does not support retry.
+
 3. **Translate Store JSON ↔ LDP:**  
    - On GET loadUrl: adapter fetches from the pod (e.g. GET `/profile/card`, GET `/contacts/index.ttl`, GET `/groups/index.ttl`, etc.), maps RDF to your Store shape, returns `[tables, values]` as JSON.  
    - On POST saveUrl: adapter receives Store JSON, maps tables/values to RDF, PUTs to the corresponding pod URLs.
@@ -318,6 +363,27 @@ Use a consistent layout so the same mapping works for one-off publish and for th
 | Values (e.g. defaultPersonaId) | Store in a small settings resource, e.g. `{podRoot}settings/preferences.ttl` |
 
 Use `Accept: application/ld+json` or `text/turtle` and `Content-Type: application/ld+json` or `text/turtle` when reading/writing so the server returns and accepts RDF.
+
+### Store ↔ LDP mapping
+
+The TinyBase store uses tables defined in the library’s [store layout](../src/storeLayout.ts): `personas`, `contacts`, `groups`, `typeIndexes`, `resources`, plus key-value **values** (e.g. `defaultPersonaId`). The sync layer (and one-off publish) must map each to one or more LDP resources on the pod. The following table and examples make that mapping explicit for implementers.
+
+| Store table | LDP path(s) | One vs many |
+|-------------|-------------|--------------|
+| `personas` | Default: `{podRoot}profile/card`. Others: `{podRoot}personas/{id}.ttl` (one doc per persona) or one doc with fragment identifiers. | One profile/card for the default persona; one resource per other persona (or one doc with fragments). |
+| `contacts` | `{podRoot}contacts/index.ttl` (single dataset with all contacts) **or** `{podRoot}contacts/{id}.ttl` (one resource per contact). | Choose one strategy: single index file or per-resource. Same choice for read and write. |
+| `groups` | `{podRoot}groups/index.ttl` (single dataset) **or** `{podRoot}groups/{id}.ttl` per group. | Same as contacts: either one index or per-resource. |
+| `typeIndexes` | `{podRoot}settings/type-index.ttl` (one doc listing registrations) **or** Solid-standard type index URLs (e.g. private/public type index discovery). | Type index rows map to type index *registrations*; the type index document(s) live at the chosen URL(s). |
+| `resources` | Direct path mapping: folder → `{podRoot}path/to/folder/`; file metadata → same path or companion doc. | One LDP resource (or container) per row; path comes from the resource’s path/IRI in the store. |
+| values | `{podRoot}settings/preferences.ttl` (or similar) as a small RDF graph with key-value triples. | Single resource for all values. |
+
+**Examples:**
+
+1. **Personas:** The default persona (e.g. row id `me`) is the WebID profile → write to `{podRoot}profile/card`. Any additional personas (e.g. `personas/alt-1`) → write to `{podRoot}personas/alt-1.ttl`. On read, `profile/card` populates the default persona row; `personas/*.ttl` (or one doc with fragments) populate the rest of the `personas` table.
+
+2. **Contacts:** If using a single dataset, the whole `contacts` table → one RDF dataset at `{podRoot}contacts/index.ttl` (e.g. a list of vCard resources or a graph of contact triples). If using per-contact resources, each contact row id maps to `{podRoot}contacts/{id}.ttl`; the sync layer GETs/PUTs each file separately. The same choice applies to groups (`groups/index.ttl` vs `groups/{id}.ttl`).
+
+Type indexes: the Solid spec uses type index discovery (e.g. `.well-known/solid`). For this app, storing type index rows in `{podRoot}settings/type-index.ttl` is sufficient for sync; implementers can later align with Solid’s type index URLs if needed.
 
 ---
 
@@ -377,6 +443,22 @@ The **sync layer** is the core piece that, **once the user has connected a pod**
 - **Conflict policy:** Depends on authority mode — see [Authority mode: browser vs server](#authority-mode-browser-vs-server). Document and implement explicitly for both modes.
 - **Offline / backpressure:** Queue pushes when offline; retry and reconcile when back online. In server-authority mode, show offline or stale state when local cache is not in sync with server. Server errors (4xx/5xx) should not drop data; retry or surface to user.
 
+### Conflict detection and resolution
+
+When the same resource is changed in the browser and on the pod (e.g. two devices, or offline edits then sync), the sync layer must detect conflicts and choose a winner. The following is a concrete approach implementers can use.
+
+**Detection:** Use **ETag** (preferred) or **Last-Modified** from the server. When pushing a resource, the client sends a conditional request: **If-Match: &lt;etag&gt;** (or **If-Unmodified-Since**) with the ETag (or last-modified) it last saw for that resource. If the server returns **412 Precondition Failed**, the resource was changed on the server since the client’s version — that’s a conflict. Alternatively, the client can **GET** the resource first, compare a **content hash** (e.g. SHA-256 of the body) with the local version; if they differ, there’s a conflict. ETag/Last-Modified is standard and avoids an extra GET when the server supports it.
+
+**What the client sends:** On **push**, the client sends the local resource body (RDF) and, for conditional overwrite, **If-Match** (or **If-Unmodified-Since**) with the last-known ETag/last-modified for that URL. If the client has never pulled this resource, it may send an unconditional PUT (no If-Match); the server then overwrites. For **pull**, the client sends **GET** with **If-None-Match: &lt;etag&gt;** to avoid re-downloading when unchanged.
+
+**What the server returns:** On successful **PUT**, the server returns **200/204** and a new **ETag** (and **Last-Modified**) in the response. On conflict (server state changed since client’s version), the server returns **412 Precondition Failed** (when the client used If-Match). On **GET**, the server returns the resource body and **ETag** / **Last-Modified** in headers.
+
+**Choosing the winner and updating the store:**
+
+- **Browser authority:** Conflict means the server has a newer or different version. Policy: **browser wins** — the sync layer keeps local state and retries push (e.g. overwrite with a fresh PUT, or after a user confirmation). Optionally, **last-write-wins per resource**: compare client and server last-modified (or a logical timestamp in the store); the newer write wins; update the store with the winner and push or leave the server as-is so both sides converge.
+- **Server authority:** Conflict means local was changed but server has a different version. Policy: **server wins** — on 412 or on pull, the sync layer overwrites the local store with the server’s version (GET the resource, transform RDF → store row, setRow). No merge is required if the design is “one source of truth (server).”
+- **Field-level merge** is possible but not required for v1: e.g. merge contact fields from both sides with a strategy like “non-empty wins” or “newer timestamp per field.” For simplicity, **resource-level last-write-wins** (or browser-wins / server-wins by authority) is enough; document the chosen policy in the sync layer and in the UI (e.g. “Local changes will overwrite the pod” vs “Pod is source of truth”).
+
 ---
 
 ## Strategy 4: Sync target — thin LDP server (custom)
@@ -394,6 +476,15 @@ Implement a **minimal LDP-compliant server** as a **sync target** (or source of 
 ---
 
 ---
+
+## Strategy 5: Stepping stone — one-off “Publish to pod”
+
+Before implementing full sync (Strategy 3), a **one-off “Publish to pod”** (or “Back up to Solid server”) action is a useful stepping stone: same export → transform → LDP PUTs, but no continuous sync.
+
+**Flow:** User has been working locally; when they want a permanent copy, they click “Publish to pod” (or “Connect pod”). App exports store, prompts for pod URL + auth; client (or small backend) transforms to LDP and PUTs to the user’s pod (hosted or self-hosted). Each run is a snapshot; optionally “Overwrite” or “Merge.” **Where the server lives:** Any (Strategy 1 or 2). This validates the mapping and auth path when the user first connects; then add the sync layer (Strategy 3) for ongoing sync.
+
+---
+
 ## Strategy 6: Sync target — managed DB (Supabase, SQLite/Fly.io, PocketBase)
 
 Use a **managed database or backend-as-a-service** as the **persistence layer** for your sync target. These are **not** LDP/Solid servers out of the box; there are no turnkey "Solid server backed by Supabase/PocketBase" packages. You either (1) build an **adapter** that speaks your app's sync protocol (e.g. Store JSON) and talks to the managed DB's REST API, or (2) run a **thin LDP server** (Strategy 4) that uses the managed DB as its storage backend. The same [authority and sync concepts](#authority-mode-browser-vs-server) apply: browser or server as authority, push/pull, conflict policy.
@@ -430,13 +521,6 @@ Use a **managed database or backend-as-a-service** as the **persistence layer** 
 - **PocketBase** is a good fit for a simple, single-file backend with SQLite and Realtime; use it as the persistence layer behind your adapter or behind a thin LDP server. **Supabase** fits if you want Postgres and a rich REST/Realtime API. **Fly.io** is a practical place to host the server (adapter or thin LDP) and, if you use SQLite, to attach a volume for the DB file.
 
 ---
-## Strategy 5: Stepping stone — one-off “Publish to pod”
-
-Before implementing full sync (Strategy 3), a **one-off “Publish to pod”** (or “Back up to Solid server”) action is a useful stepping stone: same export → transform → LDP PUTs, but no continuous sync.
-
-**Flow:** User has been working locally; when they want a permanent copy, they click “Publish to pod” (or “Connect pod”). App exports store, prompts for pod URL + auth; client (or small backend) transforms to LDP and PUTs to the user’s pod (hosted or self-hosted). Each run is a snapshot; optionally “Overwrite” or “Merge.” **Where the server lives:** Any (Strategy 1 or 2). This validates the mapping and auth path when the user first connects; then add the sync layer (Strategy 3) for ongoing sync.
-
----
 
 ## Comparison
 
@@ -451,12 +535,41 @@ Before implementing full sync (Strategy 3), a **one-off “Publish to pod”** (
 
 ---
 
+## Access control at document/file level: milestones
+
+When the sync layer writes resources (documents, files) to a Solid pod, **access control** can be rolled out in stages. At the **document/file level**, the following milestones keep security simple first, then add finer-grained sharing.
+
+**WAC** (Web Access Control) is Solid’s model for per-resource permissions; see the [WAC spec](https://solid.github.io/web-access-control-spec/). The sync layer (or app) sets ACLs on the pod when creating or updating resources.
+
+### Milestone 1 (first): Public read, owner write
+
+**Goal:** Documents and files are **publicly readable**; only the **author (owner)** can create, update, or delete them. No “share with contact X” or “share with group Y” yet—this simplifies security and is enough for many sharing scenarios (e.g. “anyone with the link can read; only I can edit”).
+
+**How (WAC):**
+
+- **Public read:** One Authorization with **`acl:agentClass foaf:Agent`** and **`acl:mode acl:Read`** on the resource. The WAC spec defines `foaf:Agent` as “any agent, i.e., the public,” so unauthenticated GET is allowed.
+- **Owner write and control:** One Authorization with **`acl:agent`** = owner’s WebID and **`acl:mode acl:Write`** (and **`acl:Control`** so the owner can change the ACL). Only that agent can PUT, PATCH, or DELETE the resource and its ACL.
+
+**Implementation:** When the sync layer (or one-off publish) creates or updates a resource on the pod, it writes the resource’s ACL document with these two Authorizations. Owner WebID comes from the current user’s persona (or pod registration). No contact or group lookup required.
+
+**Ref:** [SHORTCOMINGS.md](SHORTCOMINGS.md#simplified-security-solid-supports-public-read-owner-write) summarizes this pattern; [WAC Access Subjects](https://solid.github.io/web-access-control-spec/#access-subjects) and [Access Modes](https://solid.github.io/web-access-control-spec/#access-modes) define the terms.
+
+### Later milestones (optional)
+
+- **Milestone 2:** Share with specific agents (contacts’ WebIDs) — add Authorizations with `acl:agent` &lt;contact WebID&gt; and `acl:Read` (or `acl:Write`) for chosen resources.
+- **Milestone 3:** Share with groups — add Authorizations with `acl:agentGroup` pointing at a group resource (e.g. `vcard:Group` with `vcard:hasMember`), so all members get read or write.
+- **Milestone 4:** Per-resource private (no public read) — drop the `foaf:Agent` read Authorization for selected resources; only owner and explicitly granted agents/groups can read.
+
+Implement **Milestone 1 first** at the document/file level so that synced resources are visible and editable in a predictable way (public read, owner write); then add finer-grained sharing if the product needs it.
+
+---
+
 ## Suggested order (start local, sync later)
 
 1. **First use: no pod required (required workflow)** — From first page load, the user can add personas, contacts, groups, and other Solid-style data. Everything is stored locally (TinyBase + localStorage). No account, no login, no Solid server. The app must support this from day one.
 2. **When the user wants a permanent copy: choose the sync target (Strategy 2 preferred)** — User signs up at a hosted pod (e.g. solidcommunity.net) and gets a WebID and pod URL. In the app, they use “Connect pod” (or similar) and log in once.
-3. **Validate mapping with one-off publish (Strategy 5)** — Before or alongside full sync, implement export → transform → LDP PUTs (e.g. “Publish to pod” in the app). Confirms vocabularies and auth against the chosen target when the user first connects.
-4. **Implement the sync layer (Strategy 3, must-have)** — Once a pod is connected, the sync module pushes existing local data (initial seed) and then ongoing changes to the pod (on demand, on interval, or on change). Auth (DPoP/OIDC) is used when the user connects. Support **browser authority** (default) and **server authority** (user choice): define conflict policy for each mode (browser wins vs server wins); add pull and authority-aware getPersisted/setPersisted when server is authority.
+3. **Validate mapping with one-off publish (Strategy 5)** — Before or alongside full sync, implement export → transform → LDP PUTs (e.g. “Publish to pod” in the app). Confirms vocabularies and auth against the chosen target when the user first connects. When writing resources, apply **access control Milestone 1** ([public read, owner write](#milestone-1-first-public-read-owner-write)) so documents/files are publicly readable and only the owner can update.
+4. **Implement the sync layer (Strategy 3, must-have)** — Once a pod is connected, the sync module pushes existing local data (initial seed) and then ongoing changes to the pod (on demand, on interval, or on change). Auth (DPoP/OIDC) is used when the user connects. For each resource written to the pod, set ACLs per **access control Milestone 1** (public read, owner write) at the document/file level. Support **browser authority** (default) and **server authority** (user choice): define conflict policy for each mode (browser wins vs server wins); add pull and authority-aware getPersisted/setPersisted when server is authority.
 5. **Harden and optimize** — Offline queue, retries, incremental sync (e.g. track last-synced state), and clear UX (e.g. “Synced just now” / “Sync failed” / “Not connected to a pod” / “Using pod as main storage”).
 
 Self-hosting the target (Strategy 1, 4, or 6) is optional and can replace the hosted pod (Strategy 2) if the user wants to run the server themselves; for Strategy 6 (managed DB), the sync layer talks to your adapter or thin LDP server, not to an LDP pod directly, unless you implement LDP on top. The critical path remains: **use the app locally first, then connect a pod (or managed DB backend) and sync when ready; optionally let the user make the server the authority once the pod is established.**

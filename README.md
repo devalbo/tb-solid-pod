@@ -76,6 +76,8 @@ The schema system (Zod + JSON-LD) provides a pattern for adding new data types. 
 
 ## Limitations & Where It Falls Short
 
+For a focused list of shortcomings for **document sharing and collaboration** (no WAC, no “shared with me,” no p2p transport, etc.), see [docs/SHORTCOMINGS.md](docs/SHORTCOMINGS.md).
+
 ### No True Solid Protocol Support
 This is a **simulation** of Solid concepts, not a real Solid server. It does not implement:
 - LDP (Linked Data Platform) HTTP protocol
@@ -122,6 +124,7 @@ The ACL phase is planned but not implemented. Currently:
 - Single-user apps that need structured personal data
 - Offline-first PWAs with social data needs
 - Adding contact/group management to existing apps
+- Apps where users share document-oriented data (Solid-style or ad hoc p2p): see [docs/DOCUMENT_SHARING_SCENARIOS.md](docs/DOCUMENT_SHARING_SCENARIOS.md) for scenarios and [docs/SHORTCOMINGS.md](docs/SHORTCOMINGS.md) for what the library does not provide
 
 **Not a good fit:**
 - Multi-user collaboration requiring real-time sync
@@ -143,10 +146,10 @@ The ACL phase is planned but not implemented. Currently:
 
 You can use this in an app you’re building in two ways:
 
-1. **Install as a dependency** — `npm install github:devalbo/tb-solid-pod`, then import schemas, components, or the CLI. Your app needs a TinyBase store (and indexes if you use the file browser or CLI); wrap your app in TinyBase’s `Provider`. See [Use as a library](#use-as-a-library) and the [Integration Guide](#integration-guide) for store setup and usage.
-2. **Copy what you need** — Copy `src/schemas`, and optionally `src/components`, `src/cli`, and `src/utils`, into your repo. Install the same dependencies (TinyBase, Zod, vocab packages). Good if you want to customize or avoid a package dependency. See the [Integration Guide](#integration-guide) for the file list and store setup.
+1. **Install as a dependency** — `npm install github:devalbo/tb-solid-pod`, then import schemas, components, or the CLI. Your app needs a TinyBase store (and indexes if you use the file browser or CLI); wrap your app in TinyBase’s `Provider`. See [Use as a library](#use-as-a-library) and the [Integration Guide](docs/INTEGRATION_GUIDE.md) for store setup and usage.
+2. **Copy what you need** — Copy `src/schemas`, and optionally `src/storeLayout.ts`, `src/components`, `src/cli`, and `src/utils`, into your repo. Install the same dependencies (TinyBase, Zod, vocab packages). Good if you want to customize or avoid a package dependency. See the [Integration Guide](docs/INTEGRATION_GUIDE.md) for the file list and store setup.
 
-Both paths are covered step-by-step in the [Integration Guide](#integration-guide) (TinyBase store, Provider, table layout, optional CLI). If you only need the data shapes, use the schemas and factory functions; add React components and/or the CLI when you need the UI.
+Both paths are covered step-by-step in the [Integration Guide](docs/INTEGRATION_GUIDE.md) (TinyBase store, Provider, table layout, optional CLI). For answers to “how do I access/manage users, groups, and documents?”, see [docs/USE_CASES.md](docs/USE_CASES.md). If you only need the data shapes, use the schemas and factory functions; add React components and/or the CLI when you need the UI.
 
 ## Tech Stack
 
@@ -174,243 +177,7 @@ import { PersonaList, PersonaForm } from 'tb-solid-pod';
 
 **JSON Schema:** We generate JSON Schema from our Zod types (no canonical Solid JSON Schema; the ecosystem uses SHACL/ShEx). See the **[Schemas tab on the live demo](https://devalbo.github.io/tb-solid-pod/#schemas)** for the schema list, links to each JSON file, Solid doc links, and example code. To emit static `.json` files (e.g. for tooling that reads files), run `npm run generate:schemas`; output is written to `schema/` and `public/schema/`.
 
-For full integration (TinyBase store setup, components, CLI), see the [Integration Guide](#integration-guide) below.
-
-## Integration Guide
-
-### Option 1: Use as Reference / Copy Components
-
-This project is currently structured as a standalone app. To integrate into your project:
-
-#### 1. Install Dependencies
-
-```bash
-npm install tinybase zod @inrupt/vocab-common-rdf @inrupt/vocab-solid-common
-```
-
-#### 2. Copy the Core Files
-
-```
-src/
-├── schemas/           # Copy entire folder - Zod schemas + factory functions
-│   ├── base.ts        # JSON-LD base types and context
-│   ├── persona.ts     # Identity/profile schema
-│   ├── contact.ts     # Contact/agent schema
-│   ├── group.ts       # Organization/team schema
-│   ├── typeIndex.ts   # Type index and type registration schema
-│   ├── preferences.ts # Solid preferences document schema
-│   └── file.ts        # File metadata schema
-├── utils/
-│   ├── settings.ts    # Settings utilities (optional)
-│   ├── typeIndex.ts   # Type index helpers (register, lookup, defaults)
-│   └── storeExport.ts # Import/export helpers
-└── components/        # Copy what you need
-    ├── PersonaList.tsx / PersonaForm.tsx
-    ├── ContactList.tsx / ContactForm.tsx
-    ├── GroupList.tsx / GroupForm.tsx / MembershipManager.tsx
-    └── FileMetadataPanel.tsx
-```
-
-#### 3. Set Up TinyBase Store
-
-```typescript
-import { createStore, createIndexes } from 'tinybase';
-import { createLocalPersister } from 'tinybase/persisters/persister-browser';
-
-// Create store and indexes
-const store = createStore();
-const indexes = createIndexes(store);
-
-// Set up persistence
-const persister = createLocalPersister(store, 'my-app-pod');
-await persister.load();
-await persister.startAutoSave();
-
-// Define index for file browser (if using files)
-indexes.setIndexDefinition('byParent', 'resources', 'parentId');
-```
-
-#### 4. Wrap Your App with TinyBase Provider
-
-```tsx
-import { Provider } from 'tinybase/ui-react';
-
-function App() {
-  return (
-    <Provider store={store} indexes={indexes}>
-      <YourApp />
-    </Provider>
-  );
-}
-```
-
-#### 5. Use Components
-
-```tsx
-import PersonaList from './components/PersonaList';
-import PersonaForm from './components/PersonaForm';
-
-function ProfilePage() {
-  const [formOpen, setFormOpen] = useState(false);
-  const [editingId, setEditingId] = useState<string>();
-
-  return (
-    <>
-      <PersonaList
-        store={store}
-        onSelect={(id) => console.log('Selected:', id)}
-        onEdit={(id) => { setEditingId(id); setFormOpen(true); }}
-        onDelete={(id) => store.delRow('personas', id)}
-        onCreate={() => { setEditingId(undefined); setFormOpen(true); }}
-        onSetDefault={(id) => store.setValue('defaultPersonaId', id)}
-      />
-      {formOpen && (
-        <PersonaForm
-          store={store}
-          baseUrl="https://myapp.com/users/"
-          personaId={editingId}
-          onSave={() => setFormOpen(false)}
-          onCancel={() => setFormOpen(false)}
-        />
-      )}
-    </>
-  );
-}
-```
-
-#### 6. Use Schema Factory Functions Directly
-
-```typescript
-import { createPersona } from './schemas/persona';
-import { createContact } from './schemas/contact';
-import { createGroup } from './schemas/group';
-
-// Create a new persona
-const persona = createPersona({
-  name: 'Alice Smith',
-  email: 'alice@example.com',
-  bio: 'Software developer'
-}, 'https://myapp.com/users/');
-
-// Store it
-store.setRow('personas', persona['@id'], persona);
-
-// Create a contact
-const contact = createContact({
-  name: 'Bob Jones',
-  email: 'bob@example.com',
-  isAgent: false
-}, 'https://myapp.com/contacts/');
-
-store.setRow('contacts', contact['@id'], contact);
-
-// Create a group with members
-const group = createGroup({
-  name: 'Engineering Team',
-  type: 'team',
-  description: 'Core engineering'
-}, 'https://myapp.com/groups/');
-
-store.setRow('groups', group['@id'], group);
-```
-
-### Option 2: Use Just the Schemas
-
-If you only need the data structures without the UI:
-
-```typescript
-import { PersonaSchema, createPersona } from './schemas/persona';
-import { ContactSchema, createContact } from './schemas/contact';
-import { GroupSchema, createGroup } from './schemas/group';
-
-// Validate external data
-const result = PersonaSchema.safeParse(untrustedData);
-if (result.success) {
-  // Data is valid
-  const persona = result.data;
-}
-
-// Create new records with proper JSON-LD structure
-const newPersona = createPersona({ name: 'Test' }, baseUrl);
-// Returns: { '@context': {...}, '@id': 'https://...#me', '@type': 'foaf:Person', ... }
-```
-
-### Data Tables Structure
-
-The library uses these TinyBase tables:
-
-| Table | Purpose | Key Fields |
-|-------|---------|------------|
-| `personas` | User identities | `@id`, `foaf:name`, `foaf:mbox`, `foaf:bio` |
-| `contacts` | Address book | `@id`, `vcard:fn`, `vcard:hasEmail`, `@type` |
-| `groups` | Organizations/teams | `@id`, `vcard:fn`, `vcard:hasMember`, `@type` |
-| `typeIndexes` | Type index registrations | `forClass`, `instance`/`instanceContainer`, `indexType` (public/private) |
-| `resources` | Files and folders | URL as key, `type`, `body`, `contentType`, `parentId` |
-
-Settings are stored in TinyBase **values** (not tables):
-- `defaultPersonaId` - Default persona
-- `theme` - Color theme preference
-- `cliHistorySize` - CLI history length
-
-### Adding the CLI (Optional)
-
-If you want the terminal interface:
-
-```tsx
-import { CliTerminal } from './cli';
-
-<CliTerminal
-  store={store}
-  pod={virtualPod}  // VirtualPod instance for file operations
-  currentUrl={currentUrl}
-  setCurrentUrl={setCurrentUrl}
-  baseUrl="https://myapp.com/pod/"
-/>
-```
-
-### Customizing the Base URL
-
-The `baseUrl` parameter controls the IRI namespace for your data:
-
-```typescript
-// For a multi-tenant app
-const baseUrl = `https://myapp.com/users/${userId}/`;
-
-// All created resources will have IRIs like:
-// https://myapp.com/users/123/personas/abc-def#me
-// https://myapp.com/users/123/contacts/xyz-789
-```
-
-### Extending with New Data Types
-
-1. Create a new schema in `schemas/`:
-
-```typescript
-// schemas/project.ts
-import { z } from 'zod';
-import { JsonLdBase, NodeRef, nowISO, POD_CONTEXT } from './base';
-
-export const ProjectSchema = JsonLdBase.extend({
-  '@type': z.literal('https://schema.org/Project'),
-  'https://schema.org/name': z.string(),
-  'https://schema.org/member': z.array(NodeRef).optional(),
-});
-
-export function createProject(input: { name: string }, baseUrl: string) {
-  const id = `${baseUrl}projects/${crypto.randomUUID()}`;
-  return {
-    '@context': POD_CONTEXT,
-    '@id': id,
-    '@type': 'https://schema.org/Project',
-    'https://schema.org/name': input.name,
-    'https://schema.org/dateCreated': nowISO(),
-  };
-}
-```
-
-2. Add CLI commands in `cli/commands/project.tsx` (follow existing patterns)
-
-3. Create UI components as needed
+For full integration (TinyBase store setup, components, CLI), see the **[Integration Guide](docs/INTEGRATION_GUIDE.md)**.
 
 ## Getting Started (Demo App)
 

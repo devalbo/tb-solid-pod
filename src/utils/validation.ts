@@ -7,6 +7,7 @@
 
 import { z } from 'zod';
 import type { Store } from 'tinybase';
+import { STORE_TABLES } from '../storeLayout';
 import { PersonaSchema, safeParsePersona } from '../schemas/persona';
 import { ContactSchema, safeParseContact } from '../schemas/contact';
 import { GroupSchema, safeParseGroup } from '../schemas/group';
@@ -45,10 +46,10 @@ export interface TableValidationResult {
  * Map of table names to their Zod schemas
  */
 const TABLE_SCHEMAS: Record<string, z.ZodType<unknown>> = {
-  personas: PersonaSchema,
-  contacts: ContactSchema,
-  groups: GroupSchema,
-  typeIndexes: TypeIndexRowSchema,
+  [STORE_TABLES.PERSONAS]: PersonaSchema,
+  [STORE_TABLES.CONTACTS]: ContactSchema,
+  [STORE_TABLES.GROUPS]: GroupSchema,
+  [STORE_TABLES.TYPE_INDEXES]: TypeIndexRowSchema,
   // resources table uses a simpler validation (not JSON-LD)
 };
 
@@ -108,7 +109,7 @@ export function validatePersona(
   }
 
   const errors: ValidationError[] = result.error.issues.map((issue) => ({
-    table: 'personas',
+    table: STORE_TABLES.PERSONAS,
     rowId,
     field: issue.path.join('.'),
     message: issue.message,
@@ -131,7 +132,7 @@ export function validateContact(
   }
 
   const errors: ValidationError[] = result.error.issues.map((issue) => ({
-    table: 'contacts',
+    table: STORE_TABLES.CONTACTS,
     rowId,
     field: issue.path.join('.'),
     message: issue.message,
@@ -154,7 +155,7 @@ export function validateGroup(
   }
 
   const errors: ValidationError[] = result.error.issues.map((issue) => ({
-    table: 'groups',
+    table: STORE_TABLES.GROUPS,
     rowId,
     field: issue.path.join('.'),
     message: issue.message,
@@ -177,7 +178,7 @@ export function validateTypeIndexRow(
   }
 
   const errors: ValidationError[] = result.error.issues.map((issue) => ({
-    table: 'typeIndexes',
+    table: STORE_TABLES.TYPE_INDEXES,
     rowId,
     field: issue.path.join('.'),
     message: issue.message,
@@ -235,7 +236,7 @@ export function validateStoreData(
 
   for (const [tableName, tableData] of Object.entries(tables)) {
     // Skip tables without schemas (they get a warning instead)
-    if (!TABLE_SCHEMAS[tableName] && tableName !== 'resources') {
+    if (!TABLE_SCHEMAS[tableName] && tableName !== STORE_TABLES.RESOURCES) {
       warnings.push({
         table: tableName,
         rowId: '*',

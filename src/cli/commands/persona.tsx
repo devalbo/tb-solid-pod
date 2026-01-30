@@ -4,14 +4,13 @@ import { parseCliArgs, getOptionString, getOptionBoolean } from '../parse-args';
 import { FOAF, VCARD, LDP } from '@inrupt/vocab-common-rdf';
 import { SOLID, WS } from '@inrupt/vocab-solid-common';
 import { createPersona, type PersonaInput } from '../../schemas/persona';
+import { getPersona, setPersona, type Persona } from '../../utils/storeAccessors';
+import { STORE_TABLES } from '../../storeLayout';
 
-const TABLE_NAME = 'personas';
 const DEFAULT_PERSONA_KEY = 'defaultPersonaId';
 
-/**
- * Get the display name from a persona record
- */
-const getPersonaName = (record: Record<string, unknown>): string => {
+/** Get display name from a persona (validated row or record). */
+const getPersonaName = (record: Persona | Record<string, unknown>): string => {
   return (record[FOAF.name] as string) || '(unnamed)';
 };
 
@@ -83,7 +82,7 @@ const personaListExecute: Command['execute'] = (_args, context) => {
   const { store, addOutput } = context;
 
   // Ensure personas table exists
-  const personas = store.getTable(TABLE_NAME) || {};
+  const personas = store.getTable(STORE_TABLES.PERSONAS) || {};
   const personaIds = Object.keys(personas);
 
   if (personaIds.length === 0) {
@@ -157,11 +156,9 @@ const personaCreateExecute: Command['execute'] = (args, context) => {
   const rawId = persona['@id'];
   const id = typeof rawId === 'string' ? rawId : String((rawId as { '@id'?: string })?.['@id'] ?? '');
 
-  // Store the persona - flatten the JSON-LD for TinyBase
-  store.setRow(TABLE_NAME, id, persona as import('tinybase').Row);
+  setPersona(store, persona);
 
-  // If this is the first persona, make it default
-  const personas = store.getTable(TABLE_NAME) || {};
+  const personas = store.getTable(STORE_TABLES.PERSONAS) || {};
   if (Object.keys(personas).length === 1) {
     store.setValue(DEFAULT_PERSONA_KEY, id);
   }
@@ -193,7 +190,7 @@ const personaShowExecute: Command['execute'] = (args, context) => {
   }
 
   // Find persona by ID or partial match
-  const personas = store.getTable(TABLE_NAME) || {};
+  const personas = store.getTable(STORE_TABLES.PERSONAS) || {};
   const personaId = findPersonaId(personas, idArg);
 
   if (!personaId) {
@@ -301,7 +298,7 @@ const personaEditExecute: Command['execute'] = (args, context) => {
   }
 
   // Find persona
-  const personas = store.getTable(TABLE_NAME) || {};
+  const personas = store.getTable(STORE_TABLES.PERSONAS) || {};
   const personaId = findPersonaId(personas, idArg);
 
   if (!personaId) {
@@ -352,12 +349,13 @@ const personaEditExecute: Command['execute'] = (args, context) => {
 
   // Apply updates
   for (const [key, value] of Object.entries(updates)) {
-    store.setCell(TABLE_NAME, personaId, key, value as string);
+    store.setCell(STORE_TABLES.PERSONAS, personaId, key, value as string);
   }
 
+  const updated = getPersona(store, personaId);
   addOutput(
     <div style={{ color: '#2ecc71' }}>
-      Updated persona: {getPersonaName(store.getRow(TABLE_NAME, personaId) as Record<string, unknown>)}
+      Updated persona: {updated ? getPersonaName(updated) : '(invalid or missing)'}
     </div>,
     'success'
   );
@@ -379,7 +377,7 @@ const personaDeleteExecute: Command['execute'] = (args, context) => {
   }
 
   // Find persona
-  const personas = store.getTable(TABLE_NAME) || {};
+  const personas = store.getTable(STORE_TABLES.PERSONAS) || {};
   const personaId = findPersonaId(personas, idArg);
 
   if (!personaId) {
@@ -393,14 +391,14 @@ const personaDeleteExecute: Command['execute'] = (args, context) => {
   const name = getPersonaName(personas[personaId] as Record<string, unknown>);
 
   // Remove from store
-  store.delRow(TABLE_NAME, personaId);
+  store.delRow(STORE_TABLES.PERSONAS, personaId);
 
   // If this was the default, clear the default
   const defaultId = store.getValue(DEFAULT_PERSONA_KEY) as string | undefined;
   if (defaultId === personaId) {
     store.delValue(DEFAULT_PERSONA_KEY);
     // Set next available persona as default
-    const remaining = store.getTable(TABLE_NAME) || {};
+    const remaining = store.getTable(STORE_TABLES.PERSONAS) || {};
     const remainingIds = Object.keys(remaining);
     if (remainingIds.length > 0) {
       store.setValue(DEFAULT_PERSONA_KEY, remainingIds[0]);
@@ -429,7 +427,7 @@ const personaSetDefaultExecute: Command['execute'] = (args, context) => {
   }
 
   // Find persona
-  const personas = store.getTable(TABLE_NAME) || {};
+  const personas = store.getTable(STORE_TABLES.PERSONAS) || {};
   const personaId = findPersonaId(personas, idArg);
 
   if (!personaId) {
@@ -467,7 +465,7 @@ const personaSetInboxExecute: Command['execute'] = (args, context) => {
     return;
   }
 
-  const personas = store.getTable(TABLE_NAME) || {};
+  const personas = store.getTable(STORE_TABLES.PERSONAS) || {};
   const personaId = findPersonaId(personas, idArg);
 
   if (!personaId) {
@@ -475,9 +473,10 @@ const personaSetInboxExecute: Command['execute'] = (args, context) => {
     return;
   }
 
-  store.setCell(TABLE_NAME, personaId, LDP.inbox, { '@id': urlArg } as unknown as Parameters<typeof store.setCell>[3]);
+  store.setCell(STORE_TABLES.PERSONAS, personaId, LDP.inbox, { '@id': urlArg } as unknown as Parameters<typeof store.setCell>[3]);
+  const persona = getPersona(store, personaId);
   addOutput(
-    <span style={{ color: '#2ecc71' }}>Set inbox for {getPersonaName(store.getRow(TABLE_NAME, personaId) as Record<string, unknown>)}: {urlArg}</span>,
+    <span style={{ color: '#2ecc71' }}>Set inbox for {getPersonaName(persona ?? {})}: {urlArg}</span>,
     'success'
   );
 };
@@ -500,7 +499,7 @@ const personaSetTypeIndexExecute: Command['execute'] = (args, context) => {
     return;
   }
 
-  const personas = store.getTable(TABLE_NAME) || {};
+  const personas = store.getTable(STORE_TABLES.PERSONAS) || {};
   const personaId = findPersonaId(personas, idArg);
 
   if (!personaId) {
@@ -509,10 +508,11 @@ const personaSetTypeIndexExecute: Command['execute'] = (args, context) => {
   }
 
   const key = isPrivate ? SOLID.privateTypeIndex : SOLID.publicTypeIndex;
-  store.setCell(TABLE_NAME, personaId, key, { '@id': urlArg } as unknown as Parameters<typeof store.setCell>[3]);
+  store.setCell(STORE_TABLES.PERSONAS, personaId, key, { '@id': urlArg } as unknown as Parameters<typeof store.setCell>[3]);
+  const persona = getPersona(store, personaId);
   addOutput(
     <span style={{ color: '#2ecc71' }}>
-      Set {isPrivate ? 'private' : 'public'} type index for {getPersonaName(store.getRow(TABLE_NAME, personaId) as Record<string, unknown>)}: {urlArg}
+      Set {isPrivate ? 'private' : 'public'} type index for {getPersonaName(persona ?? {})}: {urlArg}
     </span>,
     'success'
   );

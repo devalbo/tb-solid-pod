@@ -2,22 +2,22 @@
 
 ## Current State
 
+Phases 1–7 complete. See [Feature Checklist](#feature-checklist) for detailed status.
+
 The app has a working browser-based CLI and file browser UI with:
 - Basic file/folder CRUD operations
 - TinyBase persistence with LocalStorage
 - Import/export functionality
 - Tab-based navigation (Data Browser / Personas / Contacts / Groups / Terminal)
-- Persona management (Phase 1 ✅)
-- Contact management with search/filter (Phase 2 ✅)
-- Group management with membership (Phase 3 ✅)
-- Rich file metadata with UI editor (Phase 4 ✅)
-- Settings and preferences via CLI (Phase 5 ✅)
-- Type indexes for data discovery (Phase 6 ✅)
-- WebID profile format (Phase 7 ✅)
+- Persona management (Phase 1)
+- Contact management with search/filter (Phase 2)
+- Group management with membership (Phase 3)
+- Rich file metadata with UI editor (Phase 4)
+- Settings and preferences via CLI (Phase 5)
+- Type indexes for data discovery (Phase 6)
+- WebID profile format (Phase 7)
 
-**All core schemas integrated! WebID profile format complete!**
-
-## Phase 1: Persona Management ✅ COMPLETE
+## Phase 1: Persona Management
 
 ### Goal
 Allow users to create and manage identity profiles (WebID documents).
@@ -52,7 +52,7 @@ persona set-default <id>        # Set default persona
 
 ---
 
-## Phase 2: Contact Management ✅ COMPLETE
+## Phase 2: Contact Management
 
 ### Goal
 Build an address book for storing contacts (people and agents/bots).
@@ -89,7 +89,7 @@ contact link <contact> <persona> # Link contact to your persona
 
 ---
 
-## Phase 3: Group Management ✅ COMPLETE
+## Phase 3: Group Management
 
 ### Goal
 Create and manage organizations, teams, and custom groups with membership.
@@ -128,7 +128,7 @@ group list-members <group>      # List group members
 
 ---
 
-## Phase 4: Rich File Metadata ✅ COMPLETE
+## Phase 4: Rich File Metadata
 
 ### Goal
 Enhance file storage with Solid-compatible metadata.
@@ -160,7 +160,7 @@ file set-description <path> <desc>
 
 ---
 
-## Phase 5: Settings & Preferences ✅ COMPLETE
+## Phase 5: Settings & Preferences
 
 ### Goal
 Store user preferences and app settings.
@@ -194,7 +194,7 @@ config reset [key]              # Reset setting(s) to defaults
 
 ---
 
-## Phase 6: Type Indexes ✅ COMPLETE
+## Phase 6: Type Indexes
 
 ### Goal
 Implement Solid Type Indexes for data discovery. Type indexes allow apps to find where specific types of data are stored without hardcoding paths.
@@ -254,7 +254,7 @@ typeindex unregister <type> [--public] [--private]
 
 ---
 
-## Phase 7: WebID Profile Format ✅ COMPLETE
+## Phase 7: WebID Profile Format
 
 ### Goal
 Make personas proper WebID profile documents that conform to Solid expectations.
@@ -296,8 +296,10 @@ persona edit <id> [--oidc-issuer=...] [--inbox=...] [--preferences-file=...] [--
 
 ## Phase 8: Access Control (Future)
 
+**Scope:** ACL *enforcement* happens on the Solid server (the pod). This phase is for local ACL *data* (and optionally UI) that the sync layer then writes to the pod when publishing or syncing. See [SOLID_SERVER_STRATEGIES.md](SOLID_SERVER_STRATEGIES.md) and the WAC M1 milestone for the server-side design.
+
 ### Goal
-Implement Web Access Control (WAC) for resources.
+Implement local WAC data and UI; the sync layer writes ACL documents to the pod where they are enforced.
 
 ### Background
 Solid uses WAC for authorization. Each resource can have an associated `.acl` document that specifies who can access it and how.
@@ -327,48 +329,38 @@ acl set-private <path>          # Make private (owner only)
 
 ## Phase 9: Sync & Federation (Future)
 
-### Goal
-Enable multi-device sync and federation with external Solid servers.
-
-### Features
-- TinyBase MergeableStore sync
-- WebSocket or HTTP sync transport
-- Import from external Solid pods
-- Export to Solid servers
+Implement the sync layer and flow described in [SOLID_SERVER_STRATEGIES.md](SOLID_SERVER_STRATEGIES.md): **Strategy 3** (sync layer), **Path A/B/C** (technical options), and [Suggested order](SOLID_SERVER_STRATEGIES.md#suggested-order-start-local-sync-later) (implementation sequence). That document defines authority modes, conflict policy, LDP mapping, and the steps from one-off publish to full sync. Phase 9 is not a separate “Phase 9 project”—it is the implementation of that design.
 
 ---
 
 ## Implementation Order
 
-1. **Phase 1: Personas** ✅ - Foundation for identity
-2. **Phase 2: Contacts** ✅ - Depends on personas for linking
-3. **Phase 3: Groups** ✅ - Depends on contacts for membership
-4. **Phase 4: File Metadata** ✅ - Enhance existing functionality
-5. **Phase 5: Settings** ✅ - Quality of life
-6. **Phase 6: Type Indexes** ✅ - Solid data discovery
-7. **Phase 7: WebID Profile** ✅ - Solid-compliant identity documents
-8. **Phase 8: ACL** - Security layer
-9. **Phase 9: Sync** - Federation
+1. **Phase 1: Personas** - Foundation for identity
+2. **Phase 2: Contacts** - Depends on personas for linking
+3. **Phase 3: Groups** - Depends on contacts for membership
+4. **Phase 4: File Metadata** - Enhance existing functionality
+5. **Phase 5: Settings** - Quality of life
+6. **Phase 6: Type Indexes** - Solid data discovery
+7. **Phase 7: WebID Profile** - Solid-compliant identity documents
+8. **Phase 8: ACL** - Security layer (see [SOLID_SERVER_STRATEGIES.md](SOLID_SERVER_STRATEGIES.md) for WAC milestones)
+9. **Phase 9: Sync** - Federation (see [SOLID_SERVER_STRATEGIES.md](SOLID_SERVER_STRATEGIES.md) for sync design)
 
 ## Estimated Scope
 
 | Phase | New Files | Modified Files | Complexity |
 |-------|-----------|----------------|------------|
-| 1. Personas ✅ | 3 | 2 | Medium |
-| 2. Contacts ✅ | 4 | 1 | Medium |
-| 3. Groups ✅ | 4 | 1 | Medium-High |
-| 4. File Metadata ✅ | 0 | 2 | Low |
-| 5. Settings ✅ | 2 | 1 | Low |
-| 6. Type Indexes ✅ | 3 | 5 | Medium |
-| 7. WebID Profile ✅ | 1 | 4 | Medium |
+| 1. Personas | 3 | 2 | Medium |
+| 2. Contacts | 4 | 1 | Medium |
+| 3. Groups | 4 | 1 | Medium-High |
+| 4. File Metadata | 0 | 2 | Low |
+| 5. Settings | 2 | 1 | Low |
+| 6. Type Indexes | 3 | 5 | Medium |
+| 7. WebID Profile | 1 | 4 | Medium |
 | 8. ACL | 3 | 3 | High |
 | 9. Sync | 4 | 4 | High |
 
-## Success Criteria
+## Feature Checklist
 
-- [ ] All CLI commands work with tab completion
-- [ ] Data persists across page refreshes
-- [ ] Schemas validate all stored data
-- [ ] UI and CLI stay in sync
-- [ ] Export produces valid JSON-LD
-- [ ] Import validates against schemas
+See **[FEATURE_CHECKLIST.md](FEATURE_CHECKLIST.md)** for the manual verification checklist.
+
+The checklist is organized by dependency level (foundational features first) and designed for manual review. See [SDLC_PROCESS.md](SDLC_PROCESS.md) for how changes should be documented and verified.

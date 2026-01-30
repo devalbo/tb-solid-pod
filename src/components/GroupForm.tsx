@@ -6,11 +6,11 @@ import {
   GroupInputSchema,
   safeParseGroup,
   ORG,
+  type Group,
   type GroupInput,
   type GroupType,
 } from '../schemas/group';
-
-const TABLE_NAME = 'groups';
+import { getGroup, setGroup } from '../utils/storeAccessors';
 
 interface GroupFormProps {
   store: Store;
@@ -38,13 +38,23 @@ const emptyForm: FormData = {
   logo: '',
 };
 
-const getGroupType = (record: Record<string, unknown>): GroupType => {
-  const types = record['@type'];
+function getGroupTypeFromGroup(group: Group): GroupType {
+  const types = group['@type'];
   const typeArray = Array.isArray(types) ? types : [types];
   if (typeArray.includes(ORG.Organization)) return 'organization';
   if (typeArray.includes(ORG.OrganizationalUnit)) return 'team';
   return 'group';
-};
+}
+
+function groupToFormData(group: Group): FormData {
+  return {
+    name: (group[VCARD.fn] as string) || '',
+    type: getGroupTypeFromGroup(group),
+    description: (group[DCTERMS.description] as string) || '',
+    url: (group[VCARD.hasURL] as string) || '',
+    logo: (group[VCARD.hasLogo] as string) || '',
+  };
+}
 
 const GroupForm: React.FC<GroupFormProps> = ({
   store,
@@ -59,19 +69,13 @@ const GroupForm: React.FC<GroupFormProps> = ({
   const [error, setError] = useState<string | null>(null);
   const appliedInitialRef = React.useRef(false);
 
-  // Load existing group data when editing
+  // Load existing group data when editing (validated read via getGroup)
   useEffect(() => {
     if (groupId) {
       appliedInitialRef.current = false;
-      const record = store.getRow(TABLE_NAME, groupId) as Record<string, unknown>;
-      if (record) {
-        setForm({
-          name: (record[VCARD.fn] as string) || '',
-          type: getGroupType(record),
-          description: (record[DCTERMS.description] as string) || '',
-          url: (record[VCARD.hasURL] as string) || '',
-          logo: (record[VCARD.hasLogo] as string) || '',
-        });
+      const group = getGroup(store, groupId);
+      if (group) {
+        setForm(groupToFormData(group));
       }
     }
   }, [groupId, store]);
@@ -114,11 +118,14 @@ const GroupForm: React.FC<GroupFormProps> = ({
     }
 
     if (isEditing && groupId) {
-      // Update existing group - build the full object and validate
-      const existingRecord = store.getRow(TABLE_NAME, groupId) as Record<string, unknown>;
+      const existing = getGroup(store, groupId);
+      if (!existing) {
+        setError('Group not found or invalid.');
+        return;
+      }
 
       const updates: Record<string, unknown> = {
-        ...existingRecord,
+        ...existing,
         [VCARD.fn]: form.name.trim(),
       };
 
@@ -152,13 +159,9 @@ const GroupForm: React.FC<GroupFormProps> = ({
         return;
       }
 
-      // Store the validated group
-      store.setRow(TABLE_NAME, groupId, updates as import('tinybase').Row);
+      setGroup(store, groupResult.data);
     } else {
-      // Create new group using factory function
       const group = createGroup(inputResult.data, baseUrl);
-
-      // Double-check validation
       const groupResult = safeParseGroup(group);
       if (!groupResult.success) {
         const firstError = groupResult.error.issues[0];
@@ -166,11 +169,7 @@ const GroupForm: React.FC<GroupFormProps> = ({
         return;
       }
 
-      const rawId = group['@id'];
-      const id = typeof rawId === 'string' ? rawId : String((rawId as { '@id'?: string })?.['@id'] ?? '');
-
-      // Store the group
-      store.setRow(TABLE_NAME, id, group as import('tinybase').Row);
+      setGroup(store, groupResult.data);
     }
 
     onSave();

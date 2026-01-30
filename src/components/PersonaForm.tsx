@@ -7,7 +7,10 @@ import {
   PersonaInputSchema,
   safeParsePersona,
   type PersonaInput,
+  type Persona,
 } from '../schemas/persona';
+import { getPersona, setPersona } from '../utils/storeAccessors';
+import { STORE_TABLES } from '../storeLayout';
 
 function getIdFromRef(value: unknown): string {
   if (value && typeof value === 'object' && '@id' in value) {
@@ -16,8 +19,30 @@ function getIdFromRef(value: unknown): string {
   return '';
 }
 
-const TABLE_NAME = 'personas';
 const DEFAULT_PERSONA_KEY = 'defaultPersonaId';
+
+function personaToFormData(persona: Persona): FormData {
+  const email = persona[VCARD.hasEmail];
+  const emailStr = typeof email === 'string' ? email : (email as { '@value'?: string })?.['@value'] ?? '';
+  const phone = persona[VCARD.hasTelephone];
+  const phoneStr = typeof phone === 'string' ? phone : (phone as { '@value'?: string })?.['@value'] ?? '';
+  return {
+    name: (persona[FOAF.name] as string) || '',
+    nickname: (persona[FOAF.nick] as string) || '',
+    givenName: (persona[FOAF.givenName] as string) || '',
+    familyName: (persona[FOAF.familyName] as string) || '',
+    email: emailStr.replace('mailto:', ''),
+    phone: phoneStr.replace('tel:', ''),
+    bio: (persona[VCARD.note] as string) || '',
+    homepage: (persona[FOAF.homepage] as string) || '',
+    image: (persona[FOAF.img] as string) || '',
+    oidcIssuer: getIdFromRef(persona[SOLID.oidcIssuer]) || '',
+    inbox: getIdFromRef(persona[LDP.inbox]) || '',
+    preferencesFile: getIdFromRef(persona[WS.preferencesFile]) || '',
+    publicTypeIndex: getIdFromRef(persona[SOLID.publicTypeIndex]) || '',
+    privateTypeIndex: getIdFromRef(persona[SOLID.privateTypeIndex]) || '',
+  };
+}
 
 interface PersonaFormProps {
   store: Store;
@@ -77,31 +102,13 @@ const PersonaForm: React.FC<PersonaFormProps> = ({
   const [webIdOpen, setWebIdOpen] = useState(false);
   const appliedInitialRef = React.useRef(false);
 
-  // Load existing persona data when editing
+  // Load existing persona data when editing (validated read via getPersona)
   useEffect(() => {
     if (personaId) {
       appliedInitialRef.current = false;
-      const record = store.getRow(TABLE_NAME, personaId) as Record<string, unknown>;
-      if (record) {
-        const email = record[VCARD.hasEmail] as string | undefined;
-        const phone = record[VCARD.hasTelephone] as string | undefined;
-
-        setForm({
-          name: (record[FOAF.name] as string) || '',
-          nickname: (record[FOAF.nick] as string) || '',
-          givenName: (record[FOAF.givenName] as string) || '',
-          familyName: (record[FOAF.familyName] as string) || '',
-          email: email?.replace('mailto:', '') || '',
-          phone: phone?.replace('tel:', '') || '',
-          bio: (record[VCARD.note] as string) || '',
-          homepage: (record[FOAF.homepage] as string) || '',
-          image: (record[FOAF.img] as string) || '',
-          oidcIssuer: getIdFromRef(record[SOLID.oidcIssuer]) || '',
-          inbox: getIdFromRef(record[LDP.inbox]) || '',
-          preferencesFile: getIdFromRef(record[WS.preferencesFile]) || '',
-          publicTypeIndex: getIdFromRef(record[SOLID.publicTypeIndex]) || '',
-          privateTypeIndex: getIdFromRef(record[SOLID.privateTypeIndex]) || '',
-        });
+      const persona = getPersona(store, personaId);
+      if (persona) {
+        setForm(personaToFormData(persona));
       }
     }
   }, [personaId, store]);
@@ -153,11 +160,15 @@ const PersonaForm: React.FC<PersonaFormProps> = ({
     }
 
     if (isEditing && personaId) {
-      // Update existing persona - build the full object and validate
-      const existingRecord = store.getRow(TABLE_NAME, personaId) as Record<string, unknown>;
+      // Update existing persona - use validated read, merge form, validate and write
+      const existing = getPersona(store, personaId);
+      if (!existing) {
+        setError('Persona not found or invalid.');
+        return;
+      }
 
       const updates: Record<string, unknown> = {
-        ...existingRecord,
+        ...existing,
         [FOAF.name]: form.name.trim(),
       };
 
@@ -236,7 +247,6 @@ const PersonaForm: React.FC<PersonaFormProps> = ({
         delete updates[SOLID.privateTypeIndex];
       }
 
-      // Validate the final persona object
       const personaResult = safeParsePersona(updates);
       if (!personaResult.success) {
         const firstError = personaResult.error.issues[0];
@@ -244,13 +254,9 @@ const PersonaForm: React.FC<PersonaFormProps> = ({
         return;
       }
 
-      // Store the validated persona
-      store.setRow(TABLE_NAME, personaId, updates as import('tinybase').Row);
+      setPersona(store, personaResult.data);
     } else {
-      // Create new persona using factory function (already generates valid structure)
       const persona = createPersona(inputResult.data, baseUrl);
-
-      // Double-check validation
       const personaResult = safeParsePersona(persona);
       if (!personaResult.success) {
         const firstError = personaResult.error.issues[0];
@@ -258,15 +264,11 @@ const PersonaForm: React.FC<PersonaFormProps> = ({
         return;
       }
 
-      const rawId = persona['@id'];
-      const id = typeof rawId === 'string' ? rawId : String((rawId as { '@id'?: string })?.['@id'] ?? '');
+      setPersona(store, personaResult.data);
 
-      // Store the persona
-      store.setRow(TABLE_NAME, id, persona as import('tinybase').Row);
-
-      // If this is the first persona, make it default
-      const personas = store.getTable(TABLE_NAME) || {};
+      const personas = store.getTable(STORE_TABLES.PERSONAS) || {};
       if (Object.keys(personas).length === 1) {
+        const id = typeof personaResult.data['@id'] === 'string' ? personaResult.data['@id'] : String(personaResult.data['@id']);
         store.setValue(DEFAULT_PERSONA_KEY, id);
       }
     }

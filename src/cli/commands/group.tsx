@@ -2,14 +2,12 @@ import React from 'react';
 import type { Command } from '../types';
 import { parseCliArgs, getOptionString } from '../parse-args';
 import { VCARD, DCTERMS } from '@inrupt/vocab-common-rdf';
-import { createGroup, ORG, type GroupInput, type GroupType } from '../../schemas/group';
+import { createGroup, ORG, type Group, type GroupInput, type GroupType } from '../../schemas/group';
+import { getGroup, setGroup } from '../../utils/storeAccessors';
+import { STORE_TABLES } from '../../storeLayout';
 
-const TABLE_NAME = 'groups';
-
-/**
- * Get the display name from a group record
- */
-const getGroupName = (record: Record<string, unknown>): string => {
+/** Get display name from a group (validated row or record). */
+const getGroupName = (record: Group | Record<string, unknown>): string => {
   return (record[VCARD.fn] as string) || '(unnamed)';
 };
 
@@ -114,7 +112,7 @@ const groupListExecute: Command['execute'] = (args, context) => {
   const { store, addOutput } = context;
   const { options } = parseCliArgs(args);
 
-  const groups = store.getTable(TABLE_NAME) || {};
+  const groups = store.getTable(STORE_TABLES.GROUPS) || {};
   const groupIds = Object.keys(groups);
 
   if (groupIds.length === 0) {
@@ -218,7 +216,7 @@ const groupCreateExecute: Command['execute'] = (args, context) => {
   const id = typeof group['@id'] === 'string' ? group['@id'] : String((group['@id'] as { '@id'?: string })?.['@id'] ?? '');
 
   // Store the group
-  store.setRow(TABLE_NAME, id, group as import('tinybase').Row);
+  setGroup(store, group);
 
   addOutput(
     <div>
@@ -247,7 +245,7 @@ const groupShowExecute: Command['execute'] = (args, context) => {
   }
 
   // Find group by ID or partial match
-  const groups = store.getTable(TABLE_NAME) || {};
+  const groups = store.getTable(STORE_TABLES.GROUPS) || {};
   const groupId = findGroupId(groups, idArg);
 
   if (!groupId) {
@@ -355,7 +353,7 @@ const groupEditExecute: Command['execute'] = (args, context) => {
   }
 
   // Find group
-  const groups = store.getTable(TABLE_NAME) || {};
+  const groups = store.getTable(STORE_TABLES.GROUPS) || {};
   const groupId = findGroupId(groups, idArg);
 
   if (!groupId) {
@@ -395,12 +393,12 @@ const groupEditExecute: Command['execute'] = (args, context) => {
 
   // Apply updates
   for (const [key, value] of Object.entries(updates)) {
-    store.setCell(TABLE_NAME, groupId, key, value as string);
+    store.setCell(STORE_TABLES.GROUPS, groupId, key, value as string);
   }
 
   addOutput(
     <div style={{ color: '#2ecc71' }}>
-      Updated group: {getGroupName(store.getRow(TABLE_NAME, groupId) as Record<string, unknown>)}
+      Updated group: {getGroupName(getGroup(store, groupId) ?? {})}
     </div>,
     'success'
   );
@@ -422,7 +420,7 @@ const groupDeleteExecute: Command['execute'] = (args, context) => {
   }
 
   // Find group
-  const groups = store.getTable(TABLE_NAME) || {};
+  const groups = store.getTable(STORE_TABLES.GROUPS) || {};
   const groupId = findGroupId(groups, idArg);
 
   if (!groupId) {
@@ -436,7 +434,7 @@ const groupDeleteExecute: Command['execute'] = (args, context) => {
   const name = getGroupName(groups[groupId] as Record<string, unknown>);
 
   // Remove from store
-  store.delRow(TABLE_NAME, groupId);
+  store.delRow(STORE_TABLES.GROUPS, groupId);
 
   addOutput(
     <span style={{ color: '#2ecc71' }}>Deleted group: {name}</span>,
@@ -463,7 +461,7 @@ const groupAddMemberExecute: Command['execute'] = (args, context) => {
   }
 
   // Find group
-  const groups = store.getTable(TABLE_NAME) || {};
+  const groups = store.getTable(STORE_TABLES.GROUPS) || {};
   const groupId = findGroupId(groups, groupArg);
 
   if (!groupId) {
@@ -501,7 +499,7 @@ const groupAddMemberExecute: Command['execute'] = (args, context) => {
   // Add member
   const newMembers = [...currentMembers, contactId];
   const memberRefs = newMembers.map(id => ({ '@id': id }));
-  store.setCell(TABLE_NAME, groupId, VCARD.hasMember, JSON.stringify(memberRefs));
+  store.setCell(STORE_TABLES.GROUPS, groupId, VCARD.hasMember, JSON.stringify(memberRefs));
 
   const groupName = getGroupName(record);
   const contactName = (contacts[contactId] as Record<string, unknown>)?.[VCARD.fn] as string || 'contact';
@@ -532,7 +530,7 @@ const groupRemoveMemberExecute: Command['execute'] = (args, context) => {
   }
 
   // Find group
-  const groups = store.getTable(TABLE_NAME) || {};
+  const groups = store.getTable(STORE_TABLES.GROUPS) || {};
   const groupId = findGroupId(groups, groupArg);
 
   if (!groupId) {
@@ -570,10 +568,10 @@ const groupRemoveMemberExecute: Command['execute'] = (args, context) => {
   // Remove member
   const newMembers = currentMembers.filter(id => id !== contactId);
   if (newMembers.length === 0) {
-    store.delCell(TABLE_NAME, groupId, VCARD.hasMember);
+    store.delCell(STORE_TABLES.GROUPS, groupId, VCARD.hasMember);
   } else {
     const memberRefs = newMembers.map(id => ({ '@id': id }));
-    store.setCell(TABLE_NAME, groupId, VCARD.hasMember, JSON.stringify(memberRefs));
+    store.setCell(STORE_TABLES.GROUPS, groupId, VCARD.hasMember, JSON.stringify(memberRefs));
   }
 
   const groupName = getGroupName(record);
@@ -603,7 +601,7 @@ const groupListMembersExecute: Command['execute'] = (args, context) => {
   }
 
   // Find group
-  const groups = store.getTable(TABLE_NAME) || {};
+  const groups = store.getTable(STORE_TABLES.GROUPS) || {};
   const groupId = findGroupId(groups, idArg);
 
   if (!groupId) {

@@ -120,6 +120,8 @@
 
 See [docs/testing/bdd-tests.md](testing/bdd-tests.md) for full details.
 
+**Testing boundary:** The same doc defines [what is automated vs manual](testing/bdd-tests.md#testing-boundary-automated-vs-manual): app shell, tab navigation, Contacts/Personas UI, CLI help/clear/contact/persona are covered by BDD; CLI group/file/files/config/data/typeindex, Groups UI, forms, file browser, settings, export/import, and future features (pod connect, sync, ACL) are left for manual verification until scenarios are added.
+
 ### npm Scripts Added
 ```json
 "test:e2e": "npx bddgen && playwright test",

@@ -6,6 +6,7 @@
  */
 
 import type { Store } from 'tinybase';
+import { STORE_TABLES } from '../storeLayout';
 import {
   COMMON_TYPES,
   type TypeIndexType,
@@ -17,7 +18,8 @@ import {
 // Constants
 // ============================================================================
 
-export const TYPE_INDEXES_TABLE = 'typeIndexes';
+/** Type index table name; same as STORE_TABLES.TYPE_INDEXES from storeLayout. */
+export const TYPE_INDEXES_TABLE = STORE_TABLES.TYPE_INDEXES;
 
 // Row IDs for the two type indexes
 export const PUBLIC_TYPE_INDEX_ID = 'public';

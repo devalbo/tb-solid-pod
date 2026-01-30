@@ -7,9 +7,37 @@ import {
   ContactInputSchema,
   safeParseContact,
   type ContactInput,
+  type Contact,
 } from '../schemas/contact';
+import { getContact, setContact } from '../utils/storeAccessors';
 
-const TABLE_NAME = 'contacts';
+const SCHEMA_APP_CAT = 'https://schema.org/applicationCategory';
+const SCHEMA_SOFTWARE = 'https://schema.org/SoftwareApplication';
+
+function contactToFormData(contact: Contact): FormData {
+  const email = contact[VCARD.hasEmail];
+  const emailStr = typeof email === 'string' ? email : (email as { '@value'?: string })?.['@value'] ?? '';
+  const phone = contact[VCARD.hasTelephone];
+  const phoneStr = typeof phone === 'string' ? phone : (phone as { '@value'?: string })?.['@value'] ?? '';
+  const types = contact['@type'];
+  const isAgentType = Array.isArray(types)
+    ? types.includes(SCHEMA_SOFTWARE)
+    : types === SCHEMA_SOFTWARE;
+  return {
+    name: (contact[VCARD.fn] as string) || '',
+    nickname: (contact[VCARD.nickname] as string) || '',
+    email: emailStr.replace('mailto:', ''),
+    phone: phoneStr.replace('tel:', ''),
+    url: (contact[VCARD.hasURL] as string) || '',
+    photo: (contact[VCARD.hasPhoto] as string) || '',
+    notes: (contact[VCARD.hasNote] as string) || '',
+    organization: (contact[VCARD.hasOrganizationName] as string) || '',
+    role: (contact[VCARD.hasRole] as string) || '',
+    webId: (contact[SOLID.webid] as string) || '',
+    isAgent: isAgentType,
+    agentCategory: (contact[SCHEMA_APP_CAT as keyof Contact] as string) || '',
+  };
+}
 
 interface ContactFormProps {
   store: Store;
@@ -64,33 +92,13 @@ const ContactForm: React.FC<ContactFormProps> = ({
   const [error, setError] = useState<string | null>(null);
   const appliedInitialRef = React.useRef(false);
 
-  // Load existing contact data when editing
+  // Load existing contact data when editing (validated read via getContact)
   useEffect(() => {
     if (contactId) {
       appliedInitialRef.current = false;
-      const record = store.getRow(TABLE_NAME, contactId) as Record<string, unknown>;
-      if (record) {
-        const email = record[VCARD.hasEmail] as string | undefined;
-        const phone = record[VCARD.hasTelephone] as string | undefined;
-        const types = record['@type'];
-        const isAgentType = Array.isArray(types)
-          ? types.includes('https://schema.org/SoftwareApplication')
-          : types === 'https://schema.org/SoftwareApplication';
-
-        setForm({
-          name: (record[VCARD.fn] as string) || '',
-          nickname: (record[VCARD.nickname] as string) || '',
-          email: email?.replace('mailto:', '') || '',
-          phone: phone?.replace('tel:', '') || '',
-          url: (record[VCARD.hasURL] as string) || '',
-          photo: (record[VCARD.hasPhoto] as string) || '',
-          notes: (record[VCARD.hasNote] as string) || '',
-          organization: (record[VCARD.hasOrganizationName] as string) || '',
-          role: (record[VCARD.hasRole] as string) || '',
-          webId: (record[SOLID.webid] as string) || '',
-          isAgent: isAgentType,
-          agentCategory: (record['https://schema.org/applicationCategory'] as string) || '',
-        });
+      const contact = getContact(store, contactId);
+      if (contact) {
+        setForm(contactToFormData(contact));
       }
     }
   }, [contactId, store]);
@@ -143,11 +151,14 @@ const ContactForm: React.FC<ContactFormProps> = ({
     }
 
     if (isEditing && contactId) {
-      // Update existing contact - build the full object and validate
-      const existingRecord = store.getRow(TABLE_NAME, contactId) as Record<string, unknown>;
+      const existing = getContact(store, contactId);
+      if (!existing) {
+        setError('Contact not found or invalid.');
+        return;
+      }
 
       const updates: Record<string, unknown> = {
-        ...existingRecord,
+        ...existing,
         [VCARD.fn]: form.name.trim(),
       };
 
@@ -207,35 +218,34 @@ const ContactForm: React.FC<ContactFormProps> = ({
       }
 
       // Handle type change for agent
-      const currentTypes = existingRecord['@type'];
+      const currentTypes = existing['@type'];
       let newTypes: string | string[];
       if (form.isAgent) {
         if (Array.isArray(currentTypes)) {
-          if (!currentTypes.includes('https://schema.org/SoftwareApplication')) {
-            newTypes = [...currentTypes, 'https://schema.org/SoftwareApplication'];
+          if (!currentTypes.includes(SCHEMA_SOFTWARE)) {
+            newTypes = [...currentTypes, SCHEMA_SOFTWARE];
           } else {
             newTypes = currentTypes;
           }
         } else {
-          newTypes = [currentTypes as string, 'https://schema.org/SoftwareApplication'];
+          newTypes = [currentTypes as string, SCHEMA_SOFTWARE];
         }
         if (form.agentCategory.trim()) {
-          updates['https://schema.org/applicationCategory'] = form.agentCategory.trim();
+          updates[SCHEMA_APP_CAT] = form.agentCategory.trim();
         } else {
-          delete updates['https://schema.org/applicationCategory'];
+          delete updates[SCHEMA_APP_CAT];
         }
       } else {
         if (Array.isArray(currentTypes)) {
-          newTypes = currentTypes.filter(t => t !== 'https://schema.org/SoftwareApplication');
+          newTypes = currentTypes.filter(t => t !== SCHEMA_SOFTWARE);
           if (newTypes.length === 1) newTypes = newTypes[0];
         } else {
           newTypes = currentTypes as string;
         }
-        delete updates['https://schema.org/applicationCategory'];
+        delete updates[SCHEMA_APP_CAT];
       }
       updates['@type'] = newTypes;
 
-      // Validate the final contact object
       const contactResult = safeParseContact(updates);
       if (!contactResult.success) {
         const firstError = contactResult.error.issues[0];
@@ -243,13 +253,9 @@ const ContactForm: React.FC<ContactFormProps> = ({
         return;
       }
 
-      // Store the validated contact
-      store.setRow(TABLE_NAME, contactId, updates as import('tinybase').Row);
+      setContact(store, contactResult.data);
     } else {
-      // Create new contact using factory function
       const contact = createContact(inputResult.data, baseUrl);
-
-      // Double-check validation
       const contactResult = safeParseContact(contact);
       if (!contactResult.success) {
         const firstError = contactResult.error.issues[0];
@@ -257,11 +263,7 @@ const ContactForm: React.FC<ContactFormProps> = ({
         return;
       }
 
-      const rawId = contact['@id'];
-      const id = typeof rawId === 'string' ? rawId : String((rawId as { '@id'?: string })?.['@id'] ?? '');
-
-      // Store the contact
-      store.setRow(TABLE_NAME, id, contact as import('tinybase').Row);
+      setContact(store, contactResult.data);
     }
 
     onSave();
