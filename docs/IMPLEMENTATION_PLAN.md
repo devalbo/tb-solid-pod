@@ -12,8 +12,9 @@ The app has a working browser-based CLI and file browser UI with:
 - Group management with membership (Phase 3 ✅)
 - Rich file metadata with UI editor (Phase 4 ✅)
 - Settings and preferences via CLI (Phase 5 ✅)
+- Type indexes for data discovery (Phase 6 ✅)
 
-**All core schemas integrated! Settings system complete!**
+**All core schemas integrated! Settings and type indexes complete!**
 
 ## Phase 1: Persona Management ✅ COMPLETE
 
@@ -192,7 +193,7 @@ config reset [key]              # Reset setting(s) to defaults
 
 ---
 
-## Phase 6: Type Indexes (Future)
+## Phase 6: Type Indexes ✅ COMPLETE
 
 ### Goal
 Implement Solid Type Indexes for data discovery. Type indexes allow apps to find where specific types of data are stored without hardcoding paths.
@@ -206,43 +207,49 @@ Each index contains `solid:TypeRegistration` entries mapping RDF types to contai
 
 ### CLI Commands
 ```
-typeindex list                  # List all type registrations
-typeindex show <public|private> # Show specific type index
+typeindex list                      # List all type registrations
+typeindex show <public|private>     # Show specific type index
 typeindex register <type> <location> [--public]
-typeindex unregister <type>     # Remove type registration
+typeindex unregister <type> [--public] [--private]
 ```
 
 ### Data Storage
 - Store in `typeIndexes` table (public and private)
-- Use `TypeIndexSchema` and `TypeRegistrationSchema`
-- Link from persona profile document
+- Use `TypeIndexSchema`, `TypeRegistrationSchema`, and `TypeIndexRowSchema` for validation
+- Default registrations (foaf:Person, vcard:Individual, vcard:Group, org:Organization) seeded on first load via `initializeDefaultTypeRegistrations()`
+- Persona schema extended with optional `solid:publicTypeIndex` and `solid:privateTypeIndex` links
 
 ### Schema
 ```typescript
-// Type Registration
+// Type Registration (JSON-LD)
 {
   '@type': 'solid:TypeRegistration',
   'solid:forClass': 'vcard:Individual',  // The RDF type
   'solid:instance': 'https://.../contacts/',  // Where instances live
+  'solid:instanceContainer': 'https://.../contacts/'  // Or container
 }
 
 // Type Index Document
 {
-  '@type': 'solid:TypeIndex',
-  'solid:hasTypeRegistration': [...]
+  '@type': ['solid:TypeIndex', 'solid:ListedDocument' | 'solid:UnlistedDocument'],
+  // registrations stored in typeIndexes table
 }
 ```
 
 ### UI Components
-- Type Index panel in Settings or dedicated tab
-- Registration list with type → location mapping
-- Add/remove registration interface
+- Type Index panel in Settings or dedicated tab (optional, not implemented)
+- CLI provides list/show/register/unregister
 
-### Files to Create/Modify
-- `src/schemas/typeIndex.ts` - TypeIndex and TypeRegistration schemas
-- `src/cli/commands/typeindex.tsx` - CLI commands
-- `src/utils/typeIndex.ts` - Helper functions for registration lookup
-- `src/components/TypeIndexPanel.tsx` - UI component (optional)
+### Files Created/Modified
+- `src/schemas/typeIndex.ts` - TypeIndex and TypeRegistration schemas, TypeIndexRowSchema ✅
+- `src/cli/commands/typeindex.tsx` - CLI commands ✅
+- `src/cli/commands/index.ts` - Export typeindex command ✅
+- `src/cli/registry.tsx` - Register typeindex command ✅
+- `src/utils/typeIndex.ts` - Helper functions, default initialization ✅
+- `src/utils/validation.ts` - typeIndexes table validation, validateTypeIndexRow ✅
+- `src/schemas/persona.ts` - Optional publicTypeIndex / privateTypeIndex links ✅
+- `src/App.tsx` - Call initializeDefaultTypeRegistrations after store load ✅
+- `src/components/TypeIndexPanel.tsx` - UI component (optional, skipped)
 
 ---
 
@@ -253,21 +260,22 @@ Make personas proper WebID profile documents that conform to Solid expectations.
 
 ### Background
 A Solid WebID profile document includes specific predicates that apps expect:
-- `solid:oidcIssuer` - Identity provider
-- `solid:publicTypeIndex` - Link to public type index
-- `solid:privateTypeIndex` - Link to private type index (in preferences)
+- `solid:oidcIssuer` - Identity provider (already in PersonaSchema)
+- `solid:publicTypeIndex` - Link to public type index (added in Phase 6)
+- `solid:privateTypeIndex` - Link to private type index (added in Phase 6)
 - `ldp:inbox` - Notification inbox location
 - `pim:preferencesFile` - Link to preferences document
 
 ### Changes to Persona Schema
 ```typescript
-// Additional fields for WebID compliance
+// Additional fields for WebID compliance (oidcIssuer, publicTypeIndex, privateTypeIndex already in schema)
 {
   // Existing FOAF fields...
   'solid:oidcIssuer': { '@id': 'https://...' },  // Optional - for real auth
-  'solid:publicTypeIndex': { '@id': 'https://.../settings/publicTypeIndex' },
-  'ldp:inbox': { '@id': 'https://.../inbox/' },
-  'pim:preferencesFile': { '@id': 'https://.../settings/prefs' },
+  'solid:publicTypeIndex': { '@id': 'https://.../settings/publicTypeIndex' },  // Phase 6
+  'solid:privateTypeIndex': { '@id': '...' },  // Phase 6
+  'ldp:inbox': { '@id': 'https://.../inbox/' },  // To add
+  'pim:preferencesFile': { '@id': 'https://.../settings/prefs' },  // To add
 }
 ```
 
@@ -342,7 +350,7 @@ Enable multi-device sync and federation with external Solid servers.
 3. **Phase 3: Groups** ✅ - Depends on contacts for membership
 4. **Phase 4: File Metadata** ✅ - Enhance existing functionality
 5. **Phase 5: Settings** ✅ - Quality of life
-6. **Phase 6: Type Indexes** - Solid data discovery
+6. **Phase 6: Type Indexes** ✅ - Solid data discovery
 7. **Phase 7: WebID Profile** - Solid-compliant identity documents
 8. **Phase 8: ACL** - Security layer
 9. **Phase 9: Sync** - Federation
@@ -356,7 +364,7 @@ Enable multi-device sync and federation with external Solid servers.
 | 3. Groups ✅ | 4 | 1 | Medium-High |
 | 4. File Metadata ✅ | 0 | 2 | Low |
 | 5. Settings ✅ | 2 | 1 | Low |
-| 6. Type Indexes | 4 | 2 | Medium |
+| 6. Type Indexes ✅ | 3 | 5 | Medium |
 | 7. WebID Profile | 2 | 3 | Medium |
 | 8. ACL | 3 | 3 | High |
 | 9. Sync | 4 | 4 | High |
