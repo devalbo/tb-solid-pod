@@ -1,0 +1,173 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "@id": {
+      "type": "string",
+      "format": "uri"
+    },
+    "@type": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      ]
+    },
+    "http://xmlns.com/foaf/0.1/name": {
+      "type": "string",
+      "minLength": 1
+    },
+    "http://xmlns.com/foaf/0.1/nick": {
+      "type": "string"
+    },
+    "http://xmlns.com/foaf/0.1/givenName": {
+      "type": "string"
+    },
+    "http://xmlns.com/foaf/0.1/familyName": {
+      "type": "string"
+    },
+    "http://www.w3.org/2006/vcard/ns#hasEmail": {
+      "anyOf": [
+        {
+          "type": "string",
+          "format": "uri"
+        },
+        {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "uri"
+          }
+        }
+      ]
+    },
+    "http://www.w3.org/2006/vcard/ns#hasTelephone": {
+      "anyOf": [
+        {
+          "type": "string",
+          "format": "uri"
+        },
+        {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "uri"
+          }
+        }
+      ]
+    },
+    "http://xmlns.com/foaf/0.1/img": {
+      "type": "string",
+      "format": "uri"
+    },
+    "http://www.w3.org/2006/vcard/ns#note": {
+      "type": "string"
+    },
+    "http://xmlns.com/foaf/0.1/homepage": {
+      "type": "string",
+      "format": "uri"
+    },
+    "http://www.w3.org/ns/solid/terms#oidcIssuer": {
+      "type": "object",
+      "properties": {
+        "@id": {
+          "type": "string",
+          "format": "uri"
+        }
+      },
+      "required": [
+        "@id"
+      ],
+      "additionalProperties": false
+    },
+    "http://www.w3.org/ns/auth/cert#key": {
+      "type": "object",
+      "properties": {
+        "@id": {
+          "type": "string",
+          "format": "uri"
+        }
+      },
+      "required": [
+        "@id"
+      ],
+      "additionalProperties": false
+    },
+    "http://www.w3.org/ns/solid/terms#publicTypeIndex": {
+      "type": "object",
+      "properties": {
+        "@id": {
+          "type": "string",
+          "format": "uri"
+        }
+      },
+      "required": [
+        "@id"
+      ],
+      "additionalProperties": false
+    },
+    "http://www.w3.org/ns/solid/terms#privateTypeIndex": {
+      "type": "object",
+      "properties": {
+        "@id": {
+          "type": "string",
+          "format": "uri"
+        }
+      },
+      "required": [
+        "@id"
+      ],
+      "additionalProperties": false
+    },
+    "http://www.w3.org/ns/ldp#inbox": {
+      "type": "object",
+      "properties": {
+        "@id": {
+          "type": "string",
+          "format": "uri"
+        }
+      },
+      "required": [
+        "@id"
+      ],
+      "additionalProperties": false
+    },
+    "http://www.w3.org/ns/pim/space#preferencesFile": {
+      "type": "object",
+      "properties": {
+        "@id": {
+          "type": "string",
+          "format": "uri"
+        }
+      },
+      "required": [
+        "@id"
+      ],
+      "additionalProperties": false
+    },
+    "http://xmlns.com/foaf/0.1/isPrimaryTopicOf": {
+      "type": "object",
+      "properties": {
+        "@id": {
+          "type": "string",
+          "format": "uri"
+        }
+      },
+      "required": [
+        "@id"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "required": [
+    "@type",
+    "http://xmlns.com/foaf/0.1/name"
+  ],
+  "additionalProperties": {}
+}

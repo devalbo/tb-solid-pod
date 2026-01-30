@@ -1,0 +1,35 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "@id": {
+      "type": "string",
+      "format": "uri"
+    },
+    "@type": {
+      "type": "string",
+      "const": "http://www.w3.org/2006/vcard/ns#AddressBook"
+    },
+    "http://purl.org/dc/terms/title": {
+      "type": "string"
+    },
+    "http://www.w3.org/2006/vcard/ns#nameEmailIndex": {
+      "type": "object",
+      "properties": {
+        "@id": {
+          "type": "string",
+          "format": "uri"
+        }
+      },
+      "required": [
+        "@id"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "required": [
+    "@type",
+    "http://purl.org/dc/terms/title"
+  ],
+  "additionalProperties": {}
+}

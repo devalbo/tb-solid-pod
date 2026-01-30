@@ -1,0 +1,57 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "@type": {
+      "type": "string",
+      "const": "http://www.w3.org/ns/org#Membership"
+    },
+    "http://www.w3.org/ns/org#member": {
+      "type": "object",
+      "properties": {
+        "@id": {
+          "type": "string",
+          "format": "uri"
+        }
+      },
+      "required": [
+        "@id"
+      ],
+      "additionalProperties": false
+    },
+    "http://www.w3.org/ns/org#role": {
+      "type": "object",
+      "properties": {
+        "@id": {
+          "type": "string",
+          "format": "uri"
+        }
+      },
+      "required": [
+        "@id"
+      ],
+      "additionalProperties": false
+    },
+    "http://www.w3.org/ns/org#memberDuring": {
+      "type": "object",
+      "properties": {
+        "@type": {
+          "type": "string",
+          "const": "http://www.w3.org/2006/time#Interval"
+        },
+        "http://www.w3.org/2006/time#hasBeginning": {
+          "type": "string"
+        },
+        "http://www.w3.org/2006/time#hasEnd": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "required": [
+    "@type",
+    "http://www.w3.org/ns/org#member"
+  ],
+  "additionalProperties": false
+}

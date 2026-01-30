@@ -10,7 +10,7 @@
  * ```
  */
 
-// Schemas (Zod + factory functions for personas, contacts, groups, files, type indexes, preferences)
+// Schemas (Zod + factory functions + JSON Schema for personas, contacts, groups, files, type indexes, preferences)
 export * from './schemas';
 
 // Utils (settings, store export/import, type index helpers, validation)

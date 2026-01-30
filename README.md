@@ -130,6 +130,24 @@ The ACL phase is planned but not implemented. Currently:
 - Production Solid pod replacement
 - Applications requiring authentication/authorization
 
+## Consider Adding This to Your Project If You Want…
+
+- **Minimal setup** — One install (`npm install github:devalbo/tb-solid-pod`), no backend or database to run. LocalStorage works out of the box; no config required.
+- **No design work** — Personas, contacts, groups, type indexes, and file metadata are already modeled with Zod + JSON-LD. Use the schemas and factory functions instead of defining your own.
+- **Use only what you need** — Import schemas only, add the CLI, or drop in React components. No need to adopt the full app.
+- **No new infrastructure** — No API to host, no auth to configure. Everything runs in the browser with your existing React + TinyBase (or add TinyBase in one step).
+- **Types and JSON Schema included** — TypeScript types and Zod validation come with the package; Zod v4’s built-in `z.toJSONSchema()` is used to export JSON Schema (draft-2020-12) for all schemas. Use in OpenAPI, AJV, or any JSON Schema consumer—no manual typing or schema authoring.
+- **Reference or dependency** — Copy-paste from the repo or install as a dependency; both paths are documented with little effort for you.
+
+## Integrating into your app
+
+You can use this in an app you’re building in two ways:
+
+1. **Install as a dependency** — `npm install github:devalbo/tb-solid-pod`, then import schemas, components, or the CLI. Your app needs a TinyBase store (and indexes if you use the file browser or CLI); wrap your app in TinyBase’s `Provider`. See [Use as a library](#use-as-a-library) and the [Integration Guide](#integration-guide) for store setup and usage.
+2. **Copy what you need** — Copy `src/schemas`, and optionally `src/components`, `src/cli`, and `src/utils`, into your repo. Install the same dependencies (TinyBase, Zod, vocab packages). Good if you want to customize or avoid a package dependency. See the [Integration Guide](#integration-guide) for the file list and store setup.
+
+Both paths are covered step-by-step in the [Integration Guide](#integration-guide) (TinyBase store, Provider, table layout, optional CLI). If you only need the data shapes, use the schemas and factory functions; add React components and/or the CLI when you need the UI.
+
 ## Tech Stack
 
 - **React** - UI framework
@@ -153,6 +171,8 @@ import { createPersona, createContact, PersonaSchema } from 'tb-solid-pod';
 import { CliTerminal } from 'tb-solid-pod';
 import { PersonaList, PersonaForm } from 'tb-solid-pod';
 ```
+
+**JSON Schema:** We generate JSON Schema from our Zod types (no canonical Solid JSON Schema; the ecosystem uses SHACL/ShEx). See the **[Schemas tab on the live demo](https://devalbo.github.io/tb-solid-pod/#schemas)** for the schema list, links to each JSON file, Solid doc links, and example code. To emit static `.json` files (e.g. for tooling that reads files), run `npm run generate:schemas`; output is written to `schema/` and `public/schema/`.
 
 For full integration (TinyBase store setup, components, CLI), see the [Integration Guide](#integration-guide) below.
 

@@ -1,0 +1,241 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "@id": {
+      "type": "string",
+      "format": "uri"
+    },
+    "@type": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      ]
+    },
+    "http://www.w3.org/2006/vcard/ns#fn": {
+      "type": "string",
+      "minLength": 1
+    },
+    "http://purl.org/dc/terms/description": {
+      "type": "string"
+    },
+    "http://www.w3.org/2006/vcard/ns#hasURL": {
+      "type": "string",
+      "format": "uri"
+    },
+    "http://www.w3.org/2006/vcard/ns#hasLogo": {
+      "type": "string",
+      "format": "uri"
+    },
+    "http://www.w3.org/ns/org#unitOf": {
+      "type": "object",
+      "properties": {
+        "@id": {
+          "type": "string",
+          "format": "uri"
+        }
+      },
+      "required": [
+        "@id"
+      ],
+      "additionalProperties": false
+    },
+    "http://www.w3.org/ns/org#hasUnit": {
+      "anyOf": [
+        {
+          "type": "object",
+          "properties": {
+            "@id": {
+              "type": "string",
+              "format": "uri"
+            }
+          },
+          "required": [
+            "@id"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "@id": {
+                "type": "string",
+                "format": "uri"
+              }
+            },
+            "required": [
+              "@id"
+            ],
+            "additionalProperties": false
+          }
+        }
+      ]
+    },
+    "http://www.w3.org/2006/vcard/ns#hasMember": {
+      "anyOf": [
+        {
+          "type": "object",
+          "properties": {
+            "@id": {
+              "type": "string",
+              "format": "uri"
+            }
+          },
+          "required": [
+            "@id"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "@id": {
+                "type": "string",
+                "format": "uri"
+              }
+            },
+            "required": [
+              "@id"
+            ],
+            "additionalProperties": false
+          }
+        }
+      ]
+    },
+    "http://www.w3.org/ns/org#hasMembership": {
+      "anyOf": [
+        {
+          "type": "object",
+          "properties": {
+            "@type": {
+              "type": "string",
+              "const": "http://www.w3.org/ns/org#Membership"
+            },
+            "http://www.w3.org/ns/org#member": {
+              "type": "object",
+              "properties": {
+                "@id": {
+                  "type": "string",
+                  "format": "uri"
+                }
+              },
+              "required": [
+                "@id"
+              ],
+              "additionalProperties": false
+            },
+            "http://www.w3.org/ns/org#role": {
+              "type": "object",
+              "properties": {
+                "@id": {
+                  "type": "string",
+                  "format": "uri"
+                }
+              },
+              "required": [
+                "@id"
+              ],
+              "additionalProperties": false
+            },
+            "http://www.w3.org/ns/org#memberDuring": {
+              "type": "object",
+              "properties": {
+                "@type": {
+                  "type": "string",
+                  "const": "http://www.w3.org/2006/time#Interval"
+                },
+                "http://www.w3.org/2006/time#hasBeginning": {
+                  "type": "string"
+                },
+                "http://www.w3.org/2006/time#hasEnd": {
+                  "type": "string"
+                }
+              },
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "@type",
+            "http://www.w3.org/ns/org#member"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "@type": {
+                "type": "string",
+                "const": "http://www.w3.org/ns/org#Membership"
+              },
+              "http://www.w3.org/ns/org#member": {
+                "type": "object",
+                "properties": {
+                  "@id": {
+                    "type": "string",
+                    "format": "uri"
+                  }
+                },
+                "required": [
+                  "@id"
+                ],
+                "additionalProperties": false
+              },
+              "http://www.w3.org/ns/org#role": {
+                "type": "object",
+                "properties": {
+                  "@id": {
+                    "type": "string",
+                    "format": "uri"
+                  }
+                },
+                "required": [
+                  "@id"
+                ],
+                "additionalProperties": false
+              },
+              "http://www.w3.org/ns/org#memberDuring": {
+                "type": "object",
+                "properties": {
+                  "@type": {
+                    "type": "string",
+                    "const": "http://www.w3.org/2006/time#Interval"
+                  },
+                  "http://www.w3.org/2006/time#hasBeginning": {
+                    "type": "string"
+                  },
+                  "http://www.w3.org/2006/time#hasEnd": {
+                    "type": "string"
+                  }
+                },
+                "additionalProperties": false
+              }
+            },
+            "required": [
+              "@type",
+              "http://www.w3.org/ns/org#member"
+            ],
+            "additionalProperties": false
+          }
+        }
+      ]
+    }
+  },
+  "required": [
+    "@type",
+    "http://www.w3.org/2006/vcard/ns#fn"
+  ],
+  "additionalProperties": {}
+}

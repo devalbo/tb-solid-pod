@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "memberId": {
+      "type": "string",
+      "format": "uri"
+    },
+    "roleId": {
+      "type": "string",
+      "format": "uri"
+    },
+    "startDate": {
+      "type": "string"
+    },
+    "endDate": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "memberId"
+  ],
+  "additionalProperties": false
+}

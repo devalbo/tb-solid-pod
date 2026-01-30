@@ -25,6 +25,9 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Generate JSON Schemas
+        run: npm run generate:schemas
+
       - name: Build
         env:
           BASE_PATH: "/tb-solid-pod/"

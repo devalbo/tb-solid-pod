@@ -24,6 +24,39 @@ const DEFAULT_PERSONA_KEY = 'defaultPersonaId';
 const STORAGE_KEY = 'tb-solid-pod';
 const BASE_URL = 'https://myapp.com/pod/';
 
+/** Base URL for static assets (e.g. '' in dev, '/tb-solid-pod/' on GitHub Pages). */
+function getAssetBase(): string {
+  const m = import.meta as { env?: { BASE_URL?: string } };
+  return m.env?.BASE_URL ?? '';
+}
+
+// Metadata for the Schemas view: descriptions and Solid doc links
+const SCHEMA_META: Array<{ file: string; name: string; description: string; fields: string[]; solidHref?: string }> = [
+  { file: 'iri.json', name: 'IRI', description: 'Internationalized Resource Identifier (URI). Used for @id, URLs, and vocabulary terms.', fields: [], solidHref: 'https://solidproject.org/TR/protocol' },
+  { file: 'node-ref.json', name: 'NodeRef', description: 'A reference to another JSON-LD node by its @id. Used for linking resources (e.g. author, type index).', fields: ['@id'], solidHref: 'https://www.w3.org/TR/json-ld/' },
+  { file: 'typed-literal.json', name: 'TypedLiteral', description: 'RDF literal with optional @value, @type (datatype), or @language.', fields: ['@value', '@type', '@language'], solidHref: 'https://www.w3.org/TR/json-ld/' },
+  { file: 'json-ld-base.json', name: 'JsonLdBase', description: 'Base schema for JSON-LD documents: optional @id and @type. All pod documents extend this.', fields: ['@id', '@type'], solidHref: 'https://www.w3.org/TR/json-ld/' },
+  { file: 'persona-input.json', name: 'Persona (input)', description: 'Input for creating a persona: display name, email, nickname, bio, homepage, WebID-style links (inbox, type index, preferences).', fields: ['name', 'email', 'nickname', 'bio', 'homepage', 'publicTypeIndex', 'privateTypeIndex'], solidHref: 'https://solid.github.io/webid-profile/' },
+  { file: 'persona.json', name: 'Persona', description: 'A user identity (WebID profile): foaf:Person with vCard/FOAF properties, optional OIDC issuer, type indexes, inbox.', fields: ['foaf:name', 'vcard:hasEmail', 'solid:publicTypeIndex', 'solid:privateTypeIndex', 'ldp:inbox'], solidHref: 'https://solid.github.io/webid-profile/' },
+  { file: 'contact.json', name: 'Contact', description: 'A contact (person or agent) in the address book: vcard:Individual with name, email, phone, organization, foaf:knows.', fields: ['vcard:fn', 'vcard:hasEmail', 'vcard:hasTelephone', 'vcard:hasOrganizationName', 'foaf:knows'], solidHref: 'https://www.w3.org/TR/vcard-rdf/' },
+  { file: 'contact-input.json', name: 'Contact (input)', description: 'Input for creating a contact: name, email, nickname, type (person or agent), optional organization and role.', fields: ['name', 'email', 'nickname', 'isAgent', 'organization', 'role'], solidHref: 'https://www.w3.org/TR/vcard-rdf/' },
+  { file: 'address-book.json', name: 'AddressBook', description: 'An address book container: vcard:AddressBook with title and optional name/email index.', fields: ['dcterms:title', 'vcard:nameEmailIndex'], solidHref: 'https://www.w3.org/TR/vcard-rdf/' },
+  { file: 'agent-contact.json', name: 'Agent contact', description: 'A software agent or bot contact: Contact with schema:SoftwareApplication, optional category and URL.', fields: ['schema:applicationCategory', 'schema:url'], solidHref: 'https://schema.org/SoftwareApplication' },
+  { file: 'group.json', name: 'Group', description: 'A group, team, or organization: vcard/org vocabulary, optional hierarchy (unitOf, hasUnit), members and memberships.', fields: ['vcard:fn', 'org:hasMembership', 'org:unitOf', 'vcard:hasMember'], solidHref: 'http://www.w3.org/ns/org#' },
+  { file: 'group-input.json', name: 'Group (input)', description: 'Input for creating a group: name, type (organization / team / group), description, URL, logo.', fields: ['name', 'groupType', 'description', 'url', 'logo'], solidHref: 'http://www.w3.org/ns/org#' },
+  { file: 'membership.json', name: 'Membership', description: 'A membership with role and optional time interval: org:Membership, org:member, org:role, time:Interval.', fields: ['org:member', 'org:role', 'org:memberDuring'], solidHref: 'http://www.w3.org/ns/org#' },
+  { file: 'membership-input.json', name: 'Membership (input)', description: 'Input for adding a member to a group: contact ID, optional role ID and time interval.', fields: ['contactId', 'roleId', 'start', 'end'], solidHref: 'http://www.w3.org/ns/org#' },
+  { file: 'file-metadata.json', name: 'File metadata', description: 'Metadata for a non-RDF file: ldp:NonRDFSource with title, format (MIME), size, timestamps, optional author and ACL.', fields: ['dcterms:title', 'dcterms:format', 'posix:size', 'dcterms:created', 'dcterms:modified'], solidHref: 'https://www.w3.org/TR/ldp/' },
+  { file: 'file-input.json', name: 'File (input)', description: 'Input for creating file metadata: name, MIME type, size, optional description and author.', fields: ['name', 'mimeType', 'size', 'description', 'authorId'], solidHref: 'https://www.w3.org/TR/ldp/' },
+  { file: 'container.json', name: 'Container', description: 'An LDP Container (folder): ldp:Container or ldp:BasicContainer with title, description, ldp:contains.', fields: ['ldp:contains', 'dcterms:title', 'dcterms:description'], solidHref: 'https://www.w3.org/TR/ldp/' },
+  { file: 'container-input.json', name: 'Container (input)', description: 'Input for creating a container: name, optional description.', fields: ['name', 'description'], solidHref: 'https://www.w3.org/TR/ldp/' },
+  { file: 'preferences.json', name: 'Preferences', description: 'Solid preferences document: typically holds private type index and app preferences; linked from WebID via pim:preferencesFile.', fields: ['solid:privateTypeIndex'], solidHref: 'https://solid.github.io/webid-profile/#private-preferences' },
+  { file: 'type-registration.json', name: 'Type registration', description: 'A type registration maps an RDF class to instance(s) or instance container: solid:TypeRegistration, solid:forClass, solid:instance / solid:instanceContainer.', fields: ['solid:forClass', 'solid:instance', 'solid:instanceContainer'], solidHref: 'https://solid.github.io/type-indexes/' },
+  { file: 'type-index.json', name: 'Type index', description: 'A type index document listing type registrations: solid:TypeIndex, solid:ListedDocument or solid:UnlistedDocument.', fields: ['solid:TypeIndex'], solidHref: 'https://solid.github.io/type-indexes/' },
+  { file: 'type-registration-input.json', name: 'Type registration (input)', description: 'Input for creating a type registration: forClass IRI, instance or instanceContainer URL(s), index type (public/private).', fields: ['forClass', 'instance', 'instanceContainer', 'indexType'], solidHref: 'https://solid.github.io/type-indexes/' },
+  { file: 'type-index-row.json', name: 'Type index row', description: 'Internal row for the type index table: forClass, indexType, instance (string or JSON array), instanceContainer.', fields: ['forClass', 'indexType', 'instance', 'instanceContainer'], solidHref: 'https://solid.github.io/type-indexes/' },
+];
+
 const getDefaultContent = (): [Record<string, Record<string, Record<string, unknown>>>, Record<string, unknown>] => [
   { resources: { [BASE_URL]: { type: 'Container', contentType: 'text/turtle', updated: new Date().toISOString() } } },
   {}
@@ -404,7 +437,16 @@ export default function App() {
   const uploadImageInputRef = useRef<HTMLInputElement>(null);
   const importFileInputRef = useRef<HTMLInputElement>(null);
   const [copyStatus, setCopyStatus] = useState<'success' | 'error' | null>(null);
-  const [activeView, setActiveView] = useState<'data' | 'terminal' | 'personas' | 'contacts' | 'groups'>('data');
+  const [activeView, setActiveView] = useState<'data' | 'terminal' | 'personas' | 'contacts' | 'groups' | 'schemas'>(() =>
+    (typeof window !== 'undefined' && window.location.hash === '#schemas') ? 'schemas' : 'data'
+  );
+  useEffect(() => {
+    const onHash = () => {
+      if (window.location.hash === '#schemas') setActiveView('schemas');
+    };
+    window.addEventListener('hashchange', onHash);
+    return () => window.removeEventListener('hashchange', onHash);
+  }, []);
   const [selectedPersonaId, setSelectedPersonaId] = useState<string | undefined>();
   const [personaFormOpen, setPersonaFormOpen] = useState(false);
   const [editingPersonaId, setEditingPersonaId] = useState<string | undefined>();
@@ -538,6 +580,12 @@ export default function App() {
               onClick={() => setActiveView('groups')}
             >
               Groups
+            </button>
+            <button
+              style={{ ...styles.topNavTab, ...(activeView === 'schemas' ? styles.topNavTabActive : {}) }}
+              onClick={() => setActiveView('schemas')}
+            >
+              Schemas
             </button>
             <button
               style={{ ...styles.topNavTab, ...(activeView === 'terminal' ? styles.topNavTabActive : {}) }}
@@ -797,6 +845,70 @@ export default function App() {
           </div>
         )}
 
+        {/* Schemas View */}
+        {activeView === 'schemas' && (
+          <div style={styles.schemasViewContainer}>
+            <div style={styles.schemasIntro}>
+              <h2 style={styles.schemasTitle}>JSON Schemas</h2>
+              <p style={styles.schemasLead}>
+                These JSON Schema (draft-2020-12) files are <strong>generated from our <a href="https://github.com/devalbo/tb-solid-pod/tree/main/src/schemas" target="_blank" rel="noopener noreferrer" style={styles.extLink}>Zod types</a></strong>—there are no
+                canonical JSON Schema definitions for Solid data types; the Solid ecosystem uses{' '}
+                <a href="https://www.w3.org/TR/shacl/" target="_blank" rel="noopener noreferrer" style={styles.extLink}>SHACL</a>
+                {' '}/{' '}
+                <a href="https://shex.io/" target="_blank" rel="noopener noreferrer" style={styles.extLink}>ShEx</a>
+                {' '}for validation. Use these schemas with OpenAPI, AJV, form generators, or any JSON Schema consumer.
+              </p>
+              <p style={styles.schemasSolidLinks}>
+                <strong>Solid project documentation:</strong>{' '}
+                <a href="https://solidproject.org/TR/protocol" target="_blank" rel="noopener noreferrer" style={styles.extLink}>Solid Protocol</a>
+                {' · '}
+                <a href="https://solid.github.io/webid-profile/" target="_blank" rel="noopener noreferrer" style={styles.extLink}>WebID Profile</a>
+                {' · '}
+                <a href="https://solid.github.io/type-indexes/" target="_blank" rel="noopener noreferrer" style={styles.extLink}>Type Indexes</a>
+                {' · '}
+                <a href="https://solidproject.org/" target="_blank" rel="noopener noreferrer" style={styles.extLink}>solidproject.org</a>
+              </p>
+            </div>
+            <section id="schemas-example" style={styles.schemasExampleSection}>
+              <h3 style={styles.schemasExampleTitle}>Example: using the schemas in code</h3>
+              <pre style={styles.schemasExamplePre}>{`import {
+  personaInputJsonSchema,
+  contactInputJsonSchema,
+  preferencesJsonSchema,
+  tryToJsonSchema,
+} from 'tb-solid-pod';
+
+// Pre-built schemas (input and non-refined output schemas)
+const openApiPersonaBody = personaInputJsonSchema;
+
+// Schemas that use .refine() may be undefined; use tryToJsonSchema(schema) for custom Zod schemas
+tryToJsonSchema(SomeZodSchema);`}</pre>
+            </section>
+            <div style={styles.schemaGrid}>
+              {SCHEMA_META.map((s) => (
+                <div key={s.file} style={styles.schemaCard}>
+                  <div style={styles.schemaCardHeader}>
+                    <a href={`${getAssetBase()}schema/${s.file}`} target="_blank" rel="noopener noreferrer" style={styles.schemaLink}>
+                      {s.name}
+                    </a>
+                    {s.solidHref && (
+                      <a href={s.solidHref} target="_blank" rel="noopener noreferrer" style={styles.solidDocLink} title="Solid documentation">
+                        Solid →
+                      </a>
+                    )}
+                  </div>
+                  <p style={styles.schemaDesc}>{s.description}</p>
+                  {s.fields.length > 0 && (
+                    <p style={styles.schemaFields}>
+                      <strong>Key fields:</strong> {s.fields.join(', ')}
+                    </p>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Terminal View */}
         {activeView === 'terminal' && (
           <div style={styles.terminalView}>
@@ -829,6 +941,22 @@ const styles: Record<string, CSSProperties> = {
   personasViewContainer: { padding: 24, flex: 1, maxWidth: 800, margin: '0 auto', width: '100%', boxSizing: 'border-box' },
   contactsViewContainer: { padding: 24, flex: 1, maxWidth: 800, margin: '0 auto', width: '100%', boxSizing: 'border-box' },
   groupsViewContainer: { padding: 24, flex: 1, maxWidth: 800, margin: '0 auto', width: '100%', boxSizing: 'border-box' },
+  schemasViewContainer: { padding: 24, flex: 1, maxWidth: 1000, margin: '0 auto', width: '100%', boxSizing: 'border-box' },
+  schemasIntro: { marginBottom: 28 },
+  schemasTitle: { margin: '0 0 12px', fontSize: 22, fontWeight: 600, color: '#1e1e1e' },
+  schemasLead: { margin: '0 0 14px', fontSize: 15, lineHeight: 1.5, color: '#444' },
+  schemasSolidLinks: { margin: 0, fontSize: 14, color: '#555' },
+  schemasExampleSection: { marginBottom: 24, padding: 16, background: '#f5f5f5', borderRadius: 8, border: '1px solid #eee' },
+  schemasExampleTitle: { margin: '0 0 10px', fontSize: 16, fontWeight: 600, color: '#333' },
+  schemasExamplePre: { margin: 0, padding: 14, background: '#1e1e1e', color: '#d4d4d4', borderRadius: 6, fontSize: 13, fontFamily: 'ui-monospace, monospace', overflow: 'auto', whiteSpace: 'pre-wrap', wordBreak: 'break-word' },
+  extLink: { color: '#0070f3', textDecoration: 'none' },
+  schemaGrid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 16 },
+  schemaCard: { background: '#fff', border: '1px solid #eee', borderRadius: 8, padding: 16, display: 'flex', flexDirection: 'column', gap: 8 },
+  schemaCardHeader: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, flexWrap: 'wrap' },
+  schemaLink: { fontSize: 16, fontWeight: 600, color: '#0070f3', textDecoration: 'none' },
+  solidDocLink: { fontSize: 12, color: '#666', textDecoration: 'none', whiteSpace: 'nowrap' },
+  schemaDesc: { margin: 0, fontSize: 14, lineHeight: 1.45, color: '#444' },
+  schemaFields: { margin: 0, fontSize: 13, color: '#666', lineHeight: 1.4 },
   dataViewContainer: { width: '100%', flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' },
   toolbar: { display: 'flex', alignItems: 'center', marginBottom: 20, gap: 10, padding: '20px 24px 0', width: '100%', boxSizing: 'border-box' },
   navBtn: { padding: '8px 12px', cursor: 'pointer', borderRadius: 6, border: '1px solid #ccc', background: '#fff' },

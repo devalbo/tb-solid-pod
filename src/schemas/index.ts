@@ -144,6 +144,39 @@ export {
 } from './preferences';
 
 // ============================================================================
+// JSON Schema (Zod v4 toJSONSchema)
+// ============================================================================
+
+export {
+  tryToJsonSchema,
+  iriJsonSchema,
+  nodeRefJsonSchema,
+  typedLiteralJsonSchema,
+  jsonLdBaseJsonSchema,
+  personaInputJsonSchema,
+  personaJsonSchema,
+  contactJsonSchema,
+  contactInputJsonSchema,
+  addressBookJsonSchema,
+  agentContactJsonSchema,
+  groupJsonSchema,
+  groupInputJsonSchema,
+  membershipJsonSchema,
+  membershipInputJsonSchema,
+  fileMetadataJsonSchema,
+  fileInputJsonSchema,
+  containerJsonSchema,
+  containerInputJsonSchema,
+  preferencesJsonSchema,
+  typeRegistrationJsonSchema,
+  typeIndexJsonSchema,
+  typeRegistrationInputJsonSchema,
+  typeIndexRowJsonSchema,
+  type JsonSchemaDraft,
+  type ToJsonSchemaOptions,
+} from './json-schema';
+
+// ============================================================================
 // Vocabulary Re-exports (for convenience)
 // ============================================================================
 
