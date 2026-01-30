@@ -6,12 +6,12 @@ The app has a working browser-based CLI and file browser UI with:
 - Basic file/folder CRUD operations
 - TinyBase persistence with LocalStorage
 - Import/export functionality
-- Tab-based navigation (Data Browser / Personas / Contacts / Terminal)
+- Tab-based navigation (Data Browser / Personas / Contacts / Groups / Terminal)
 - Persona management (Phase 1 ✅)
 - Contact management with search/filter (Phase 2 ✅)
+- Group management with membership (Phase 3 ✅)
 
 **Schemas defined but not yet integrated:**
-- Group (organizations/teams)
 - File Metadata (rich metadata)
 
 ## Phase 1: Persona Management ✅ COMPLETE
@@ -86,7 +86,7 @@ contact link <contact> <persona> # Link contact to your persona
 
 ---
 
-## Phase 3: Group Management
+## Phase 3: Group Management ✅ COMPLETE
 
 ### Goal
 Create and manage organizations, teams, and custom groups with membership.
@@ -109,16 +109,19 @@ group list-members <group>      # List group members
 - Support for org: vocabulary (roles, time intervals)
 
 ### UI Components
-- Group list view
+- Group list view with type filter (All/Organizations/Teams/Groups)
 - Group detail with member list
-- Add/remove member interface
-- Role assignment
+- Add/remove member interface via MembershipManager modal
+- Member count display
 
-### Files to Create/Modify
-- `src/cli/commands/group.tsx` - CLI commands
-- `src/components/GroupList.tsx` - UI component
-- `src/components/GroupForm.tsx` - Create/edit form
-- `src/components/MembershipManager.tsx` - Member management
+### Files Created/Modified
+- `src/cli/commands/group.tsx` - CLI commands ✅
+- `src/components/GroupList.tsx` - UI component with type filter ✅
+- `src/components/GroupForm.tsx` - Create/edit form ✅
+- `src/components/MembershipManager.tsx` - Member management modal ✅
+- `src/App.tsx` - Add Groups tab and view ✅
+- `src/cli/commands/index.ts` - Export group command ✅
+- `src/cli/registry.tsx` - Register group command ✅
 
 ---
 

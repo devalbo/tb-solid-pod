@@ -13,6 +13,9 @@ import PersonaList from './components/PersonaList';
 import PersonaForm from './components/PersonaForm';
 import ContactList from './components/ContactList';
 import ContactForm from './components/ContactForm';
+import GroupList from './components/GroupList';
+import GroupForm from './components/GroupForm';
+import MembershipManager from './components/MembershipManager';
 
 const DEFAULT_PERSONA_KEY = 'defaultPersonaId';
 
@@ -392,13 +395,17 @@ export default function App() {
   const uploadImageInputRef = useRef<HTMLInputElement>(null);
   const importFileInputRef = useRef<HTMLInputElement>(null);
   const [copyStatus, setCopyStatus] = useState<'success' | 'error' | null>(null);
-  const [activeView, setActiveView] = useState<'data' | 'terminal' | 'personas' | 'contacts'>('data');
+  const [activeView, setActiveView] = useState<'data' | 'terminal' | 'personas' | 'contacts' | 'groups'>('data');
   const [selectedPersonaId, setSelectedPersonaId] = useState<string | undefined>();
   const [personaFormOpen, setPersonaFormOpen] = useState(false);
   const [editingPersonaId, setEditingPersonaId] = useState<string | undefined>();
   const [selectedContactId, setSelectedContactId] = useState<string | undefined>();
   const [contactFormOpen, setContactFormOpen] = useState(false);
   const [editingContactId, setEditingContactId] = useState<string | undefined>();
+  const [selectedGroupId, setSelectedGroupId] = useState<string | undefined>();
+  const [groupFormOpen, setGroupFormOpen] = useState(false);
+  const [editingGroupId, setEditingGroupId] = useState<string | undefined>();
+  const [managingMembersGroupId, setManagingMembersGroupId] = useState<string | undefined>();
 
   const row = useRow('resources', currentUrl, store) as ResourceRow | undefined;
   const isContainer = row?.type === 'Container';
@@ -516,6 +523,12 @@ export default function App() {
               onClick={() => setActiveView('contacts')}
             >
               Contacts
+            </button>
+            <button
+              style={{ ...styles.topNavTab, ...(activeView === 'groups' ? styles.topNavTabActive : {}) }}
+              onClick={() => setActiveView('groups')}
+            >
+              Groups
             </button>
             <button
               style={{ ...styles.topNavTab, ...(activeView === 'terminal' ? styles.topNavTabActive : {}) }}
@@ -725,6 +738,56 @@ export default function App() {
           </div>
         )}
 
+        {/* Groups View */}
+        {activeView === 'groups' && (
+          <div style={styles.groupsViewContainer}>
+            <GroupList
+              store={store}
+              selectedId={selectedGroupId}
+              onSelect={setSelectedGroupId}
+              onEdit={(id) => {
+                setEditingGroupId(id);
+                setGroupFormOpen(true);
+              }}
+              onDelete={(id) => {
+                store.delRow('groups', id);
+                if (selectedGroupId === id) {
+                  setSelectedGroupId(undefined);
+                }
+              }}
+              onManageMembers={(id) => {
+                setManagingMembersGroupId(id);
+              }}
+              onCreate={() => {
+                setEditingGroupId(undefined);
+                setGroupFormOpen(true);
+              }}
+            />
+            {groupFormOpen && (
+              <GroupForm
+                store={store}
+                baseUrl={BASE_URL}
+                groupId={editingGroupId}
+                onSave={() => {
+                  setGroupFormOpen(false);
+                  setEditingGroupId(undefined);
+                }}
+                onCancel={() => {
+                  setGroupFormOpen(false);
+                  setEditingGroupId(undefined);
+                }}
+              />
+            )}
+            {managingMembersGroupId && (
+              <MembershipManager
+                store={store}
+                groupId={managingMembersGroupId}
+                onClose={() => setManagingMembersGroupId(undefined)}
+              />
+            )}
+          </div>
+        )}
+
         {/* Terminal View */}
         {activeView === 'terminal' && (
           <div style={styles.terminalView}>
@@ -756,6 +819,7 @@ const styles: Record<string, CSSProperties> = {
   terminalView: { padding: 0, height: 'calc(100vh - 49px)', background: '#1e1e1e' },
   personasViewContainer: { padding: 24, flex: 1, maxWidth: 800, margin: '0 auto', width: '100%', boxSizing: 'border-box' },
   contactsViewContainer: { padding: 24, flex: 1, maxWidth: 800, margin: '0 auto', width: '100%', boxSizing: 'border-box' },
+  groupsViewContainer: { padding: 24, flex: 1, maxWidth: 800, margin: '0 auto', width: '100%', boxSizing: 'border-box' },
   dataViewContainer: { width: '100%', flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' },
   toolbar: { display: 'flex', alignItems: 'center', marginBottom: 20, gap: 10, padding: '20px 24px 0', width: '100%', boxSizing: 'border-box' },
   navBtn: { padding: '8px 12px', cursor: 'pointer', borderRadius: 6, border: '1px solid #ccc', background: '#fff' },

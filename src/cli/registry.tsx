@@ -14,6 +14,7 @@ import {
   importCommand,
   personaCommand,
   contactCommand,
+  groupCommand,
 } from './commands';
 
 /**
@@ -33,6 +34,7 @@ export const commands: Record<string, Command> = {
   import: importCommand,
   persona: personaCommand,
   contact: contactCommand,
+  group: groupCommand,
 };
 
 /**
