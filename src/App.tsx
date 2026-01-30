@@ -535,7 +535,7 @@ export default function App() {
 
         {/* Data Browser View */}
         {activeView === 'data' && (
-          <>
+          <div style={styles.dataViewContainer}>
             <div style={styles.toolbar}>
               <div style={styles.urlBar}>{currentUrl}</div>
             </div>
@@ -605,7 +605,7 @@ export default function App() {
                 ) : null}
               </div>
             </div>
-          </>
+          </div>
         )}
 
         {/* Terminal View */}
@@ -629,7 +629,7 @@ export default function App() {
 // 4. STYLES
 // ==========================================
 const styles: Record<string, CSSProperties> = {
-  app: { fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif', margin: 0, padding: 0, minHeight: '100vh', boxSizing: 'border-box', background: '#f8f9fa' },
+  app: { fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif', margin: 0, padding: 0, width: '100%', minHeight: '100vh', boxSizing: 'border-box', background: '#f8f9fa', display: 'flex', flexDirection: 'column' },
   topNav: { background: '#1e1e1e', padding: '0 24px', borderBottom: '1px solid #333', display: 'flex', justifyContent: 'space-between', alignItems: 'center' },
   topNavTabs: { display: 'flex', gap: 0 },
   topNavActions: { display: 'flex', gap: 8, alignItems: 'center' },
@@ -637,16 +637,17 @@ const styles: Record<string, CSSProperties> = {
   topNavTab: { padding: '14px 24px', border: 'none', background: 'transparent', color: '#888', cursor: 'pointer', fontSize: 14, fontWeight: 500, borderBottom: '2px solid transparent', transition: 'all 0.2s' },
   topNavTabActive: { color: '#4ecdc4', borderBottom: '2px solid #4ecdc4' },
   terminalView: { padding: 0, height: 'calc(100vh - 49px)', background: '#1e1e1e' },
-  toolbar: { display: 'flex', alignItems: 'center', marginBottom: 20, gap: 10, padding: '20px 24px 0' },
+  dataViewContainer: { width: '100%', flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' },
+  toolbar: { display: 'flex', alignItems: 'center', marginBottom: 20, gap: 10, padding: '20px 24px 0', width: '100%', boxSizing: 'border-box' },
   navBtn: { padding: '8px 12px', cursor: 'pointer', borderRadius: 6, border: '1px solid #ccc', background: '#fff' },
   urlBar: { flex: 1, padding: '8px 12px', background: '#f5f5f5', borderRadius: 6, fontSize: '14px', color: '#555', fontFamily: 'monospace' },
-  actions: { display: 'flex', gap: 10, marginBottom: 20, padding: '0 24px' },
+  actions: { display: 'flex', gap: 10, marginBottom: 20, padding: '0 24px', width: '100%', boxSizing: 'border-box' },
   actionBtn: { padding: '8px 16px', cursor: 'pointer', borderRadius: 6, border: 'none', background: '#0070f3', color: '#fff', fontWeight: 500, fontSize: '13px' },
   actionDivider: { color: '#ccc', alignSelf: 'center', margin: '0 4px' },
   exportBtn: { padding: '8px 14px', cursor: 'pointer', borderRadius: 6, border: '1px solid #ccc', background: '#fff', color: '#333', fontWeight: 500, fontSize: '13px' },
-  mainLayout: { display: 'flex', gap: 20, alignItems: 'flex-start', minHeight: 400, padding: '0 24px 30px' },
+  mainLayout: { display: 'flex', gap: 20, alignItems: 'flex-start', minHeight: 400, padding: '0 24px 30px', flex: 1, width: '100%', minWidth: 0, boxSizing: 'border-box' },
   navColumn: { width: 260, flexShrink: 0 },
-  mainContent: { flex: 1, minWidth: 0, maxWidth: 700 },
+  mainContent: { flex: 1, minWidth: 0 },
   tabBar: { display: 'flex', gap: 0, borderBottom: '1px solid #eee', background: '#fafafa' },
   tabBtn: { padding: '10px 16px', border: 'none', borderBottom: '2px solid transparent', background: 'none', cursor: 'pointer', fontSize: 14, fontWeight: 500, color: '#666' },
   tabBtnActive: { color: '#0070f3', borderBottom: '2px solid #0070f3' },
