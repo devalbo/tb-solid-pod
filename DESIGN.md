@@ -39,27 +39,30 @@ This project implements a browser-based Solid Pod that enables personal data por
 
 ### Future: Add Always-Online Sync Target
 
+**Design principle:** By default the browser instance (TinyBase) is the **authority** and the remote Solid server is a **sync target**. A **required workflow** is that users can add Solid data from **first page load** with no pod or login; **later**, they can connect a pod and synchronize that data to a permanently online server. Syncing from browser to server (and optionally back) is a **must-have** once a pod is connected. **Once the server is established**, the user may choose to make the **server the authority** (pod as source of truth, browser as cache); the design must support both modes. See [docs/SOLID_SERVER_STRATEGIES.md](SOLID_SERVER_STRATEGIES.md) for strategies, authority modes, and sync design.
+
 ```
 ┌─────────────────────────────────────────────────────┐
 │                   Your Domain                        │
 │  ┌─────────┐    ┌─────────┐    ┌─────────────────┐  │
 │  │  App A  │───▶│ Browser │◀──▶│  TinyBase       │  │
-│  └─────────┘    │  Pod    │    │  Sync           │  │
+│  └─────────┘    │  Pod    │    │  (default auth)  │  │
 │  ┌─────────┐    └─────────┘    └────────┬────────┘  │
-│  │  App B  │───▶     │                  │           │
-│  └─────────┘         │                  │           │
+│  │  App B  │───▶     │                  │  Sync     │
+│  └─────────┘         │                  │  (must-have)
 └──────────────────────┼──────────────────┼───────────┘
                        │                  │
                        ▼                  ▼
               ┌─────────────────────────────────┐
               │   Always-Online Solid Server    │
-              │   (WebID resolvable, federated) │
+              │   (sync target or authority;    │
+              │    WebID, federated)            │
               └─────────────────────────────────┘
 ```
 
-- TinyBase syncs to a real Solid server
-- WebID becomes externally resolvable
-- Federation with other Solid pods unlocks
+- TinyBase syncs to a real Solid server (browser ↔ server; sync layer required).
+- WebID becomes externally resolvable; federation with other Solid pods unlocks.
+- **Authority is configurable:** browser remains default; user can switch to server as authority so the pod is the source of truth (see SOLID_SERVER_STRATEGIES).
 
 ---
 

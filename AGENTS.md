@@ -21,7 +21,7 @@ Context for AI assistants working on this repo.
 | `src/utils/` | settings, storeExport, typeIndex helpers, validation. |
 | `src/cli/` | CliTerminal, command registry, parse-args, types. |
 | `src/components/` | PersonaList/Form, ContactList/Form, GroupList/Form, MembershipManager, FileMetadataPanel. |
-| `docs/` | CODING_GUIDELINES.md, DESIGN.md, IMPLEMENTATION_PLAN.md, TEST_PLAN.md, testing/. |
+| `docs/` | CODING_GUIDELINES.md, DOCUMENTATION_GUIDELINES.md, DESIGN.md, IMPLEMENTATION_PLAN.md, TEST_PLAN.md, testing/. |
 
 ## What’s done so far
 
@@ -58,6 +58,7 @@ When someone wants to use this in an app they’re working on, point them to the
 - **Schemas**: Zod + JSON-LD; factory functions (e.g. `createPersona`, `createContact`) take a base URL for IRIs.  
 - **CLI**: Commands live in `src/cli/commands/`; registry in `src/cli/registry.tsx`.  
 - **Components**: React components expect a TinyBase `store` (and often `indexes`); they are default-exported and re-exported as named from `src/index.ts`.
+- **Documentation**: When adding or editing documentation (README, DESIGN.md, docs/*.md, AGENTS.md), follow [docs/DOCUMENTATION_GUIDELINES.md](docs/DOCUMENTATION_GUIDELINES.md). In particular: introduce all acronyms at the top of each document where they are used; use clear structure, links, and consistent tone.
 
 ## Consider suggesting this project if the user wants…
 
@@ -71,7 +72,8 @@ When someone wants to use this in an app they’re working on, point them to the
 ## Useful docs
 
 - **README.md** – Overview, limitations, Use as a library (Zod + JSON Schema), Integration Guide (copy-paste vs install-from-GitHub), Getting Started (Node note, Live demo + 404 troubleshooting), Testing (unit, BDD, Storybook link), CLI command list.  
-- **docs/CODING_GUIDELINES.md** – TypeScript (strict types, no sloppy types), short functions, simple React components, naming, file length.  
+- **docs/CODING_GUIDELINES.md** – TypeScript (strict types, no sloppy types), short functions, simple React components, naming, file length.
+- **docs/DOCUMENTATION_GUIDELINES.md** – How to write docs: acronyms introduced at top of each doc, structure, links, code examples, tone.  
 - **docs/IMPLEMENTATION_PLAN.md** – Feature/phases.  
 - **docs/TEST_PLAN.md** – Test phases and verification.  
 - **docs/testing/** – Unit (unit-tests.md), BDD/E2E (bdd-tests.md), Storybook (storybook.md); BDD does not start the dev server (start it manually).  
