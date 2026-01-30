@@ -1,7 +1,14 @@
 import React, { useState, useEffect, CSSProperties } from 'react';
 import { Store } from 'tinybase';
 import { VCARD, DCTERMS } from '@inrupt/vocab-common-rdf';
-import { createGroup, ORG, type GroupInput, type GroupType } from '../schemas/group';
+import {
+  createGroup,
+  GroupInputSchema,
+  safeParseGroup,
+  ORG,
+  type GroupInput,
+  type GroupType,
+} from '../schemas/group';
 
 const TABLE_NAME = 'groups';
 
@@ -75,56 +82,76 @@ const GroupForm: React.FC<GroupFormProps> = ({
     e.preventDefault();
     setError(null);
 
-    if (!form.name.trim()) {
-      setError('Name is required');
+    // Build input object for validation
+    const input: GroupInput = {
+      name: form.name.trim(),
+      type: form.type,
+      description: form.description.trim() || undefined,
+      url: form.url.trim() || undefined,
+      logo: form.logo.trim() || undefined,
+    };
+
+    // Validate input using Zod schema
+    const inputResult = GroupInputSchema.safeParse(input);
+    if (!inputResult.success) {
+      const firstError = inputResult.error.issues[0];
+      setError(firstError.message);
       return;
     }
 
-    // Validate URL fields if provided
-    const urlFields = ['url', 'logo'] as const;
-    for (const field of urlFields) {
-      if (form[field]) {
-        try {
-          new URL(form[field]);
-        } catch {
-          setError(`Invalid ${field} URL`);
-          return;
-        }
-      }
-    }
-
     if (isEditing && groupId) {
-      // Update existing group
+      // Update existing group - build the full object and validate
+      const existingRecord = store.getRow(TABLE_NAME, groupId) as Record<string, unknown>;
+
       const updates: Record<string, unknown> = {
-        [VCARD.fn]: form.name,
+        ...existingRecord,
+        [VCARD.fn]: form.name.trim(),
       };
 
-      // Optional fields - set or clear
-      updates[DCTERMS.description] = form.description || null;
-      updates[VCARD.hasURL] = form.url || null;
-      updates[VCARD.hasLogo] = form.logo || null;
+      // Optional fields - set or remove
+      if (form.description.trim()) {
+        updates[DCTERMS.description] = form.description.trim();
+      } else {
+        delete updates[DCTERMS.description];
+      }
+
+      if (form.url.trim()) {
+        updates[VCARD.hasURL] = form.url.trim();
+      } else {
+        delete updates[VCARD.hasURL];
+      }
+
+      if (form.logo.trim()) {
+        updates[VCARD.hasLogo] = form.logo.trim();
+      } else {
+        delete updates[VCARD.hasLogo];
+      }
 
       // Note: We don't change the type when editing as it affects the @type field
       // which determines the RDF classes
 
-      for (const [key, value] of Object.entries(updates)) {
-        if (value === null) {
-          store.delCell(TABLE_NAME, groupId, key);
-        } else {
-          store.setCell(TABLE_NAME, groupId, key, value as string);
-        }
+      // Validate the final group object
+      const groupResult = safeParseGroup(updates);
+      if (!groupResult.success) {
+        const firstError = groupResult.error.issues[0];
+        setError(`Validation error: ${firstError.message}`);
+        return;
       }
-    } else {
-      // Create new group
-      const input: GroupInput = {
-        name: form.name,
-        type: form.type,
-        description: form.description || undefined,
-        url: form.url || undefined,
-        logo: form.logo || undefined,
-      };
 
-      const group = createGroup(input, baseUrl);
+      // Store the validated group
+      store.setRow(TABLE_NAME, groupId, updates);
+    } else {
+      // Create new group using factory function
+      const group = createGroup(inputResult.data, baseUrl);
+
+      // Double-check validation
+      const groupResult = safeParseGroup(group);
+      if (!groupResult.success) {
+        const firstError = groupResult.error.issues[0];
+        setError(`Validation error: ${firstError.message}`);
+        return;
+      }
+
       const id = group['@id'];
 
       // Store the group

@@ -2,7 +2,12 @@ import React, { useState, useEffect, CSSProperties } from 'react';
 import { Store } from 'tinybase';
 import { VCARD } from '@inrupt/vocab-common-rdf';
 import { SOLID } from '@inrupt/vocab-solid-common';
-import { createContact, type ContactInput } from '../schemas/contact';
+import {
+  createContact,
+  ContactInputSchema,
+  safeParseContact,
+  type ContactInput,
+} from '../schemas/contact';
 
 const TABLE_NAME = 'contacts';
 
@@ -99,49 +104,96 @@ const ContactForm: React.FC<ContactFormProps> = ({
     e.preventDefault();
     setError(null);
 
-    if (!form.name.trim()) {
-      setError('Name is required');
-      return;
-    }
+    // Build input object for validation
+    const input: ContactInput = {
+      name: form.name.trim(),
+      nickname: form.nickname.trim() || undefined,
+      email: form.email.trim() || undefined,
+      phone: form.phone.trim() || undefined,
+      url: form.url.trim() || undefined,
+      photo: form.photo.trim() || undefined,
+      notes: form.notes.trim() || undefined,
+      organization: form.organization.trim() || undefined,
+      role: form.role.trim() || undefined,
+      webId: form.webId.trim() || undefined,
+      isAgent: form.isAgent,
+      agentCategory: form.agentCategory.trim() || undefined,
+    };
 
-    // Validate email if provided
-    if (form.email && !form.email.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)) {
-      setError('Invalid email address');
+    // Validate input using Zod schema
+    const inputResult = ContactInputSchema.safeParse(input);
+    if (!inputResult.success) {
+      const firstError = inputResult.error.issues[0];
+      setError(firstError.message);
       return;
-    }
-
-    // Validate URL fields if provided
-    const urlFields = ['url', 'photo', 'webId'] as const;
-    for (const field of urlFields) {
-      if (form[field]) {
-        try {
-          new URL(form[field]);
-        } catch {
-          setError(`Invalid ${field} URL`);
-          return;
-        }
-      }
     }
 
     if (isEditing && contactId) {
-      // Update existing contact
+      // Update existing contact - build the full object and validate
+      const existingRecord = store.getRow(TABLE_NAME, contactId) as Record<string, unknown>;
+
       const updates: Record<string, unknown> = {
-        [VCARD.fn]: form.name,
+        ...existingRecord,
+        [VCARD.fn]: form.name.trim(),
       };
 
-      // Optional fields - set or clear
-      updates[VCARD.nickname] = form.nickname || null;
-      updates[VCARD.hasEmail] = form.email ? `mailto:${form.email}` : null;
-      updates[VCARD.hasTelephone] = form.phone ? `tel:${form.phone.replace(/\s/g, '')}` : null;
-      updates[VCARD.hasURL] = form.url || null;
-      updates[VCARD.hasPhoto] = form.photo || null;
-      updates[VCARD.hasNote] = form.notes || null;
-      updates[VCARD.hasOrganizationName] = form.organization || null;
-      updates[VCARD.hasRole] = form.role || null;
-      updates[SOLID.webid] = form.webId || null;
+      // Optional fields - set or remove
+      if (form.nickname.trim()) {
+        updates[VCARD.nickname] = form.nickname.trim();
+      } else {
+        delete updates[VCARD.nickname];
+      }
+
+      if (form.email.trim()) {
+        updates[VCARD.hasEmail] = `mailto:${form.email.trim()}`;
+      } else {
+        delete updates[VCARD.hasEmail];
+      }
+
+      if (form.phone.trim()) {
+        updates[VCARD.hasTelephone] = `tel:${form.phone.trim().replace(/\s/g, '')}`;
+      } else {
+        delete updates[VCARD.hasTelephone];
+      }
+
+      if (form.url.trim()) {
+        updates[VCARD.hasURL] = form.url.trim();
+      } else {
+        delete updates[VCARD.hasURL];
+      }
+
+      if (form.photo.trim()) {
+        updates[VCARD.hasPhoto] = form.photo.trim();
+      } else {
+        delete updates[VCARD.hasPhoto];
+      }
+
+      if (form.notes.trim()) {
+        updates[VCARD.hasNote] = form.notes.trim();
+      } else {
+        delete updates[VCARD.hasNote];
+      }
+
+      if (form.organization.trim()) {
+        updates[VCARD.hasOrganizationName] = form.organization.trim();
+      } else {
+        delete updates[VCARD.hasOrganizationName];
+      }
+
+      if (form.role.trim()) {
+        updates[VCARD.hasRole] = form.role.trim();
+      } else {
+        delete updates[VCARD.hasRole];
+      }
+
+      if (form.webId.trim()) {
+        updates[SOLID.webid] = form.webId.trim();
+      } else {
+        delete updates[SOLID.webid];
+      }
 
       // Handle type change for agent
-      const currentTypes = store.getCell(TABLE_NAME, contactId, '@type');
+      const currentTypes = existingRecord['@type'];
       let newTypes: string | string[];
       if (form.isAgent) {
         if (Array.isArray(currentTypes)) {
@@ -153,7 +205,11 @@ const ContactForm: React.FC<ContactFormProps> = ({
         } else {
           newTypes = [currentTypes as string, 'https://schema.org/SoftwareApplication'];
         }
-        updates['https://schema.org/applicationCategory'] = form.agentCategory || null;
+        if (form.agentCategory.trim()) {
+          updates['https://schema.org/applicationCategory'] = form.agentCategory.trim();
+        } else {
+          delete updates['https://schema.org/applicationCategory'];
+        }
       } else {
         if (Array.isArray(currentTypes)) {
           newTypes = currentTypes.filter(t => t !== 'https://schema.org/SoftwareApplication');
@@ -161,35 +217,32 @@ const ContactForm: React.FC<ContactFormProps> = ({
         } else {
           newTypes = currentTypes as string;
         }
-        updates['https://schema.org/applicationCategory'] = null;
+        delete updates['https://schema.org/applicationCategory'];
       }
       updates['@type'] = newTypes;
 
-      for (const [key, value] of Object.entries(updates)) {
-        if (value === null) {
-          store.delCell(TABLE_NAME, contactId, key);
-        } else {
-          store.setCell(TABLE_NAME, contactId, key, value as string);
-        }
+      // Validate the final contact object
+      const contactResult = safeParseContact(updates);
+      if (!contactResult.success) {
+        const firstError = contactResult.error.issues[0];
+        setError(`Validation error: ${firstError.message}`);
+        return;
       }
-    } else {
-      // Create new contact
-      const input: ContactInput = {
-        name: form.name,
-        nickname: form.nickname || undefined,
-        email: form.email || undefined,
-        phone: form.phone || undefined,
-        url: form.url || undefined,
-        photo: form.photo || undefined,
-        notes: form.notes || undefined,
-        organization: form.organization || undefined,
-        role: form.role || undefined,
-        webId: form.webId || undefined,
-        isAgent: form.isAgent,
-        agentCategory: form.agentCategory || undefined,
-      };
 
-      const contact = createContact(input, baseUrl);
+      // Store the validated contact
+      store.setRow(TABLE_NAME, contactId, updates);
+    } else {
+      // Create new contact using factory function
+      const contact = createContact(inputResult.data, baseUrl);
+
+      // Double-check validation
+      const contactResult = safeParseContact(contact);
+      if (!contactResult.success) {
+        const firstError = contactResult.error.issues[0];
+        setError(`Validation error: ${firstError.message}`);
+        return;
+      }
+
       const id = contact['@id'];
 
       // Store the contact

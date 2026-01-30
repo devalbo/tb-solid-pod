@@ -192,28 +192,137 @@ config reset [key]              # Reset setting(s) to defaults
 
 ---
 
-## Phase 6: Access Control (Future)
+## Phase 6: Type Indexes (Future)
 
 ### Goal
-Implement Web Access Control for resources.
+Implement Solid Type Indexes for data discovery. Type indexes allow apps to find where specific types of data are stored without hardcoding paths.
+
+### Background
+Solid uses two type index documents:
+- **Public Type Index** - Listed in profile, points to publicly discoverable data
+- **Private Type Index** - Listed in preferences, points to private data locations
+
+Each index contains `solid:TypeRegistration` entries mapping RDF types to container locations.
+
+### CLI Commands
+```
+typeindex list                  # List all type registrations
+typeindex show <public|private> # Show specific type index
+typeindex register <type> <location> [--public]
+typeindex unregister <type>     # Remove type registration
+```
+
+### Data Storage
+- Store in `typeIndexes` table (public and private)
+- Use `TypeIndexSchema` and `TypeRegistrationSchema`
+- Link from persona profile document
+
+### Schema
+```typescript
+// Type Registration
+{
+  '@type': 'solid:TypeRegistration',
+  'solid:forClass': 'vcard:Individual',  // The RDF type
+  'solid:instance': 'https://.../contacts/',  // Where instances live
+}
+
+// Type Index Document
+{
+  '@type': 'solid:TypeIndex',
+  'solid:hasTypeRegistration': [...]
+}
+```
+
+### UI Components
+- Type Index panel in Settings or dedicated tab
+- Registration list with type → location mapping
+- Add/remove registration interface
+
+### Files to Create/Modify
+- `src/schemas/typeIndex.ts` - TypeIndex and TypeRegistration schemas
+- `src/cli/commands/typeindex.tsx` - CLI commands
+- `src/utils/typeIndex.ts` - Helper functions for registration lookup
+- `src/components/TypeIndexPanel.tsx` - UI component (optional)
+
+---
+
+## Phase 7: WebID Profile Format (Future)
+
+### Goal
+Make personas proper WebID profile documents that conform to Solid expectations.
+
+### Background
+A Solid WebID profile document includes specific predicates that apps expect:
+- `solid:oidcIssuer` - Identity provider
+- `solid:publicTypeIndex` - Link to public type index
+- `solid:privateTypeIndex` - Link to private type index (in preferences)
+- `ldp:inbox` - Notification inbox location
+- `pim:preferencesFile` - Link to preferences document
+
+### Changes to Persona Schema
+```typescript
+// Additional fields for WebID compliance
+{
+  // Existing FOAF fields...
+  'solid:oidcIssuer': { '@id': 'https://...' },  // Optional - for real auth
+  'solid:publicTypeIndex': { '@id': 'https://.../settings/publicTypeIndex' },
+  'ldp:inbox': { '@id': 'https://.../inbox/' },
+  'pim:preferencesFile': { '@id': 'https://.../settings/prefs' },
+}
+```
+
+### CLI Commands
+```
+persona show <id> --full        # Show full WebID document
+persona set-inbox <id> <url>    # Set inbox location
+persona set-typeindex <id> <url> [--private]
+```
+
+### Data Storage
+- Extend `PersonaSchema` with Solid-specific fields
+- Create preferences document structure
+- Link type indexes from profile
+
+### Files to Create/Modify
+- `src/schemas/persona.ts` - Extend with Solid WebID fields
+- `src/schemas/preferences.ts` - Preferences file schema
+- `src/cli/commands/persona.tsx` - Add WebID-specific subcommands
+- `src/components/PersonaForm.tsx` - Add advanced WebID fields (collapsible)
+
+---
+
+## Phase 8: Access Control (Future)
+
+### Goal
+Implement Web Access Control (WAC) for resources.
+
+### Background
+Solid uses WAC for authorization. Each resource can have an associated `.acl` document that specifies who can access it and how.
 
 ### CLI Commands
 ```
 acl show <path>                 # Show access control
-acl grant <path> <agent> <mode> # Grant access
+acl grant <path> <agent> <mode> # Grant access (Read/Write/Append/Control)
 acl revoke <path> <agent>       # Revoke access
-acl set-public <path>           # Make public
-acl set-private <path>          # Make private
+acl set-public <path>           # Make public (grant to foaf:Agent)
+acl set-private <path>          # Make private (owner only)
 ```
 
 ### Data Storage
 - Create `ACLSchema` in schemas
-- Store ACL documents alongside resources
+- Store ACL documents alongside resources (resource.acl)
 - Support for WAC modes (Read, Write, Append, Control)
+- Agent types: WebID, Group, Public (foaf:Agent)
+
+### Files to Create/Modify
+- `src/schemas/acl.ts` - ACL and Authorization schemas
+- `src/cli/commands/acl.tsx` - CLI commands
+- `src/utils/acl.ts` - Permission checking helpers
+- `src/components/ACLPanel.tsx` - UI for managing permissions
 
 ---
 
-## Phase 7: Sync & Federation (Future)
+## Phase 9: Sync & Federation (Future)
 
 ### Goal
 Enable multi-device sync and federation with external Solid servers.
@@ -228,25 +337,29 @@ Enable multi-device sync and federation with external Solid servers.
 
 ## Implementation Order
 
-1. **Phase 1: Personas** - Foundation for identity
-2. **Phase 2: Contacts** - Depends on personas for linking
-3. **Phase 3: Groups** - Depends on contacts for membership
-4. **Phase 4: File Metadata** - Enhance existing functionality
-5. **Phase 5: Settings** - Quality of life
-6. **Phase 6: ACL** - Security layer
-7. **Phase 7: Sync** - Federation
+1. **Phase 1: Personas** ✅ - Foundation for identity
+2. **Phase 2: Contacts** ✅ - Depends on personas for linking
+3. **Phase 3: Groups** ✅ - Depends on contacts for membership
+4. **Phase 4: File Metadata** ✅ - Enhance existing functionality
+5. **Phase 5: Settings** ✅ - Quality of life
+6. **Phase 6: Type Indexes** - Solid data discovery
+7. **Phase 7: WebID Profile** - Solid-compliant identity documents
+8. **Phase 8: ACL** - Security layer
+9. **Phase 9: Sync** - Federation
 
 ## Estimated Scope
 
 | Phase | New Files | Modified Files | Complexity |
 |-------|-----------|----------------|------------|
-| 1. Personas | 3 | 2 | Medium |
-| 2. Contacts | 4 | 1 | Medium |
-| 3. Groups | 4 | 1 | Medium-High |
-| 4. File Metadata | 0 | 2 | Low |
-| 5. Settings | 2 | 1 | Low |
-| 6. ACL | 3 | 3 | High |
-| 7. Sync | 4 | 4 | High |
+| 1. Personas ✅ | 3 | 2 | Medium |
+| 2. Contacts ✅ | 4 | 1 | Medium |
+| 3. Groups ✅ | 4 | 1 | Medium-High |
+| 4. File Metadata ✅ | 0 | 2 | Low |
+| 5. Settings ✅ | 2 | 1 | Low |
+| 6. Type Indexes | 4 | 2 | Medium |
+| 7. WebID Profile | 2 | 3 | Medium |
+| 8. ACL | 3 | 3 | High |
+| 9. Sync | 4 | 4 | High |
 
 ## Success Criteria
 

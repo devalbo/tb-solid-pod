@@ -1,7 +1,12 @@
 import React, { useState, useEffect, CSSProperties } from 'react';
 import { Store } from 'tinybase';
 import { FOAF, VCARD } from '@inrupt/vocab-common-rdf';
-import { createPersona, type PersonaInput } from '../schemas/persona';
+import {
+  createPersona,
+  PersonaInputSchema,
+  safeParsePersona,
+  type PersonaInput,
+} from '../schemas/persona';
 
 const TABLE_NAME = 'personas';
 const DEFAULT_PERSONA_KEY = 'defaultPersonaId';
@@ -83,68 +88,107 @@ const PersonaForm: React.FC<PersonaFormProps> = ({
     e.preventDefault();
     setError(null);
 
-    if (!form.name.trim()) {
-      setError('Name is required');
-      return;
-    }
+    // Build input object for validation
+    const input: PersonaInput = {
+      name: form.name.trim(),
+      nickname: form.nickname.trim() || undefined,
+      givenName: form.givenName.trim() || undefined,
+      familyName: form.familyName.trim() || undefined,
+      email: form.email.trim() || undefined,
+      phone: form.phone.trim() || undefined,
+      bio: form.bio.trim() || undefined,
+      homepage: form.homepage.trim() || undefined,
+      image: form.image.trim() || undefined,
+    };
 
-    // Validate email if provided
-    if (form.email && !form.email.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)) {
-      setError('Invalid email address');
+    // Validate input using Zod schema
+    const inputResult = PersonaInputSchema.safeParse(input);
+    if (!inputResult.success) {
+      const firstError = inputResult.error.issues[0];
+      setError(firstError.message);
       return;
-    }
-
-    // Validate URL fields if provided
-    const urlFields = ['homepage', 'image'] as const;
-    for (const field of urlFields) {
-      if (form[field]) {
-        try {
-          new URL(form[field]);
-        } catch {
-          setError(`Invalid ${field} URL`);
-          return;
-        }
-      }
     }
 
     if (isEditing && personaId) {
-      // Update existing persona
+      // Update existing persona - build the full object and validate
+      const existingRecord = store.getRow(TABLE_NAME, personaId) as Record<string, unknown>;
+
       const updates: Record<string, unknown> = {
-        [FOAF.name]: form.name,
+        ...existingRecord,
+        [FOAF.name]: form.name.trim(),
       };
 
-      // Optional fields - set or clear
-      updates[FOAF.nick] = form.nickname || null;
-      updates[FOAF.givenName] = form.givenName || null;
-      updates[FOAF.familyName] = form.familyName || null;
-      updates[VCARD.hasEmail] = form.email ? `mailto:${form.email}` : null;
-      updates[VCARD.hasTelephone] = form.phone ? `tel:${form.phone.replace(/\s/g, '')}` : null;
-      updates[VCARD.note] = form.bio || null;
-      updates[FOAF.homepage] = form.homepage || null;
-      updates[FOAF.img] = form.image || null;
-
-      for (const [key, value] of Object.entries(updates)) {
-        if (value === null) {
-          store.delCell(TABLE_NAME, personaId, key);
-        } else {
-          store.setCell(TABLE_NAME, personaId, key, value as string);
-        }
+      // Optional fields - set or remove
+      if (form.nickname.trim()) {
+        updates[FOAF.nick] = form.nickname.trim();
+      } else {
+        delete updates[FOAF.nick];
       }
-    } else {
-      // Create new persona
-      const input: PersonaInput = {
-        name: form.name,
-        nickname: form.nickname || undefined,
-        givenName: form.givenName || undefined,
-        familyName: form.familyName || undefined,
-        email: form.email || undefined,
-        phone: form.phone || undefined,
-        bio: form.bio || undefined,
-        homepage: form.homepage || undefined,
-        image: form.image || undefined,
-      };
 
-      const persona = createPersona(input, baseUrl);
+      if (form.givenName.trim()) {
+        updates[FOAF.givenName] = form.givenName.trim();
+      } else {
+        delete updates[FOAF.givenName];
+      }
+
+      if (form.familyName.trim()) {
+        updates[FOAF.familyName] = form.familyName.trim();
+      } else {
+        delete updates[FOAF.familyName];
+      }
+
+      if (form.email.trim()) {
+        updates[VCARD.hasEmail] = `mailto:${form.email.trim()}`;
+      } else {
+        delete updates[VCARD.hasEmail];
+      }
+
+      if (form.phone.trim()) {
+        updates[VCARD.hasTelephone] = `tel:${form.phone.trim().replace(/\s/g, '')}`;
+      } else {
+        delete updates[VCARD.hasTelephone];
+      }
+
+      if (form.bio.trim()) {
+        updates[VCARD.note] = form.bio.trim();
+      } else {
+        delete updates[VCARD.note];
+      }
+
+      if (form.homepage.trim()) {
+        updates[FOAF.homepage] = form.homepage.trim();
+      } else {
+        delete updates[FOAF.homepage];
+      }
+
+      if (form.image.trim()) {
+        updates[FOAF.img] = form.image.trim();
+      } else {
+        delete updates[FOAF.img];
+      }
+
+      // Validate the final persona object
+      const personaResult = safeParsePersona(updates);
+      if (!personaResult.success) {
+        const firstError = personaResult.error.issues[0];
+        setError(`Validation error: ${firstError.message}`);
+        return;
+      }
+
+      // Store the validated persona
+      store.setRow(TABLE_NAME, personaId, updates);
+    } else {
+      // Create new persona using factory function (already generates valid structure)
+      const persona = createPersona(inputResult.data, baseUrl);
+
+      // Double-check validation
+      const personaResult = safeParsePersona(persona);
+      if (!personaResult.success) {
+        const firstError = personaResult.error.issues[0];
+        setError(`Validation error: ${firstError.message}`);
+        return;
+      }
+
       const id = persona['@id'];
 
       // Store the persona
