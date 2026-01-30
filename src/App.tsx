@@ -1,6 +1,6 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { createStore, createIndexes } from 'tinybase';
-import { createLocalPersister } from 'tinybase/persisters/persister-browser';
+import React, { useState, useEffect, useRef, CSSProperties } from 'react';
+import { createStore, createIndexes, Store, Indexes } from 'tinybase';
+import { createLocalPersister, LocalPersister } from 'tinybase/persisters/persister-browser';
 import { Provider, useRow, useSliceRowIds } from 'tinybase/ui-react';
 import {
   copyStoreToClipboard,
@@ -8,11 +8,12 @@ import {
   importStoreFromJson,
   readFileAsText,
 } from './utils/storeExport';
+import { CliTerminal } from './cli';
 
 const STORAGE_KEY = 'tb-solid-pod';
 const BASE_URL = 'https://myapp.com/pod/';
 
-const getDefaultContent = () => [
+const getDefaultContent = (): [Record<string, Record<string, Record<string, unknown>>>, Record<string, unknown>] => [
   { resources: { [BASE_URL]: { type: 'Container', contentType: 'text/turtle', updated: new Date().toISOString() } } },
   {}
 ];
@@ -21,13 +22,14 @@ const getDefaultContent = () => [
 // MIME & IMAGE HELPERS
 // ==========================================
 const IMAGE_MIMES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml'];
-const isImageContentType = (ct) => ct && (IMAGE_MIMES.includes(ct) || ct.startsWith('image/'));
+const isImageContentType = (ct: string | undefined): boolean =>
+  ct != null && (IMAGE_MIMES.includes(ct) || ct.startsWith('image/'));
 
-const readFileAsBase64 = (file) =>
+const readFileAsBase64 = (file: File): Promise<string> =>
   new Promise((resolve, reject) => {
     const r = new FileReader();
     r.onload = () => {
-      const dataUrl = r.result;
+      const dataUrl = r.result as string;
       const base64 = dataUrl.indexOf(',') >= 0 ? dataUrl.slice(dataUrl.indexOf(',') + 1) : dataUrl;
       resolve(base64);
     };
@@ -36,14 +38,41 @@ const readFileAsBase64 = (file) =>
   });
 
 // ==========================================
+// Types
+// ==========================================
+interface ResourceRow {
+  type?: string;
+  body?: string | null;
+  contentType?: string;
+  parentId?: string;
+  updated?: string;
+}
+
+interface RequestOptions {
+  method?: string;
+  body?: string | null;
+  headers?: Record<string, string>;
+}
+
+interface RequestResult {
+  status: number;
+  body: string | null;
+  headers?: Record<string, string>;
+}
+
+// ==========================================
 // 1. THE BACKEND (VirtualPod Class)
 // ==========================================
-class VirtualPod {
-  constructor(store, indexes) {
+export class VirtualPod {
+  store: Store;
+  indexes: Indexes;
+  baseUrl: string;
+
+  constructor(store: Store, indexes: Indexes) {
     this.store = store;
     this.indexes = indexes;
     this.baseUrl = BASE_URL;
-    
+
     // Initialize Schema
     this.store.setTables({ resources: {} });
     // Index for fast folder lookups: "Give me files where parentId = X"
@@ -60,9 +89,9 @@ class VirtualPod {
   }
 
   // The "Fetch" Interceptor
-  async handleRequest(url, options = { method: 'GET' }) {
+  async handleRequest(url: string, options: RequestOptions = { method: 'GET' }): Promise<RequestResult> {
     const method = options.method?.toUpperCase() || 'GET';
-    
+
     // Simple Router
     if (method === 'GET') return this._get(url);
     if (method === 'PUT') return this._put(url, options.body, options.headers);
@@ -70,17 +99,17 @@ class VirtualPod {
     return { status: 405, body: "Method Not Allowed" };
   }
 
-  _get(url) {
+  _get(url: string): RequestResult {
     if (!this.store.hasRow('resources', url)) return { status: 404, body: "Not Found" };
-    const row = this.store.getRow('resources', url);
-    return { status: 200, body: row.body, headers: { 'Content-Type': row.contentType } };
+    const row = this.store.getRow('resources', url) as ResourceRow;
+    return { status: 200, body: row.body ?? null, headers: { 'Content-Type': row.contentType || 'text/plain' } };
   }
 
-  _put(url, body, headers = {}) {
+  _put(url: string, body?: string | null, headers: Record<string, string> = {}): RequestResult {
     const isContainer = url.endsWith('/');
     // Logic: Find parent
-    const parentUrl = isContainer 
-      ? new URL('..', url).href 
+    const parentUrl = isContainer
+      ? new URL('..', url).href
       : new URL('.', url).href;
 
     if (url !== this.baseUrl && !this.store.hasRow('resources', parentUrl)) {
@@ -97,9 +126,9 @@ class VirtualPod {
     return { status: 201, body: "Created" };
   }
 
-  _delete(url) {
+  _delete(url: string): RequestResult {
     if (url === this.baseUrl) return { status: 405, body: "Cannot delete root" };
-    this.store.delRow('resources', url); // TinyBase handles the delete
+    this.store.delRow('resources', url);
     return { status: 204, body: "Deleted" };
   }
 }
@@ -108,14 +137,30 @@ class VirtualPod {
 // 2. THE FRONTEND (Widgets)
 // ==========================================
 
-// -- Widget: File Browser --
-const FileBrowser = ({ url, onNavigate }) => {
-  // Reactive Hook: Updates automatically when 'byParent' index changes
+interface FileBrowserProps {
+  url: string;
+  onNavigate: (url: string) => void;
+  parentUrl?: string;
+  onNavigateUp?: () => void;
+}
+
+const FileBrowser: React.FC<FileBrowserProps> = ({ url, onNavigate, parentUrl, onNavigateUp }) => {
   const children = useSliceRowIds('byParent', url);
-  
+  const isRoot = !parentUrl;
+
   return (
     <div style={styles.card}>
-      <h3 style={styles.header}>📂 {url.replace('https://myapp.com/pod/', '/')}</h3>
+      <h3 style={styles.header}>
+        <button
+          style={{ ...styles.upBtn, ...(isRoot ? styles.upBtnDisabled : {}) }}
+          onClick={onNavigateUp}
+          disabled={isRoot}
+          title={isRoot ? 'At root' : 'Go up'}
+        >
+          ↑
+        </button>
+        📂 {url.replace('https://myapp.com/pod/', '/')}
+      </h3>
       <div style={styles.list}>
         {children.length === 0 && <i style={{color: '#888'}}>Empty Folder</i>}
         {children.map(childUrl => (
@@ -126,33 +171,42 @@ const FileBrowser = ({ url, onNavigate }) => {
   );
 };
 
-const FileItem = ({ url, onNavigate }) => {
-  // Reactive Hook: Updates if this specific file changes
-  const row = useRow('resources', url); 
+interface FileItemProps {
+  url: string;
+  onNavigate: (url: string) => void;
+}
+
+const FileItem: React.FC<FileItemProps> = ({ url, onNavigate }) => {
+  const row = useRow('resources', url) as ResourceRow;
   const isDir = row?.type === 'Container';
   const name = url.split('/').filter(Boolean).pop();
 
   return (
-    <div 
-      onClick={() => onNavigate(url)} 
+    <div
+      onClick={() => onNavigate(url)}
       style={{...styles.item, fontWeight: isDir ? 'bold' : 'normal'}}
     >
-      <span style={{marginRight: 8}}>{isDir ? '📁' : '📄'}</span> 
+      <span style={{marginRight: 8}}>{isDir ? '📁' : '📄'}</span>
       {name}
     </div>
   );
 };
 
-// -- Widget: Text Editor --
-const TextEditor = ({ url, pod, inline }) => {
-  const row = useRow('resources', url);
+interface TextEditorProps {
+  url: string;
+  pod: VirtualPod;
+  inline?: boolean;
+}
+
+const TextEditor: React.FC<TextEditorProps> = ({ url, pod, inline }) => {
+  const row = useRow('resources', url) as ResourceRow;
   const [text, setText] = useState(row?.body || '');
   const contentType = row?.contentType || 'text/plain';
 
   const save = () => {
-    pod.handleRequest(url, { 
-      method: 'PUT', 
-      body: text, 
+    pod.handleRequest(url, {
+      method: 'PUT',
+      body: text,
       headers: { 'Content-Type': contentType }
     });
     alert("Saved!");
@@ -160,10 +214,10 @@ const TextEditor = ({ url, pod, inline }) => {
 
   const inner = (
     <>
-      <textarea 
-        style={styles.textarea} 
-        value={text} 
-        onChange={e => setText(e.target.value)} 
+      <textarea
+        style={styles.textarea}
+        value={text}
+        onChange={e => setText(e.target.value)}
       />
       <div style={{textAlign: 'right'}}>
         <button style={styles.btn} onClick={save}>Save Changes</button>
@@ -180,17 +234,22 @@ const TextEditor = ({ url, pod, inline }) => {
   );
 };
 
-// -- Widget: Image viewer / replace --
-const ImageViewer = ({ url, pod, inline }) => {
-  const row = useRow('resources', url);
-  const inputRef = useRef(null);
+interface ImageViewerProps {
+  url: string;
+  pod: VirtualPod;
+  inline?: boolean;
+}
+
+const ImageViewer: React.FC<ImageViewerProps> = ({ url, pod, inline }) => {
+  const row = useRow('resources', url) as ResourceRow;
+  const inputRef = useRef<HTMLInputElement>(null);
   const contentType = row?.contentType || 'image/png';
   const body = row?.body;
   const dataUrl = body != null && body !== '' ? `data:${contentType};base64,${body}` : null;
 
   const replaceImage = () => inputRef.current?.click();
 
-  const onFileChange = async (e) => {
+  const onFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file || !file.type.startsWith('image/')) return;
     try {
@@ -200,7 +259,7 @@ const ImageViewer = ({ url, pod, inline }) => {
         body: base64,
         headers: { 'Content-Type': file.type }
       });
-    } catch (err) {
+    } catch {
       alert('Failed to replace image');
     }
     e.target.value = '';
@@ -231,8 +290,12 @@ const ImageViewer = ({ url, pod, inline }) => {
   );
 };
 
-// -- Widget: View tab content (read-only) --
-const FileViewContent = ({ url, row }) => {
+interface FileViewContentProps {
+  url: string;
+  row: ResourceRow;
+}
+
+const FileViewContent: React.FC<FileViewContentProps> = ({ url, row }) => {
   const name = url ? url.split('/').filter(Boolean).pop() : '';
   const body = row?.body;
   const contentType = row?.contentType;
@@ -256,8 +319,15 @@ const FileViewContent = ({ url, row }) => {
   );
 };
 
-// -- Widget: Tabbed view (View | Edit) for a file --
-const FileViewTabs = ({ url, row, pod, activeTab, onTabChange }) => {
+interface FileViewTabsProps {
+  url: string;
+  row: ResourceRow;
+  pod: VirtualPod;
+  activeTab: string;
+  onTabChange: (tab: string) => void;
+}
+
+const FileViewTabs: React.FC<FileViewTabsProps> = ({ url, row, pod, activeTab, onTabChange }) => {
   const isImage = isImageContentType(row?.contentType);
 
   return (
@@ -281,10 +351,17 @@ const FileViewTabs = ({ url, row, pod, activeTab, onTabChange }) => {
 // 3. THE APP SHELL
 // ==========================================
 
-export default function App() {
-  const [app, setApp] = useState({ store: null, indexes: null, pod: null, ready: false });
+interface AppState {
+  store: Store | null;
+  indexes: Indexes | null;
+  pod: VirtualPod | null;
+  ready: boolean;
+}
 
-  const persisterRef = useRef(null);
+export default function App() {
+  const [app, setApp] = useState<AppState>({ store: null, indexes: null, pod: null, ready: false });
+
+  const persisterRef = useRef<LocalPersister | null>(null);
   useEffect(() => {
     (async () => {
       const s = createStore();
@@ -302,16 +379,16 @@ export default function App() {
   const { store, indexes, pod, ready } = app;
 
   const [currentUrl, setCurrentUrl] = useState(BASE_URL);
-  const [fileTab, setFileTab] = useState('view'); // 'view' | 'edit'
+  const [fileTab, setFileTab] = useState('view');
   const [newFileOpen, setNewFileOpen] = useState(false);
   const [newFileName, setNewFileName] = useState('');
   const [newFileContent, setNewFileContent] = useState('');
-  const uploadImageInputRef = useRef(null);
-  const importFileInputRef = useRef(null);
-  const [copyStatus, setCopyStatus] = useState(null); // 'success' | 'error' | null
+  const uploadImageInputRef = useRef<HTMLInputElement>(null);
+  const importFileInputRef = useRef<HTMLInputElement>(null);
+  const [copyStatus, setCopyStatus] = useState<'success' | 'error' | null>(null);
+  const [activeView, setActiveView] = useState<'data' | 'terminal'>('data');
 
-  // Determine resource type to decide which widget to show
-  const row = useRow('resources', currentUrl, store);
+  const row = useRow('resources', currentUrl, store) as ResourceRow | undefined;
   const isContainer = row?.type === 'Container';
   const parentUrl = row?.parentId;
 
@@ -329,7 +406,7 @@ export default function App() {
 
   const submitNewFile = () => {
     const name = newFileName.trim();
-    if (!name) return;
+    if (!name || !pod) return;
     pod.handleRequest(`${currentUrl}${name}`, {
       method: 'PUT',
       body: newFileContent || '',
@@ -338,9 +415,9 @@ export default function App() {
     closeNewFileDialog();
   };
 
-  const onUploadImageSelect = async (e) => {
+  const onUploadImageSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file || !file.type.startsWith('image/')) return;
+    if (!file || !file.type.startsWith('image/') || !pod) return;
     try {
       const base64 = await readFileAsBase64(file);
       const name = file.name;
@@ -349,23 +426,23 @@ export default function App() {
         body: base64,
         headers: { 'Content-Type': file.type }
       });
-    } catch (err) {
+    } catch {
       alert('Failed to upload image');
     }
     e.target.value = '';
   };
 
-  // Action: Create a new file using the "API"
   const createNote = () => openNewFileDialog();
 
-  // Export/Import actions
   const handleCopyToClipboard = async () => {
+    if (!store) return;
     const success = await copyStoreToClipboard(store);
     setCopyStatus(success ? 'success' : 'error');
     setTimeout(() => setCopyStatus(null), 2000);
   };
 
   const handleDownload = () => {
+    if (!store) return;
     downloadStoreAsJson(store);
   };
 
@@ -373,9 +450,9 @@ export default function App() {
     importFileInputRef.current?.click();
   };
 
-  const handleImportFile = async (e) => {
+  const handleImportFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file) return;
+    if (!file || !store) return;
     try {
       const json = await readFileAsText(file);
       const result = importStoreFromJson(store, json, { merge: false });
@@ -384,21 +461,20 @@ export default function App() {
       } else {
         alert(`Import failed: ${result.error}`);
       }
-    } catch (err) {
+    } catch {
       alert('Failed to read file');
     }
     e.target.value = '';
   };
 
-  if (!ready || !store) {
+  if (!ready || !store || !indexes || !pod) {
     return <div style={styles.loading}>Loading…</div>;
   }
 
-  // Action: Create a new folder
   const createFolder = () => {
     const name = prompt("Folder Name (e.g., notes):");
     if (name) {
-      pod.handleRequest(`${currentUrl}${name}/`, { // Note the trailing slash
+      pod.handleRequest(`${currentUrl}${name}/`, {
         method: 'PUT',
         headers: { 'Content-Type': 'text/turtle' }
       });
@@ -408,106 +484,142 @@ export default function App() {
   return (
     <Provider store={store} indexes={indexes}>
       <div style={styles.app}>
-        <div style={styles.toolbar}>
-          <button style={styles.navBtn} disabled={!parentUrl} onClick={() => setCurrentUrl(parentUrl)}>⬅ Up</button>
-          <div style={styles.urlBar}>{currentUrl}</div>
+        {/* Top Navigation Bar */}
+        <div style={styles.topNav}>
+          <div style={styles.topNavTabs}>
+            <button
+              style={{ ...styles.topNavTab, ...(activeView === 'data' ? styles.topNavTabActive : {}) }}
+              onClick={() => setActiveView('data')}
+            >
+              Data Browser
+            </button>
+            <button
+              style={{ ...styles.topNavTab, ...(activeView === 'terminal' ? styles.topNavTabActive : {}) }}
+              onClick={() => setActiveView('terminal')}
+            >
+              Terminal
+            </button>
+          </div>
+          <div style={styles.topNavActions}>
+            <button
+              style={styles.navExportBtn}
+              onClick={handleCopyToClipboard}
+              title="Copy store data to clipboard"
+            >
+              {copyStatus === 'success' ? 'Copied!' : copyStatus === 'error' ? 'Failed' : 'Copy'}
+            </button>
+            <button
+              style={styles.navExportBtn}
+              onClick={handleDownload}
+              title="Download store as JSON file"
+            >
+              Export
+            </button>
+            <button
+              style={styles.navExportBtn}
+              onClick={handleImportClick}
+              title="Import store from JSON file"
+            >
+              Import
+            </button>
+            <input
+              ref={importFileInputRef}
+              type="file"
+              accept=".json,application/json"
+              onChange={handleImportFile}
+              style={{ display: 'none' }}
+              aria-hidden
+            />
+          </div>
         </div>
 
-        <div style={styles.actions}>
-           <button style={styles.actionBtn} onClick={createNote}>+ New File</button>
-           <button
-             type="button"
-             style={styles.actionBtn}
-             onClick={() => {
-               console.log('Upload Image clicked');
-               uploadImageInputRef.current?.click();
-             }}
-           >
-             + Upload Image
-           </button>
-           <input
-             ref={uploadImageInputRef}
-             type="file"
-             accept="image/*"
-             onChange={onUploadImageSelect}
-             style={{ display: 'none' }}
-             aria-hidden
-           />
-           <button style={styles.actionBtn} onClick={createFolder}>+ New Folder</button>
-           <span style={styles.actionDivider}>|</span>
-           <button
-             style={styles.exportBtn}
-             onClick={handleCopyToClipboard}
-             title="Copy store data to clipboard"
-           >
-             {copyStatus === 'success' ? 'Copied!' : copyStatus === 'error' ? 'Failed' : 'Copy to Clipboard'}
-           </button>
-           <button
-             style={styles.exportBtn}
-             onClick={handleDownload}
-             title="Download store as JSON file"
-           >
-             Download JSON
-           </button>
-           <button
-             style={styles.exportBtn}
-             onClick={handleImportClick}
-             title="Import store from JSON file"
-           >
-             Import
-           </button>
-           <input
-             ref={importFileInputRef}
-             type="file"
-             accept=".json,application/json"
-             onChange={handleImportFile}
-             style={{ display: 'none' }}
-             aria-hidden
-           />
-        </div>
-
-        {/* New File dialog */}
-        {newFileOpen && (
-          <div style={styles.dialogOverlay} onClick={closeNewFileDialog}>
-            <div style={styles.dialog} onClick={e => e.stopPropagation()}>
-              <h3 style={styles.dialogTitle}>New File</h3>
-              <label style={styles.dialogLabel}>Filename</label>
+        {/* Data Browser View */}
+        {activeView === 'data' && (
+          <>
+            <div style={styles.toolbar}>
+              <div style={styles.urlBar}>{currentUrl}</div>
+            </div>
+            <div style={styles.actions}>
+              <button style={styles.actionBtn} onClick={createNote}>+ New File</button>
+              <button
+                type="button"
+                style={styles.actionBtn}
+                onClick={() => uploadImageInputRef.current?.click()}
+              >
+                + Upload Image
+              </button>
               <input
-                type="text"
-                placeholder="e.g. hello.txt"
-                value={newFileName}
-                onChange={e => setNewFileName(e.target.value)}
-                style={styles.dialogInput}
-                autoFocus
+                ref={uploadImageInputRef}
+                type="file"
+                accept="image/*"
+                onChange={onUploadImageSelect}
+                style={{ display: 'none' }}
+                aria-hidden
               />
-              <label style={styles.dialogLabel}>Initial content (optional)</label>
-              <textarea
-                placeholder="Write your note here..."
-                value={newFileContent}
-                onChange={e => setNewFileContent(e.target.value)}
-                style={styles.dialogTextarea}
-              />
-              <div style={styles.dialogActions}>
-                <button style={styles.dialogBtnCancel} onClick={closeNewFileDialog}>Cancel</button>
-                <button style={{ ...styles.dialogBtnSubmit, ...(!newFileName.trim() ? styles.dialogBtnSubmitDisabled : {}) }} onClick={submitNewFile} disabled={!newFileName.trim()}>Create</button>
+              <button style={styles.actionBtn} onClick={createFolder}>+ New Folder</button>
+            </div>
+
+            {/* New File dialog */}
+            {newFileOpen && (
+              <div style={styles.dialogOverlay} onClick={closeNewFileDialog}>
+                <div style={styles.dialog} onClick={e => e.stopPropagation()}>
+                  <h3 style={styles.dialogTitle}>New File</h3>
+                  <label style={styles.dialogLabel}>Filename</label>
+                  <input
+                    type="text"
+                    placeholder="e.g. hello.txt"
+                    value={newFileName}
+                    onChange={e => setNewFileName(e.target.value)}
+                    style={styles.dialogInput}
+                    autoFocus
+                  />
+                  <label style={styles.dialogLabel}>Initial content (optional)</label>
+                  <textarea
+                    placeholder="Write your note here..."
+                    value={newFileContent}
+                    onChange={e => setNewFileContent(e.target.value)}
+                    style={styles.dialogTextarea}
+                  />
+                  <div style={styles.dialogActions}>
+                    <button style={styles.dialogBtnCancel} onClick={closeNewFileDialog}>Cancel</button>
+                    <button style={{ ...styles.dialogBtnSubmit, ...(!newFileName.trim() ? styles.dialogBtnSubmitDisabled : {}) }} onClick={submitNewFile} disabled={!newFileName.trim()}>Create</button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            <div style={styles.mainLayout}>
+              <div style={styles.navColumn}>
+                <FileBrowser
+                  url={isContainer ? currentUrl : (parentUrl ?? BASE_URL)}
+                  onNavigate={setCurrentUrl}
+                  parentUrl={parentUrl}
+                  onNavigateUp={parentUrl ? () => setCurrentUrl(parentUrl) : undefined}
+                />
+              </div>
+              <div style={styles.mainContent}>
+                {!row ? (
+                  <div style={styles.error}>404 Not Found</div>
+                ) : !isContainer ? (
+                  <FileViewTabs url={currentUrl} row={row} pod={pod} activeTab={fileTab} onTabChange={setFileTab} />
+                ) : null}
               </div>
             </div>
-          </div>
+          </>
         )}
 
-        <div style={styles.mainLayout}>
-          {/* Navigation: always show the folder that contains currentUrl */}
-          <div style={styles.navColumn}>
-            <FileBrowser url={isContainer ? currentUrl : (parentUrl ?? BASE_URL)} onNavigate={setCurrentUrl} />
+        {/* Terminal View */}
+        {activeView === 'terminal' && (
+          <div style={styles.terminalView}>
+            <CliTerminal
+              store={store}
+              pod={pod}
+              currentUrl={currentUrl}
+              setCurrentUrl={setCurrentUrl}
+              baseUrl={BASE_URL}
+            />
           </div>
-          <div style={styles.mainContent}>
-            {!row ? (
-              <div style={styles.error}>404 Not Found</div>
-            ) : !isContainer ? (
-              <FileViewTabs url={currentUrl} row={row} pod={pod} activeTab={fileTab} onTabChange={setFileTab} />
-            ) : null}
-          </div>
-        </div>
+        )}
       </div>
     </Provider>
   );
@@ -516,26 +628,35 @@ export default function App() {
 // ==========================================
 // 4. STYLES
 // ==========================================
-const styles = {
-  app: { fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif', margin: 0, padding: '20px 24px 30px', minHeight: '100vh', boxSizing: 'border-box', background: '#f8f9fa' },
-  toolbar: { display: 'flex', alignItems: 'center', marginBottom: 15, gap: 10 },
+const styles: Record<string, CSSProperties> = {
+  app: { fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif', margin: 0, padding: 0, minHeight: '100vh', boxSizing: 'border-box', background: '#f8f9fa' },
+  topNav: { background: '#1e1e1e', padding: '0 24px', borderBottom: '1px solid #333', display: 'flex', justifyContent: 'space-between', alignItems: 'center' },
+  topNavTabs: { display: 'flex', gap: 0 },
+  topNavActions: { display: 'flex', gap: 8, alignItems: 'center' },
+  navExportBtn: { padding: '6px 12px', cursor: 'pointer', borderRadius: 4, border: '1px solid #444', background: '#2a2a2a', color: '#ccc', fontSize: 12, fontWeight: 500 },
+  topNavTab: { padding: '14px 24px', border: 'none', background: 'transparent', color: '#888', cursor: 'pointer', fontSize: 14, fontWeight: 500, borderBottom: '2px solid transparent', transition: 'all 0.2s' },
+  topNavTabActive: { color: '#4ecdc4', borderBottom: '2px solid #4ecdc4' },
+  terminalView: { padding: 0, height: 'calc(100vh - 49px)', background: '#1e1e1e' },
+  toolbar: { display: 'flex', alignItems: 'center', marginBottom: 20, gap: 10, padding: '20px 24px 0' },
   navBtn: { padding: '8px 12px', cursor: 'pointer', borderRadius: 6, border: '1px solid #ccc', background: '#fff' },
   urlBar: { flex: 1, padding: '8px 12px', background: '#f5f5f5', borderRadius: 6, fontSize: '14px', color: '#555', fontFamily: 'monospace' },
-  actions: { display: 'flex', gap: 10, marginBottom: 20 },
+  actions: { display: 'flex', gap: 10, marginBottom: 20, padding: '0 24px' },
   actionBtn: { padding: '8px 16px', cursor: 'pointer', borderRadius: 6, border: 'none', background: '#0070f3', color: '#fff', fontWeight: 500, fontSize: '13px' },
   actionDivider: { color: '#ccc', alignSelf: 'center', margin: '0 4px' },
   exportBtn: { padding: '8px 14px', cursor: 'pointer', borderRadius: 6, border: '1px solid #ccc', background: '#fff', color: '#333', fontWeight: 500, fontSize: '13px' },
-  mainLayout: { display: 'flex', gap: 20, alignItems: 'flex-start', minHeight: 400 },
+  mainLayout: { display: 'flex', gap: 20, alignItems: 'flex-start', minHeight: 400, padding: '0 24px 30px' },
   navColumn: { width: 260, flexShrink: 0 },
   mainContent: { flex: 1, minWidth: 0, maxWidth: 700 },
   tabBar: { display: 'flex', gap: 0, borderBottom: '1px solid #eee', background: '#fafafa' },
   tabBtn: { padding: '10px 16px', border: 'none', borderBottom: '2px solid transparent', background: 'none', cursor: 'pointer', fontSize: 14, fontWeight: 500, color: '#666' },
-  tabBtnActive: { color: '#0070f3', borderBottomColor: '#0070f3' },
+  tabBtnActive: { color: '#0070f3', borderBottom: '2px solid #0070f3' },
   tabContent: { padding: 16, overflow: 'auto' },
   card: { background: '#fff', border: '1px solid #eee', borderRadius: 8, overflow: 'hidden' },
-  header: { margin: 0, padding: '15px', background: '#fafafa', borderBottom: '1px solid #eee', fontSize: '16px' },
+  header: { margin: 0, padding: '15px', background: '#fafafa', borderBottom: '1px solid #eee', fontSize: '16px', display: 'flex', alignItems: 'center', gap: 8 },
+  upBtn: { background: 'none', border: 'none', cursor: 'pointer', fontSize: 16, padding: '0 4px' },
+  upBtnDisabled: { opacity: 0.3, cursor: 'default' },
   list: { display: 'flex', flexDirection: 'column' },
-  item: { padding: '12px 15px', borderBottom: '1px solid #f0f0f0', cursor: 'pointer', display: 'flex', alignItems: 'center', transition: 'background 0.2s', ':hover': { background: '#f9f9f9' } },
+  item: { padding: '12px 15px', borderBottom: '1px solid #f0f0f0', cursor: 'pointer', display: 'flex', alignItems: 'center', transition: 'background 0.2s' },
   textarea: { width: '100%', height: 200, padding: 15, border: 'none', resize: 'vertical', fontFamily: 'monospace', fontSize: '14px', outline: 'none' },
   btn: { background: '#28a745', color: 'white', border: 'none', padding: '10px 20px', borderRadius: 6, cursor: 'pointer', margin: '15px', fontWeight: 600 },
   error: { padding: 20, color: 'red', textAlign: 'center' },
