@@ -136,6 +136,24 @@ The ACL phase is planned but not implemented. Currently:
 - **Vite** - Build tooling
 - **TypeScript** - Type safety
 
+## Use as a library
+
+Install from GitHub (replace `devalbo/tb-solid-pod` with your fork if needed):
+
+```bash
+npm install github:devalbo/tb-solid-pod
+```
+
+Then import schemas, CLI, or components:
+
+```ts
+import { createPersona, createContact, PersonaSchema } from 'tb-solid-pod';
+import { CliTerminal } from 'tb-solid-pod';
+import { PersonaList, PersonaForm } from 'tb-solid-pod';
+```
+
+For full integration (TinyBase store setup, components, CLI), see the [Integration Guide](#integration-guide) below.
+
 ## Integration Guide
 
 ### Option 1: Use as Reference / Copy Components
@@ -373,6 +391,8 @@ export function createProject(input: { name: string }, baseUrl: string) {
 3. Create UI components as needed
 
 ## Getting Started (Demo App)
+
+Requires Node 18+ (or use `nvm use` if you use nvm).
 
 ```bash
 npm install

@@ -10,19 +10,45 @@ Make this repo suitable for **three uses**:
 
 ## Goals
 
-Goals follow the same order as the implementation steps below.
+Goals follow the same order as sections 1–4. Track progress via the checklists in each section (1.4, 2.6, 3.6, 4.5).
 
-| Goal | Outcome (aligned with step) |
+| Goal | Outcome (aligned with section) |
 |------|-----------------------------|
-| **1. GitHub-ready** | Repo created on GitHub; code pushed; LICENSE in repo; description and topics set (step 1). |
-| **2. Runnable on checkout** | `git clone` → `npm install` → `npm run dev` works; README “Getting Started” accurate (step 2). |
-| **3. Use as library** | package.json and entry point in place; consumers can install from GitHub/npm and import; README “Use as a library” section (step 3). |
-| **4. GitHub Pages demo** | Vite `base` set; Pages workflow deploys `dist/` to `gh-pages`; Settings → Pages enabled; “Live demo” link in README (steps 4–5). |
-| **5. Clear docs** | README explains run locally, use as library, and try the live demo (across steps 2–5). |
-| **6. Publish (optional)** | npm publish or install-from-GitHub documented (step 6). |
+| **1. GitHub-ready** | Repo created on GitHub; code pushed; LICENSE in repo; description and topics set (§4). |
+| **2. Runnable on checkout** | `git clone` → `npm install` → `npm run dev` works; README “Getting Started” accurate (§1). |
+| **3. Use as library** | package.json and entry point in place; consumers can install from GitHub/npm and import; README “Use as a library” section (§2). |
+| **4. GitHub Pages demo** | Vite `base` set; Pages workflow deploys `dist/` to `gh-pages`; Settings → Pages enabled; “Live demo” link in README (§3). |
+| **5. Clear docs** | README explains run locally, use as library, and try the live demo (§1–4). |
+| **6. Publish (optional)** | npm publish or install-from-GitHub documented. |
 
 ---
 
+## Current state (as of plan update)
+
+Summary of what exists in the repo today.
+
+| Area | Status | Notes |
+|------|--------|--------|
+| **App entry** | Done | `index.html` + `src/main.tsx`; scripts `dev`, `build`, `preview`, `lint` present. |
+| **Source layout** | Done | `src/schemas/`, `src/utils/`, `src/cli/`, `src/components/` with expected files. |
+| **LICENSE** | Done | AGPL-3.0-or-later in repo; `package.json` has `"license": "AGPL-3.0-or-later"`. |
+| **README** | Partial | Has “Getting Started (Demo App)” with `npm install` / `npm run dev`. No Node version note, no “Use as a library” install-from-GitHub section, no “Live demo” link. Integration Guide documents copy-paste and schema-only use. |
+| **Runnable on checkout** | Partial | Commands work; no `.nvmrc`; README matches commands. |
+| **Library packaging** | Done | `package.json`: version 0.1.0, description, keywords, main, types, exports, files; `src/index.ts` re-exports schemas, utils, CLI, components; README “Use as a library” section. |
+| **GitHub Pages** | Not done | No `base` in `vite.config.js`; no `.github/workflows/` (no `pages.yml` or `ci.yml`). |
+| **GitHub repo** | Done | Repo on GitHub (`devalbo/tb-solid-pod`), main pushed, LICENSE in repo. **Repo is private for now**; make public when you want install-from-GitHub or a public Live demo. |
+
+**Next steps (in order):**  
+1) ~~Confirm repo on GitHub and push if needed.~~ Done (repo is private).  
+2) ~~Add `.nvmrc` and optional Node note in README.~~ Done.  
+3) ~~Add `src/index.ts`, update `package.json` for library use, add “Use as a library” in README.~~ Done.  
+4) Set Vite `base`, add Pages workflow, enable Pages, add “Live demo” link.
+
+---
+
+**When you complete a task:** mark it `[x]` in the **checklist** at the end of the relevant section (1.4, 2.6, 3.6, 4.5) and refresh this **Current state** table so the plan stays accurate.
+
+---
 ## 1. Runnable on Checkout
 
 ### 1.1 Keep current app as default
@@ -32,19 +58,19 @@ Goals follow the same order as the implementation steps below.
 
 ### 1.2 Getting Started in README
 
-- README already has “Getting Started (Demo App)” with `npm install` and `npm run dev`.
-- Add one line if useful: “Requires Node 18+ (or 20+).” Optionally add `.nvmrc` with e.g. `20` so `nvm use` works.
+- [x] README already has “Getting Started (Demo App)” with `npm install` and `npm run dev`.
+- [x] Add one line if useful: “Requires Node 18+ (or 20+).” Optionally add `.nvmrc` with e.g. `20` so `nvm use` works.
 
 ### 1.3 Optional: Node version hint
 
-- Add **`.nvmrc`** with a single line: `20` (or your preferred LTS).
-- In README Getting Started, add: “Requires Node 18+ (or use `nvm use` if you use nvm).”
+- [x] Add **`.nvmrc`** with a single line: `20` (or your preferred LTS).
+- [x] In README Getting Started, add: “Requires Node 18+ (or use `nvm use` if you use nvm).”
 
 ### 1.4 Checklist (runnable)
 
-- [ ] `npm install` and `npm run dev` work on a clean clone.
-- [ ] README “Getting Started” matches actual commands.
-- [ ] (Optional) `.nvmrc` added; README mentions Node version.
+- [x] `npm install` and `npm run dev` work on a clean clone.
+- [x] README “Getting Started” matches actual commands.
+- [x] (Optional) `.nvmrc` added; README mentions Node version.
 
 ---
 
@@ -57,11 +83,13 @@ Two ways to “use as a library”:
 
 Plan focuses on **A** so the repo is a proper installable package; **B** stays as an alternative in the README.
 
+**Assumption for step 2:** we are **not** publishing to npm right now—only making the package installable from the GitHub repo (e.g. `npm install github:user/tb-solid-pod`). You can add npm publish later if needed.
+
 ### 2.1 Package identity
 
-- **name**: Keep `tb-solid-pod` or use a scoped name e.g. `@yourname/tb-solid-pod` if you plan to publish to npm.
-- **version**: Set a real version, e.g. `0.1.0` (semver).
-- **private**: Remove `"private": true` so the package can be published (or installed from GitHub with `npm install git+https://...`).
+- [x] **name**: Keep `tb-solid-pod` (or use a scoped name e.g. `@yourname/tb-solid-pod` if you later publish to npm).
+- [x] **version**: Set a real version, e.g. `0.1.0` (semver).
+- [ ] **private**: Keep `"private": true` for now—it only blocks npm publish; install from GitHub still works. Remove when you want to publish to npm.
 
 ### 2.2 What the library exposes
 
@@ -101,8 +129,7 @@ Add/update:
 ```
 
 - **main / types / exports**: Point at **source** so consumers’ bundlers (Vite, etc.) compile TypeScript. No `dist/` or dual build unless you add a separate “lib” build later.
-- **files**: Publish only `src` and README; keeps package small and avoids shipping `dist/` or demo-only files if you add a lib build later.
-- Omit `"private": true` when you intend to publish or allow install from GitHub.
+- **files**: Include only `src` and README; keeps the package small. For GitHub-only install, `private: true` is fine (remove it when you publish to npm).
 
 If you prefer a **single entry** that re-exports everything:
 
@@ -119,26 +146,26 @@ Then in package.json:
 ### 2.4 Consumer dependencies (peer / optional)
 
 - **tinybase**, **react**, **react-dom**, **zod**, **@inrupt/vocab-common-rdf**, **@inrupt/vocab-solid-common** are required for full app.
-- For **library** use, list them as **dependencies** so `npm install tb-solid-pod` brings them in; or list as **peerDependencies** if you want the app to supply versions (more flexible, but consumers must install them).
+- For **library** use, list them as **dependencies** so `npm install github:user/tb-solid-pod` brings them in; or list as **peerDependencies** if you want the app to supply versions (more flexible, but consumers must install them).
 
-Recommendation for simplicity: keep as **dependencies** so install-from-GitHub / npm “just works” for the demo and for apps that don’t care about version alignment. You can switch to peerDependencies later if needed.
+Recommendation for simplicity: keep as **dependencies** so `npm install github:user/tb-solid-pod` “just works” for the demo and for consuming apps. You can switch to peerDependencies later if needed.
 
 ### 2.5 Library entry file (optional but useful)
 
-- Add **`src/index.ts`** that:
+- [x] Add **`src/index.ts`** that:
   - Re-exports all public schemas (from `src/schemas/index.ts`).
   - Re-exports CLI and components you want to expose (e.g. `CliTerminal`, `createPersona`, etc.).
-- Document in README: “To use as a library, `import { createPersona, CliTerminal, ... } from 'tb-solid-pod'` (or from GitHub: `npm i github:user/tb-solid-pod`).”
+- [x] Document in README: install from GitHub (`npm i github:user/tb-solid-pod`) and example `import { createPersona, CliTerminal, ... } from 'tb-solid-pod'`.
 
 ### 2.6 Checklist (library)
 
-- [ ] `"private": true` removed (when you want it installable).
-- [ ] `version` set (e.g. `0.1.0`).
-- [ ] `description`, `keywords`, `author`, `license` set.
-- [ ] `main`, `types`, `exports` point at source entry (e.g. `src/index.ts`).
-- [ ] `files` includes `src` and `README.md`.
-- [ ] (Optional) `src/index.ts` added and re-exports public API.
-- [ ] README documents: install from npm or GitHub, and example `import` for library use.
+- [x] `"private": true` kept for now (GitHub-only install; remove when you publish to npm).
+- [x] `version` set (e.g. `0.1.0`).
+- [x] `description`, `keywords`, `author`, `license` set.
+- [x] `main`, `types`, `exports` point at source entry (e.g. `src/index.ts`).
+- [x] `files` includes `src` and `README.md`.
+- [x] (Optional) `src/index.ts` added and re-exports public API.
+- [x] README documents: install from GitHub and example `import` for library use.
 
 ---
 
@@ -150,10 +177,10 @@ Deploy the built Vite app so visitors can use it at `https://<username>.github.i
 
 GitHub Pages serves project sites from `/<repo>/`, so assets must use that base.
 
-- In **`vite.config.js`** (or `vite.config.ts`), set **`base`** to the repo name with leading and trailing slash:
+- [ ] In **`vite.config.js`** (or `vite.config.ts`), set **`base`** to the repo name with leading and trailing slash:
   - `base: '/tb-solid-pod/'` (replace with actual repo name if different).
-- Rebuild: `npm run build`. Check that `dist/index.html` references assets like `/tb-solid-pod/assets/...` (not `/assets/...`).
-- Optional: use an env variable so local dev keeps `base: '/'` and CI sets `base: '/repo-name/'` for the Pages build.
+- [ ] Rebuild: `npm run build`. Check that `dist/index.html` references assets like `/tb-solid-pod/assets/...` (not `/assets/...`).
+- [ ] Optional: use an env variable so local dev keeps `base: '/'` and CI sets `base: '/repo-name/'` for the Pages build.
 
 ### 3.2 Build output
 
@@ -172,7 +199,7 @@ GitHub Pages serves project sites from `/<repo>/`, so assets must use that base.
 
 Add a workflow that builds and deploys to GitHub Pages. For example:
 
-- **Trigger**: push to `main` (or only when `dist/` or source changes, if you prefer).
+- [ ] **Trigger**: push to `main` (or only when `dist/` or source changes, if you prefer).
 - **Steps**:
   1. Checkout repo.
   2. Setup Node (e.g. `actions/setup-node` with version from `.nvmrc` or fixed `20`).
@@ -184,8 +211,8 @@ Result: every push to `main` (or chosen branch) updates the live demo.
 
 ### 3.5 README and base path
 
-- In README, add a **“Try it”** or **“Live demo”** link at the top or in Getting Started: `https://<username>.github.io/<repo>/`.
-- If repo is renamed, update `base` in Vite config and the README link.
+- [ ] In README, add a **“Try it”** or **“Live demo”** link at the top or in Getting Started: `https://<username>.github.io/<repo>/`.
+- [ ] If repo is renamed, update `base` in Vite config and the README link.
 
 ### 3.6 Checklist (GitHub Pages)
 
@@ -201,24 +228,25 @@ Result: every push to `main` (or chosen branch) updates the live demo.
 
 ### 4.1 Create the repo on GitHub
 
-- On GitHub: **Create a new repository** (e.g. `tb-solid-pod`).
+- [x] On GitHub: **Create a new repository** (e.g. `tb-solid-pod`).
   - Choose owner (your user or org).
   - Set repo name (this becomes the path in GitHub Pages URL: `https://<owner>.github.io/<repo>/`).
   - **Do not** add a README, .gitignore, or license yet if you already have them locally (avoids merge conflicts).
   - Default branch: **main**.
-- Note the repo URL (e.g. `https://github.com/<owner>/<repo>.git`); you will need the repo name for `base` in Vite and for the “Live demo” link.
+  - **Public vs private**: The repo can stay **private** for now. Make it public when you want others to install from GitHub (`npm install github:user/tb-solid-pod`) or when you want the Live demo URL to be openly shareable.
+- [x] Note the repo URL (e.g. `https://github.com/<owner>/<repo>.git`); you will need the repo name for `base` in Vite and for the “Live demo” link.
 
 ### 4.2 Repo settings
 
-- **Description**: e.g. “Browser-based Solid-style data pod with TinyBase – personas, contacts, groups, type indexes, WebID profile. Runnable demo + use as library.”
-- **Topics/tags**: e.g. `solid`, `tinybase`, `pod`, `webid`, `linked-data`, `react`, `typescript`.
-- **License**: Ensure LICENSE file exists (AGPL-3.0) and matches `package.json` “license”.
+- [ ] **Description**: e.g. “Browser-based Solid-style data pod with TinyBase – personas, contacts, groups, type indexes, WebID profile. Runnable demo + use as library.”
+- [ ] **Topics/tags**: e.g. `solid`, `tinybase`, `pod`, `webid`, `linked-data`, `react`, `typescript`.
+- [x] **License**: Ensure LICENSE file exists (AGPL-3.0) and matches `package.json` “license”.
 
 ### 4.3 README for GitHub visitors
 
-- First paragraph: what the project is, that it’s **runnable on checkout** and **usable as a library**.
-- **Getting Started** – clone, install, run (already there).
-- **Library usage** – one short section: install from GitHub (or npm) and a minimal import example; link to “Integration Guide” for details.
+- [x] First paragraph: what the project is, that it’s **runnable on checkout** and **usable as a library**.
+- [x] **Getting Started** – clone, install, run (already there).
+- [ ] **Library usage** – one short section: install from GitHub (or npm) and a minimal import example; link to “Integration Guide” for details.
 
 ### 4.4 GitHub Actions
 
@@ -228,44 +256,18 @@ Result: every push to `main` (or chosen branch) updates the live demo.
 
 ### 4.5 Checklist (GitHub)
 
-- [ ] Repo created on GitHub; default branch set (e.g. main).
+- [x] Repo created on GitHub; default branch set (e.g. main).
 - [ ] Description and topics set.
-- [ ] LICENSE file present; package.json “license” matches.
+- [x] LICENSE file present; package.json “license” matches.
 - [ ] README explains runnable app + library use + “Live demo” link.
 - [ ] GitHub Actions Pages workflow added; deploys `dist/` to `gh-pages` on push to main.
 - [ ] Settings → Pages: source = branch `gh-pages`, root.
 
 ---
 
-## 5. Implementation Order
+## 5. Implementation order
 
-1. **GitHub-ready** (do this first)
-   - Create a new repository on GitHub (e.g. `tb-solid-pod`) under your user or org. Do not initialize with README / .gitignore / license if you already have them locally.
-   - Push your code: add remote (`git remote add origin https://github.com/<owner>/<repo>.git`), push `main`.
-   - Ensure LICENSE is in the repo. Set the repo description and topics in Settings.
-   - Note the repo name; you will use it for Vite `base` and the Live demo URL in later steps.
-
-2. **Runnable on checkout**
-   - Verify `npm install` and `npm run dev` on clean clone.
-   - (Optional) Add `.nvmrc`; mention Node in README.
-
-3. **Library packaging**
-   - Add or adjust `src/index.ts` as the public entry; re-export schemas, CLI, and components you want public.
-   - Update `package.json`: remove `private`, set `version`, `description`, `keywords`, `main`, `types`, `exports`, `files`.
-   - In README, add a short “Use as a library” section (install from GitHub/npm + one import example).
-
-4. **GitHub Pages: Vite base + workflow**
-   - Set `base: '/<repo>/'` in `vite.config.js` (use the repo name from step 1).
-   - Add `.github/workflows/pages.yml` that builds with this base and deploys `dist/` to `gh-pages` (e.g. `peaceiris/actions-gh-pages`). This workflow is required.
-   - Add “Live demo” / “Try it” link in README: `https://<owner>.github.io/<repo>/`.
-
-5. **Enable Pages and verify**
-   - In repo Settings → Pages: choose “Deploy from a branch”; branch `gh-pages`, folder root. Save.
-   - Push your changes (workflow and Vite base). The workflow will run and create/update `gh-pages`; the site will appear at the Pages URL.
-
-6. **Publish (optional)**
-   - To publish to npm: add npm account, `npm login`, `npm publish`. Optionally automate with a release workflow.
-   - To use only from GitHub: document `npm install github:username/tb-solid-pod` (or `user/repo#branch`).
+Work through **sections 1 → 4** in order. Track progress using the **checklists** at the end of each section (1.4, 2.6, 3.6, 4.5).
 
 ---
 

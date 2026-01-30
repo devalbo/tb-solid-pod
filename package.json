@@ -1,9 +1,24 @@
 {
   "name": "tb-solid-pod",
   "private": true,
-  "version": "0.0.0",
+  "version": "0.1.0",
+  "description": "Browser-based Solid-style data pod with TinyBase: personas, contacts, groups, type indexes, WebID profile.",
   "license": "AGPL-3.0-or-later",
   "type": "module",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": {
+      "import": "./src/index.ts",
+      "types": "./src/index.ts"
+    }
+  },
+  "files": [
+    "src",
+    "README.md"
+  ],
+  "keywords": ["solid", "tinybase", "pod", "webid", "linked-data", "react", "typescript"],
+  "author": "",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
