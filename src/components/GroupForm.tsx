@@ -139,7 +139,7 @@ const GroupForm: React.FC<GroupFormProps> = ({
       }
 
       // Store the validated group
-      store.setRow(TABLE_NAME, groupId, updates);
+      store.setRow(TABLE_NAME, groupId, updates as import('tinybase').Row);
     } else {
       // Create new group using factory function
       const group = createGroup(inputResult.data, baseUrl);
@@ -152,10 +152,11 @@ const GroupForm: React.FC<GroupFormProps> = ({
         return;
       }
 
-      const id = group['@id'];
+      const rawId = group['@id'];
+      const id = typeof rawId === 'string' ? rawId : String((rawId as { '@id'?: string })?.['@id'] ?? '');
 
       // Store the group
-      store.setRow(TABLE_NAME, id, group as Record<string, unknown>);
+      store.setRow(TABLE_NAME, id, group as import('tinybase').Row);
     }
 
     onSave();

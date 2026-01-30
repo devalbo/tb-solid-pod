@@ -1,4 +1,3 @@
-import React from 'react';
 import type { Command } from '../types';
 import { parseCliArgs, getOptionBoolean } from '../parse-args';
 import {
@@ -38,7 +37,7 @@ export const exportCommand: Command = {
       );
     } else {
       // Fallback: show the JSON
-      const json = exportStoreAsJson(store, pretty);
+      const json = exportStoreAsJson(store, { pretty });
       addOutput(
         <div>
           <div style={{ color: '#ff6b6b', marginBottom: 4 }}>

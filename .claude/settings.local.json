@@ -3,7 +3,8 @@
     "allow": [
       "Bash(npm run build:*)",
       "WebFetch(domain:localhost)",
-      "Bash(npx tsc:*)"
+      "Bash(npx tsc:*)",
+      "Bash(npm run test:run:*)"
     ]
   }
 }

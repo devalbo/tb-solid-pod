@@ -438,6 +438,54 @@ export|import                 Data portability
 clear                         Clear terminal
 ```
 
+## Testing
+
+- **Unit tests (Vitest):** `npm test` or `npm run test:run`; coverage: `npm run test:coverage`
+- **BDD / E2E (Playwright):** Generate specs from Gherkin, then run Playwright:
+  ```bash
+  npx bddgen && npx playwright test
+  ```
+  Or use the scripts: `npm run test:e2e` or `npm run test:bdd` (same thing). With browser visible: `npm run test:e2e:headed`.
+
+  **Start the server manually (recommended if E2E hangs):** In one terminal start the app; in another run the tests. Playwright will reuse the existing server on port 5173 (`reuseExistingServer` when not in CI).
+  1. **Terminal 1:** `npm run dev` — leave it running (app at http://localhost:5173).
+  2. **Terminal 2:** `npx bddgen && npx playwright test` (or `npm run test:e2e`).
+
+  If you use a different port for the app, set `E2E_BASE_URL` so Playwright hits the right URL (e.g. `E2E_BASE_URL=http://localhost:3000 npx playwright test` after starting the app on 3000).
+
+### Try the BDD steps manually
+
+You can run through the BDD scenarios by hand to verify behavior without Playwright:
+
+1. **App shell**
+   - Open the app (`npm run dev`, then http://localhost:5173).
+   - Check the browser tab title contains `tb-solid-pod`.
+   - Click the **Terminal** tab and confirm you see the CLI welcome message or prompt.
+
+2. **CLI contacts**
+   - Go to the **Terminal** tab.
+   - Run: `contact add JohnDoe --email=john@example.com` → you should see **Added contact: JohnDoe**.
+   - Run: `contact add JaneSmith` then `contact list` → you should see **JaneSmith** in the list.
+   - Run: `contact` → you should see **Usage: contact**, **Subcommands**, **add**, and **list** in the help.
+
+3. **CLI personas**
+   - In the Terminal, run: `persona create TestUser --email=test@example.com` → you should see **Created persona: TestUser**.
+   - Run: `persona list` → you should see **Persona** (or personas list / empty message).
+   - Run: `persona` → you should see **Usage: persona**, **Subcommands**, and **create** in the help.
+
+4. **CLI navigation**
+   - Run: `help` → you should see **help**, **contact**, **persona** in the output.
+   - Run: `contact list` then `clear` → terminal output should clear.
+
+5. **UI tabs**
+   - Click **Contacts** → you should see the contacts view (list or empty state).
+   - Click **Personas** → you should see the personas view.
+   - Confirm **Personas**, **Contacts**, and **Terminal** tabs are visible.
+
+Feature files live under `tests/features/` (e.g. `cli-contacts.feature`, `app.feature`). Step definitions are in `tests/features/steps/`. After changing `.feature` or steps, run `npx bddgen` before `npx playwright test`.
+
+For more detail (where results are stored, unit/BDD/Storybook guidelines), see **[docs/testing/](docs/testing/README.md)**. For coding standards (strict TypeScript, short functions, simple components), see **[docs/CODING_GUIDELINES.md](docs/CODING_GUIDELINES.md)**.
+
 ## License
 
 AGPL-3.0-or-later. See [LICENSE](LICENSE).

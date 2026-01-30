@@ -230,7 +230,7 @@ const ContactForm: React.FC<ContactFormProps> = ({
       }
 
       // Store the validated contact
-      store.setRow(TABLE_NAME, contactId, updates);
+      store.setRow(TABLE_NAME, contactId, updates as import('tinybase').Row);
     } else {
       // Create new contact using factory function
       const contact = createContact(inputResult.data, baseUrl);
@@ -243,10 +243,11 @@ const ContactForm: React.FC<ContactFormProps> = ({
         return;
       }
 
-      const id = contact['@id'];
+      const rawId = contact['@id'];
+      const id = typeof rawId === 'string' ? rawId : String((rawId as { '@id'?: string })?.['@id'] ?? '');
 
       // Store the contact
-      store.setRow(TABLE_NAME, id, contact as Record<string, unknown>);
+      store.setRow(TABLE_NAME, id, contact as import('tinybase').Row);
     }
 
     onSave();

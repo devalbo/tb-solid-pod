@@ -1,6 +1,5 @@
-import React from 'react';
 import type { Command, CliContext } from '../types';
-import { DCTERMS, POSIX } from '@inrupt/vocab-common-rdf';
+import { DCTERMS } from '@inrupt/vocab-common-rdf';
 import { SCHEMA } from '../../schemas/file';
 
 const PERSONAS_TABLE = 'personas';

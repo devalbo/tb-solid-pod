@@ -1,4 +1,3 @@
-import React from 'react';
 import type { Command } from '../types';
 import { parseCliArgs, getOptionString } from '../parse-args';
 
@@ -57,17 +56,17 @@ export const catCommand: Command = {
     }
 
     const body = row.body;
-    const contentType = row.contentType || 'text/plain';
+    const contentType = typeof row.contentType === 'string' ? row.contentType : 'text/plain';
 
     // Handle images
-    if (contentType.startsWith('image/')) {
+    if (typeof contentType === 'string' && contentType.startsWith('image/')) {
       addOutput(
         <div>
           <div style={{ color: '#888', marginBottom: 4 }}>
             [{contentType}] (base64 image data)
           </div>
           <img
-            src={`data:${contentType};base64,${body}`}
+            src={`data:${contentType};base64,${typeof body === 'string' ? body : ''}`}
             alt={path}
             style={{ maxWidth: 300, maxHeight: 200 }}
           />

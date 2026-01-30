@@ -7,15 +7,11 @@
 
 import type { Store } from 'tinybase';
 import {
-  SOLID,
   COMMON_TYPES,
-  type TypeRegistration,
   type TypeIndexType,
-  createTypeRegistration,
   getClassDisplayName,
   resolveClassIri,
 } from '../schemas/typeIndex';
-import { toArray } from '../schemas/base';
 
 // ============================================================================
 // Constants
@@ -57,7 +53,7 @@ export function getAllTypeRegistrations(store: Store): TypeRegistrationDisplay[]
   const table = store.getTable(TYPE_INDEXES_TABLE) || {};
   const registrations: TypeRegistrationDisplay[] = [];
 
-  for (const [rowId, row] of Object.entries(table)) {
+  for (const [_rowId, row] of Object.entries(table)) {
     const forClass = row.forClass as string;
     if (!forClass) continue;
 

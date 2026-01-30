@@ -1,4 +1,3 @@
-import React from 'react';
 import type { Command } from '../types';
 import { parseCliArgs, getOptionString } from '../parse-args';
 import { VCARD } from '@inrupt/vocab-common-rdf';
@@ -12,13 +11,6 @@ const TABLE_NAME = 'contacts';
  */
 const getContactName = (record: Record<string, unknown>): string => {
   return (record[VCARD.fn] as string) || '(unnamed)';
-};
-
-/**
- * Get the contact ID from the record
- */
-const getContactId = (record: Record<string, unknown>): string => {
-  return (record['@id'] as string) || '';
 };
 
 /**
@@ -187,10 +179,10 @@ const contactAddExecute: Command['execute'] = (args, context) => {
 
   // Create the contact using the factory function
   const contact = createContact(input, baseUrl);
-  const id = contact['@id'];
+  const id = typeof contact['@id'] === 'string' ? contact['@id'] : String((contact['@id'] as { '@id'?: string })?.['@id'] ?? '');
 
   // Store the contact
-  store.setRow(TABLE_NAME, id, contact as Record<string, unknown>);
+  store.setRow(TABLE_NAME, id, contact as import('tinybase').Row);
 
   addOutput(
     <div>

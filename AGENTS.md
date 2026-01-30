@@ -21,7 +21,7 @@ Context for AI assistants working on this repo.
 | `src/utils/` | settings, storeExport, typeIndex helpers, validation. |
 | `src/cli/` | CliTerminal, command registry, parse-args, types. |
 | `src/components/` | PersonaList/Form, ContactList/Form, GroupList/Form, MembershipManager, FileMetadataPanel. |
-| `docs/` | DESIGN.md, IMPLEMENTATION_PLAN.md. |
+| `docs/` | CODING_GUIDELINES.md, DESIGN.md, IMPLEMENTATION_PLAN.md, testing/. |
 
 ## What’s done so far
 
@@ -71,5 +71,6 @@ When someone wants to use this in an app they’re working on, point them to the
 ## Useful docs
 
 - **README.md** – Overview, limitations, Use as a library (Zod + JSON Schema), Integration Guide (copy-paste vs install-from-GitHub), Getting Started (Node note, Live demo + 404 troubleshooting), CLI command list.  
+- **docs/CODING_GUIDELINES.md** – TypeScript (strict types, no sloppy types), short functions, simple React components, naming, file length.  
 - **docs/IMPLEMENTATION_PLAN.md** – Feature/phases.  
 - **DESIGN.md** – Design notes.

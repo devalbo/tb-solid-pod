@@ -202,7 +202,7 @@ export function importStoreFromJson(
 
     // Import validated tables
     const tablesToImport = skipInvalid ? validTables : data.tables;
-    store.setTables(tablesToImport);
+    store.setTables(tablesToImport as import('tinybase').Tables);
 
     // Count imported rows
     let importedRows = 0;
@@ -212,7 +212,7 @@ export function importStoreFromJson(
 
     // Import values if present
     if (data.values && Object.keys(data.values).length > 0) {
-      store.setValues(data.values);
+      store.setValues(data.values as import('tinybase').Values);
     }
 
     // Return success with any warnings about skipped rows

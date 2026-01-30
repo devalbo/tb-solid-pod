@@ -1,6 +1,5 @@
-import React from 'react';
 import type { Command, CliContext } from '../types';
-import { parseCliArgs, getOptionString, getOptionBoolean } from '../parse-args';
+import { parseCliArgs, getOptionBoolean } from '../parse-args';
 import {
   getAllTypeRegistrations,
   getTypeRegistrationsByType,
@@ -14,7 +13,7 @@ import { resolveClassIri, type TypeIndexType } from '../../schemas/typeIndex';
 /**
  * typeindex list - List all type registrations
  */
-const typeindexListExecute = (args: string[], context: CliContext) => {
+const typeindexListExecute = (_args: string[], context: CliContext) => {
   const { store, addOutput } = context;
   const registrations = getAllTypeRegistrations(store);
 

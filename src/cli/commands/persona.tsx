@@ -16,13 +16,6 @@ const getPersonaName = (record: Record<string, unknown>): string => {
 };
 
 /**
- * Get the persona ID from the record
- */
-const getPersonaId = (record: Record<string, unknown>): string => {
-  return (record['@id'] as string) || '';
-};
-
-/**
  * persona - Main persona command with subcommands
  */
 export const personaCommand: Command = {
@@ -161,10 +154,11 @@ const personaCreateExecute: Command['execute'] = (args, context) => {
 
   // Create the persona using the factory function
   const persona = createPersona(input, baseUrl);
-  const id = persona['@id'];
+  const rawId = persona['@id'];
+  const id = typeof rawId === 'string' ? rawId : String((rawId as { '@id'?: string })?.['@id'] ?? '');
 
   // Store the persona - flatten the JSON-LD for TinyBase
-  store.setRow(TABLE_NAME, id, persona as Record<string, unknown>);
+  store.setRow(TABLE_NAME, id, persona as import('tinybase').Row);
 
   // If this is the first persona, make it default
   const personas = store.getTable(TABLE_NAME) || {};
@@ -481,7 +475,7 @@ const personaSetInboxExecute: Command['execute'] = (args, context) => {
     return;
   }
 
-  store.setCell(TABLE_NAME, personaId, LDP.inbox, { '@id': urlArg });
+  store.setCell(TABLE_NAME, personaId, LDP.inbox, { '@id': urlArg } as unknown as Parameters<typeof store.setCell>[3]);
   addOutput(
     <span style={{ color: '#2ecc71' }}>Set inbox for {getPersonaName(store.getRow(TABLE_NAME, personaId) as Record<string, unknown>)}: {urlArg}</span>,
     'success'
@@ -515,7 +509,7 @@ const personaSetTypeIndexExecute: Command['execute'] = (args, context) => {
   }
 
   const key = isPrivate ? SOLID.privateTypeIndex : SOLID.publicTypeIndex;
-  store.setCell(TABLE_NAME, personaId, key, { '@id': urlArg });
+  store.setCell(TABLE_NAME, personaId, key, { '@id': urlArg } as unknown as Parameters<typeof store.setCell>[3]);
   addOutput(
     <span style={{ color: '#2ecc71' }}>
       Set {isPrivate ? 'private' : 'public'} type index for {getPersonaName(store.getRow(TABLE_NAME, personaId) as Record<string, unknown>)}: {urlArg}

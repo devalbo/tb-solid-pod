@@ -215,10 +215,10 @@ const groupCreateExecute: Command['execute'] = (args, context) => {
 
   // Create the group using the factory function
   const group = createGroup(input, baseUrl);
-  const id = group['@id'];
+  const id = typeof group['@id'] === 'string' ? group['@id'] : String((group['@id'] as { '@id'?: string })?.['@id'] ?? '');
 
   // Store the group
-  store.setRow(TABLE_NAME, id, group as Record<string, unknown>);
+  store.setRow(TABLE_NAME, id, group as import('tinybase').Row);
 
   addOutput(
     <div>
@@ -449,7 +449,7 @@ const groupDeleteExecute: Command['execute'] = (args, context) => {
  */
 const groupAddMemberExecute: Command['execute'] = (args, context) => {
   const { store, addOutput } = context;
-  const { positional, options } = parseCliArgs(args);
+  const { positional } = parseCliArgs(args);
   const [groupArg, contactArg] = positional;
 
   if (!groupArg || !contactArg) {

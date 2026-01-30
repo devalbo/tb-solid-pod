@@ -419,7 +419,7 @@ export default function App() {
       const p = new VirtualPod(s, i);
       const persister = createLocalPersister(s, STORAGE_KEY);
       persisterRef.current = persister;
-      await persister.load(getDefaultContent());
+      await persister.load(getDefaultContent() as Parameters<LocalPersister['load']>[0]);
       initializeDefaultTypeRegistrations(s, BASE_URL);
       await persister.startAutoSave();
       setApp({ store: s, indexes: i, pod: p, ready: true });
@@ -458,7 +458,7 @@ export default function App() {
   const [editingGroupId, setEditingGroupId] = useState<string | undefined>();
   const [managingMembersGroupId, setManagingMembersGroupId] = useState<string | undefined>();
 
-  const row = useRow('resources', currentUrl, store) as ResourceRow | undefined;
+  const row = useRow('resources', currentUrl, store ?? undefined) as ResourceRow | undefined;
   const isContainer = row?.type === 'Container';
   const parentUrl = row?.parentId;
 

@@ -126,7 +126,7 @@ export function getAllSettings(store: Store): Partial<SettingsSchema> {
   for (const key of Object.values(SETTINGS_KEYS)) {
     const value = store.getValue(key);
     if (value !== undefined) {
-      settings[key] = value as SettingsSchema[typeof key];
+      (settings as Record<string, string | number | boolean | undefined | null>)[key] = value;
     }
   }
   return settings;

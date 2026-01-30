@@ -231,7 +231,7 @@ const PersonaForm: React.FC<PersonaFormProps> = ({
       }
 
       // Store the validated persona
-      store.setRow(TABLE_NAME, personaId, updates);
+      store.setRow(TABLE_NAME, personaId, updates as import('tinybase').Row);
     } else {
       // Create new persona using factory function (already generates valid structure)
       const persona = createPersona(inputResult.data, baseUrl);
@@ -244,10 +244,11 @@ const PersonaForm: React.FC<PersonaFormProps> = ({
         return;
       }
 
-      const id = persona['@id'];
+      const rawId = persona['@id'];
+      const id = typeof rawId === 'string' ? rawId : String((rawId as { '@id'?: string })?.['@id'] ?? '');
 
       // Store the persona
-      store.setRow(TABLE_NAME, id, persona as Record<string, unknown>);
+      store.setRow(TABLE_NAME, id, persona as import('tinybase').Row);
 
       // If this is the first persona, make it default
       const personas = store.getTable(TABLE_NAME) || {};

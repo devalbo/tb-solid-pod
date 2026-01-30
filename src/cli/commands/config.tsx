@@ -1,7 +1,5 @@
-import React from 'react';
 import type { Command, CliContext } from '../types';
 import {
-  SETTINGS_KEYS,
   SETTINGS_META,
   SETTINGS_DEFAULTS,
   getSetting,
@@ -18,7 +16,7 @@ import {
 /**
  * config list - Show all settings
  */
-const listSubcommand = (args: string[], context: CliContext) => {
+const listSubcommand = (_args: string[], context: CliContext) => {
   const { store, addOutput } = context;
   const keys = getSettingsKeys();
 

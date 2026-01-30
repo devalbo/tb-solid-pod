@@ -10,13 +10,11 @@
 
 import { z } from 'zod';
 import {
-  IRI,
   NodeRef,
   JsonLdBase,
   JsonLdContext,
   oneOrMany,
   POD_CONTEXT,
-  nowISO,
 } from './base';
 
 // ============================================================================
