@@ -24,10 +24,5 @@ export default defineConfig({
   projects: [
     { name: 'chromium', use: { ...devices['Desktop Chrome'] } },
   ],
-  webServer: {
-    command: 'npm run dev',
-    url: process.env.E2E_BASE_URL || 'http://localhost:5173',
-    reuseExistingServer: !process.env.CI,
-    timeout: 60_000,
-  },
+  // No webServer: start the dev server yourself (e.g. npm run dev) before running BDD/E2E tests.
 });

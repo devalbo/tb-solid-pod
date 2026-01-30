@@ -25,7 +25,7 @@ This library provides a complete foundation for **user-owned social data** in we
 ### Groups & Organizations
 - Three group types: Organizations, Teams, and informal Groups
 - W3C Organization Ontology (org:) vocabulary
-- Membership management with contact linking
+- Membership management: add contacts and your own personas to groups
 - Group metadata: name, description, URL, logo
 
 ### File Storage with Metadata
@@ -47,7 +47,7 @@ This library provides a complete foundation for **user-owned social data** in we
 - Persona schema includes optional `solid:publicTypeIndex` and `solid:privateTypeIndex` links
 
 ### Dual Interface
-- **Graphical UI**: Tab-based navigation with forms and lists
+- **Graphical UI**: Tab-based navigation with forms and lists. Personas, Contacts, and Groups tabs each have a **Create random** button that opens the form with sample data for quick try-out.
 - **CLI Terminal**: Full command-line interface for power users
 
 ## Benefits for Social Applications
@@ -441,13 +441,14 @@ clear                         Clear terminal
 ## Testing
 
 - **Unit tests (Vitest):** `npm test` or `npm run test:run`; coverage: `npm run test:coverage`
+- **Storybook:** `npm run storybook` → http://localhost:6006 (component development). See [docs/testing/](docs/testing/README.md).
 - **BDD / E2E (Playwright):** Generate specs from Gherkin, then run Playwright:
   ```bash
   npx bddgen && npx playwright test
   ```
   Or use the scripts: `npm run test:e2e` or `npm run test:bdd` (same thing). With browser visible: `npm run test:e2e:headed`.
 
-  **Start the server manually (recommended if E2E hangs):** In one terminal start the app; in another run the tests. Playwright will reuse the existing server on port 5173 (`reuseExistingServer` when not in CI).
+  **Start the server first (required):** The BDD/E2E command does not start the dev server. In one terminal start the app; in another run the tests.
   1. **Terminal 1:** `npm run dev` — leave it running (app at http://localhost:5173).
   2. **Terminal 2:** `npx bddgen && npx playwright test` (or `npm run test:e2e`).
 

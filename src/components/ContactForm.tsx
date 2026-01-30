@@ -15,6 +15,8 @@ interface ContactFormProps {
   store: Store;
   baseUrl: string;
   contactId?: string; // If provided, we're editing; otherwise creating
+  /** Pre-fill form when creating (e.g. "Add random" demo). */
+  initialValues?: Partial<FormData>;
   onSave: () => void;
   onCancel: () => void;
 }
@@ -53,16 +55,19 @@ const ContactForm: React.FC<ContactFormProps> = ({
   store,
   baseUrl,
   contactId,
+  initialValues,
   onSave,
   onCancel,
 }) => {
   const isEditing = !!contactId;
   const [form, setForm] = useState<FormData>(emptyForm);
   const [error, setError] = useState<string | null>(null);
+  const appliedInitialRef = React.useRef(false);
 
   // Load existing contact data when editing
   useEffect(() => {
     if (contactId) {
+      appliedInitialRef.current = false;
       const record = store.getRow(TABLE_NAME, contactId) as Record<string, unknown>;
       if (record) {
         const email = record[VCARD.hasEmail] as string | undefined;
@@ -89,6 +94,15 @@ const ContactForm: React.FC<ContactFormProps> = ({
       }
     }
   }, [contactId, store]);
+
+  // Pre-fill form when creating with initialValues (e.g. "Add random" demo)
+  useEffect(() => {
+    if (!contactId && initialValues && !appliedInitialRef.current) {
+      setForm((prev) => ({ ...emptyForm, ...prev, ...initialValues }));
+      appliedInitialRef.current = true;
+    }
+    if (contactId) appliedInitialRef.current = false;
+  }, [contactId, initialValues]);
 
   const handleChange = (field: keyof FormData) => (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>

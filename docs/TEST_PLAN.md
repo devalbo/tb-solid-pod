@@ -107,7 +107,7 @@
 - @playwright/test, playwright-bdd; `npx playwright install` (chromium)
 
 ### Configuration
-- `playwright.config.ts` — Playwright config with defineBddConfig, webServer (port 5173), baseURL
+- `playwright.config.ts` — Playwright config with defineBddConfig, baseURL; no webServer (start dev server manually)
 
 ### Feature Files and Steps
 - `tests/features/*.feature` — app, cli-contacts, cli-personas, cli-navigation, contacts, personas

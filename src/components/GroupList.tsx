@@ -13,6 +13,8 @@ interface GroupListProps {
   onDelete: (id: string) => void;
   onManageMembers: (id: string) => void;
   onCreate: () => void;
+  /** Open create form with random demo values pre-filled. */
+  onCreateRandom?: () => void;
   selectedId?: string;
 }
 
@@ -64,6 +66,7 @@ const GroupList: React.FC<GroupListProps> = ({
   onDelete,
   onManageMembers,
   onCreate,
+  onCreateRandom,
   selectedId,
 }) => {
   const groups = useTable(TABLE_NAME, store) as Record<string, Record<string, unknown>>;
@@ -81,9 +84,16 @@ const GroupList: React.FC<GroupListProps> = ({
     <div style={styles.container}>
       <div style={styles.header}>
         <h3 style={styles.title}>Groups</h3>
-        <button style={styles.createBtn} onClick={onCreate}>
-          + New Group
-        </button>
+        <div style={styles.headerActions}>
+          {onCreateRandom && (
+            <button style={styles.randomBtn} onClick={onCreateRandom} title="Open form with random demo values">
+              Create random
+            </button>
+          )}
+          <button style={styles.createBtn} onClick={onCreate}>
+            + New Group
+          </button>
+        </div>
       </div>
 
       <div style={styles.toolbar}>
@@ -219,6 +229,21 @@ const styles: Record<string, CSSProperties> = {
     padding: '15px',
     background: '#fafafa',
     borderBottom: '1px solid #eee',
+  },
+  headerActions: {
+    display: 'flex',
+    gap: 8,
+    alignItems: 'center',
+  },
+  randomBtn: {
+    padding: '8px 14px',
+    background: '#fff',
+    color: '#555',
+    border: '1px solid #ccc',
+    borderRadius: 6,
+    cursor: 'pointer',
+    fontWeight: 500,
+    fontSize: 13,
   },
   title: {
     margin: 0,

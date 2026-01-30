@@ -16,6 +16,8 @@ interface GroupFormProps {
   store: Store;
   baseUrl: string;
   groupId?: string; // If provided, we're editing; otherwise creating
+  /** Pre-fill form when creating (e.g. "Add random" demo). */
+  initialValues?: Partial<FormData>;
   onSave: () => void;
   onCancel: () => void;
 }
@@ -48,16 +50,19 @@ const GroupForm: React.FC<GroupFormProps> = ({
   store,
   baseUrl,
   groupId,
+  initialValues,
   onSave,
   onCancel,
 }) => {
   const isEditing = !!groupId;
   const [form, setForm] = useState<FormData>(emptyForm);
   const [error, setError] = useState<string | null>(null);
+  const appliedInitialRef = React.useRef(false);
 
   // Load existing group data when editing
   useEffect(() => {
     if (groupId) {
+      appliedInitialRef.current = false;
       const record = store.getRow(TABLE_NAME, groupId) as Record<string, unknown>;
       if (record) {
         setForm({
@@ -70,6 +75,15 @@ const GroupForm: React.FC<GroupFormProps> = ({
       }
     }
   }, [groupId, store]);
+
+  // Pre-fill form when creating with initialValues (e.g. "Add random" demo)
+  useEffect(() => {
+    if (!groupId && initialValues && !appliedInitialRef.current) {
+      setForm((prev) => ({ ...emptyForm, ...prev, ...initialValues }));
+      appliedInitialRef.current = true;
+    }
+    if (groupId) appliedInitialRef.current = false;
+  }, [groupId, initialValues]);
 
   const handleChange = (field: keyof FormData) => (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>

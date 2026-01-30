@@ -1,10 +1,11 @@
 import React, { CSSProperties } from 'react';
 import { useTable } from 'tinybase/ui-react';
 import { Store } from 'tinybase';
-import { VCARD } from '@inrupt/vocab-common-rdf';
+import { FOAF, VCARD } from '@inrupt/vocab-common-rdf';
 
 const GROUPS_TABLE = 'groups';
 const CONTACTS_TABLE = 'contacts';
+const PERSONAS_TABLE = 'personas';
 
 interface MembershipManagerProps {
   store: Store;
@@ -44,6 +45,31 @@ const getMemberIds = (record: Record<string, unknown>): string[] => {
   return [];
 };
 
+/** Resolve display name and optional email for a member ID (contact or persona). */
+function getMemberDisplay(
+  memberId: string,
+  contacts: Record<string, Record<string, unknown>>,
+  personas: Record<string, Record<string, unknown>>
+): { name: string; email?: string; isPersona: boolean } {
+  const contact = contacts[memberId];
+  if (contact) {
+    return {
+      name: (contact[VCARD.fn] as string) || '(unnamed)',
+      email: contact[VCARD.hasEmail] as string | undefined,
+      isPersona: false,
+    };
+  }
+  const persona = personas[memberId];
+  if (persona) {
+    return {
+      name: (persona[FOAF.name] as string) || '(unnamed)',
+      email: persona[VCARD.hasEmail] as string | undefined,
+      isPersona: true,
+    };
+  }
+  return { name: memberId, isPersona: false };
+}
+
 const MembershipManager: React.FC<MembershipManagerProps> = ({
   store,
   groupId,
@@ -51,22 +77,25 @@ const MembershipManager: React.FC<MembershipManagerProps> = ({
 }) => {
   const groups = useTable(GROUPS_TABLE, store) as Record<string, Record<string, unknown>>;
   const contacts = useTable(CONTACTS_TABLE, store) as Record<string, Record<string, unknown>>;
+  const personas = useTable(PERSONAS_TABLE, store) as Record<string, Record<string, unknown>>;
 
   const group = groups[groupId];
   const groupName = group ? (group[VCARD.fn] as string) || '(unnamed)' : '';
   const memberIds = group ? getMemberIds(group) : [];
 
   const contactIds = Object.keys(contacts);
-  const nonMembers = contactIds.filter(id => !memberIds.includes(id));
+  const personaIds = Object.keys(personas);
+  const nonMemberContacts = contactIds.filter(id => !memberIds.includes(id));
+  const nonMemberPersonas = personaIds.filter(id => !memberIds.includes(id));
 
-  const addMember = (contactId: string) => {
-    const newMembers = [...memberIds, contactId];
+  const addMember = (memberId: string) => {
+    const newMembers = [...memberIds, memberId];
     const memberRefs = newMembers.map(id => ({ '@id': id }));
     store.setCell(GROUPS_TABLE, groupId, VCARD.hasMember, JSON.stringify(memberRefs));
   };
 
-  const removeMember = (contactId: string) => {
-    const newMembers = memberIds.filter(id => id !== contactId);
+  const removeMember = (memberId: string) => {
+    const newMembers = memberIds.filter(id => id !== memberId);
     if (newMembers.length === 0) {
       store.delCell(GROUPS_TABLE, groupId, VCARD.hasMember);
     } else {
@@ -89,19 +118,17 @@ const MembershipManager: React.FC<MembershipManagerProps> = ({
           ) : (
             <div style={styles.list}>
               {memberIds.map((memberId) => {
-                const contact = contacts[memberId];
-                const name = contact
-                  ? (contact[VCARD.fn] as string) || '(unnamed)'
-                  : memberId;
-                const email = contact?.[VCARD.hasEmail] as string | undefined;
-
+                const { name, email, isPersona } = getMemberDisplay(memberId, contacts, personas);
                 return (
                   <div key={memberId} style={styles.memberItem}>
                     <div style={styles.memberInfo}>
-                      <span style={styles.memberName}>👤 {name}</span>
+                      <span style={styles.memberName}>
+                        {isPersona ? '🪪' : '👤'} {name}
+                        {isPersona && <span style={styles.personaBadge}> you</span>}
+                      </span>
                       {email && (
                         <span style={styles.memberEmail}>
-                          {email.replace('mailto:', '')}
+                          {String(email).replace('mailto:', '')}
                         </span>
                       )}
                     </div>
@@ -120,17 +147,56 @@ const MembershipManager: React.FC<MembershipManagerProps> = ({
 
         <div style={styles.section}>
           <h4 style={styles.sectionTitle}>
-            Available Contacts ({nonMembers.length})
+            Your Personas ({nonMemberPersonas.length})
           </h4>
-          {nonMembers.length === 0 ? (
+          {nonMemberPersonas.length === 0 ? (
+            <div style={styles.empty}>
+              {personaIds.length === 0
+                ? 'No personas. Create personas in the Personas tab.'
+                : 'All your personas are already members.'}
+            </div>
+          ) : (
+            <div style={styles.list}>
+              {nonMemberPersonas.map((personaId) => {
+                const persona = personas[personaId];
+                const name = persona ? (persona[FOAF.name] as string) || '(unnamed)' : personaId;
+                const email = persona?.[VCARD.hasEmail] as string | undefined;
+                return (
+                  <div key={personaId} style={styles.memberItem}>
+                    <div style={styles.memberInfo}>
+                      <span style={styles.memberName}>🪪 {name}</span>
+                      {email && (
+                        <span style={styles.memberEmail}>
+                          {String(email).replace('mailto:', '')}
+                        </span>
+                      )}
+                    </div>
+                    <button
+                      style={styles.addBtn}
+                      onClick={() => addMember(personaId)}
+                    >
+                      Add
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+
+        <div style={styles.section}>
+          <h4 style={styles.sectionTitle}>
+            Contacts ({nonMemberContacts.length})
+          </h4>
+          {nonMemberContacts.length === 0 ? (
             <div style={styles.empty}>
               {contactIds.length === 0
-                ? 'No contacts available. Add contacts first.'
+                ? 'No contacts. Add contacts in the Contacts tab.'
                 : 'All contacts are already members.'}
             </div>
           ) : (
             <div style={styles.list}>
-              {nonMembers.map((contactId) => {
+              {nonMemberContacts.map((contactId) => {
                 const contact = contacts[contactId];
                 const name = contact
                   ? (contact[VCARD.fn] as string) || '(unnamed)'
@@ -143,7 +209,7 @@ const MembershipManager: React.FC<MembershipManagerProps> = ({
                       <span style={styles.memberName}>👤 {name}</span>
                       {email && (
                         <span style={styles.memberEmail}>
-                          {email.replace('mailto:', '')}
+                          {String(email).replace('mailto:', '')}
                         </span>
                       )}
                     </div>
@@ -234,6 +300,12 @@ const styles: Record<string, CSSProperties> = {
   memberName: {
     fontSize: 14,
     fontWeight: 500,
+  },
+  personaBadge: {
+    marginLeft: 6,
+    fontSize: 11,
+    color: '#666',
+    fontWeight: 400,
   },
   memberEmail: {
     marginLeft: 8,

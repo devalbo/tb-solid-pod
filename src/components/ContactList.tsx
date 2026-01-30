@@ -11,6 +11,8 @@ interface ContactListProps {
   onEdit: (id: string) => void;
   onDelete: (id: string) => void;
   onCreate: () => void;
+  /** Open create form with random demo values pre-filled. */
+  onCreateRandom?: () => void;
   selectedId?: string;
 }
 
@@ -28,6 +30,7 @@ const ContactList: React.FC<ContactListProps> = ({
   onEdit,
   onDelete,
   onCreate,
+  onCreateRandom,
   selectedId,
 }) => {
   const contacts = useTable(TABLE_NAME, store) as Record<string, Record<string, unknown>>;
@@ -66,9 +69,16 @@ const ContactList: React.FC<ContactListProps> = ({
     <div style={styles.container}>
       <div style={styles.header}>
         <h3 style={styles.title}>Contacts</h3>
-        <button style={styles.createBtn} onClick={onCreate}>
-          + Add Contact
-        </button>
+        <div style={styles.headerActions}>
+          {onCreateRandom && (
+            <button style={styles.randomBtn} onClick={onCreateRandom} title="Open form with random demo values">
+              Create random
+            </button>
+          )}
+          <button style={styles.createBtn} onClick={onCreate}>
+            + Add Contact
+          </button>
+        </div>
       </div>
 
       <div style={styles.toolbar}>
@@ -196,6 +206,21 @@ const styles: Record<string, CSSProperties> = {
     padding: '15px',
     background: '#fafafa',
     borderBottom: '1px solid #eee',
+  },
+  headerActions: {
+    display: 'flex',
+    gap: 8,
+    alignItems: 'center',
+  },
+  randomBtn: {
+    padding: '8px 14px',
+    background: '#fff',
+    color: '#555',
+    border: '1px solid #ccc',
+    borderRadius: 6,
+    cursor: 'pointer',
+    fontWeight: 500,
+    fontSize: 13,
   },
   title: {
     margin: 0,

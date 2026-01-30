@@ -63,6 +63,73 @@ const getDefaultContent = (): [Record<string, Record<string, Record<string, unkn
 ];
 
 // ==========================================
+// RANDOM DEMO DATA (for "Add random" buttons)
+// ==========================================
+function pick<T>(arr: readonly T[]): T {
+  return arr[Math.floor(Math.random() * arr.length)];
+}
+
+function getRandomPersonaFormValues(): Record<string, string> {
+  const first = pick(['Alex', 'Sam', 'Jordan', 'Casey', 'Riley', 'Morgan', 'Quinn', 'Avery']);
+  const last = pick(['Smith', 'Chen', 'Williams', 'Brown', 'Lee', 'Jones', 'Garcia']);
+  const name = `${first} ${last}`;
+  const nick = pick([first.toLowerCase(), `${first}${last.slice(0, 1)}`.toLowerCase(), `${first}_${last}`.toLowerCase()]);
+  return {
+    name,
+    nickname: nick,
+    givenName: first,
+    familyName: last,
+    email: `${nick}@example.com`,
+    phone: `+1-555-${Math.floor(100 + Math.random() * 900)}-${Math.floor(1000 + Math.random() * 9000)}`,
+    bio: pick(['Developer and designer.', 'Works on the Solid ecosystem.', 'Building for the decentralized web.']),
+    homepage: `https://${nick}.example.com`,
+    image: '',
+    oidcIssuer: '',
+    inbox: '',
+    preferencesFile: '',
+    publicTypeIndex: '',
+    privateTypeIndex: '',
+  };
+}
+
+function getRandomContactFormValues(): Record<string, string | boolean> {
+  const first = pick(['Jamie', 'Taylor', 'Robin', 'Drew', 'Skyler', 'Parker']);
+  const last = pick(['Miller', 'Davis', 'Wilson', 'Martinez', 'Anderson']);
+  const name = `${first} ${last}`;
+  const nick = first.toLowerCase();
+  const isAgent = Math.random() > 0.7;
+  return {
+    name,
+    nickname: nick,
+    email: `${nick}@company.com`,
+    phone: `+1-555-${Math.floor(200 + Math.random() * 800)}-${Math.floor(1000 + Math.random() * 9000)}`,
+    url: `https://${nick}.company.com`,
+    photo: '',
+    notes: pick(['Met at conference.', 'Collaborator on project X.', '']),
+    organization: pick(['Acme Inc', 'Tech Corp', 'Solid Labs', '']),
+    role: pick(['Engineer', 'Designer', 'PM', '']),
+    webId: '',
+    isAgent,
+    agentCategory: isAgent ? pick(['DeveloperApplication', 'SocialNetworking', 'Utilities']) : '',
+  };
+}
+
+type GroupType = 'group' | 'organization' | 'team';
+function getRandomGroupFormValues(): Record<string, string> {
+  const adj = pick(['Core', 'Product', 'Platform', 'Research', 'Community']);
+  const noun = pick(['Team', 'Squad', 'Group', 'Org', 'Circle']);
+  const name = `${adj} ${noun}`;
+  const type: GroupType = pick(['group', 'organization', 'team']);
+  return {
+    name,
+    type,
+    description: pick([`The ${name} works on key initiatives.`, `Internal ${type}.`, '']),
+    url: `https://${name.toLowerCase().replace(/\s+/g, '-')}.company.com`,
+    logo: '',
+  };
+}
+
+// ==========================================
 // MIME & IMAGE HELPERS
 // ==========================================
 const IMAGE_MIMES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml'];
@@ -450,12 +517,15 @@ export default function App() {
   const [selectedPersonaId, setSelectedPersonaId] = useState<string | undefined>();
   const [personaFormOpen, setPersonaFormOpen] = useState(false);
   const [editingPersonaId, setEditingPersonaId] = useState<string | undefined>();
+  const [personaFormInitial, setPersonaFormInitial] = useState<Record<string, string> | undefined>();
   const [selectedContactId, setSelectedContactId] = useState<string | undefined>();
   const [contactFormOpen, setContactFormOpen] = useState(false);
   const [editingContactId, setEditingContactId] = useState<string | undefined>();
+  const [contactFormInitial, setContactFormInitial] = useState<Record<string, string | boolean> | undefined>();
   const [selectedGroupId, setSelectedGroupId] = useState<string | undefined>();
   const [groupFormOpen, setGroupFormOpen] = useState(false);
   const [editingGroupId, setEditingGroupId] = useState<string | undefined>();
+  const [groupFormInitial, setGroupFormInitial] = useState<Record<string, string> | undefined>();
   const [managingMembersGroupId, setManagingMembersGroupId] = useState<string | undefined>();
 
   const row = useRow('resources', currentUrl, store ?? undefined) as ResourceRow | undefined;
@@ -734,6 +804,12 @@ export default function App() {
               }}
               onCreate={() => {
                 setEditingPersonaId(undefined);
+                setPersonaFormInitial(undefined);
+                setPersonaFormOpen(true);
+              }}
+              onCreateRandom={() => {
+                setEditingPersonaId(undefined);
+                setPersonaFormInitial(getRandomPersonaFormValues());
                 setPersonaFormOpen(true);
               }}
             />
@@ -742,13 +818,16 @@ export default function App() {
                 store={store}
                 baseUrl={BASE_URL}
                 personaId={editingPersonaId}
+                initialValues={personaFormInitial}
                 onSave={() => {
                   setPersonaFormOpen(false);
                   setEditingPersonaId(undefined);
+                  setPersonaFormInitial(undefined);
                 }}
                 onCancel={() => {
                   setPersonaFormOpen(false);
                   setEditingPersonaId(undefined);
+                  setPersonaFormInitial(undefined);
                 }}
               />
             )}
@@ -774,6 +853,12 @@ export default function App() {
               }}
               onCreate={() => {
                 setEditingContactId(undefined);
+                setContactFormInitial(undefined);
+                setContactFormOpen(true);
+              }}
+              onCreateRandom={() => {
+                setEditingContactId(undefined);
+                setContactFormInitial(getRandomContactFormValues());
                 setContactFormOpen(true);
               }}
             />
@@ -782,13 +867,16 @@ export default function App() {
                 store={store}
                 baseUrl={BASE_URL}
                 contactId={editingContactId}
+                initialValues={contactFormInitial}
                 onSave={() => {
                   setContactFormOpen(false);
                   setEditingContactId(undefined);
+                  setContactFormInitial(undefined);
                 }}
                 onCancel={() => {
                   setContactFormOpen(false);
                   setEditingContactId(undefined);
+                  setContactFormInitial(undefined);
                 }}
               />
             )}
@@ -817,6 +905,12 @@ export default function App() {
               }}
               onCreate={() => {
                 setEditingGroupId(undefined);
+                setGroupFormInitial(undefined);
+                setGroupFormOpen(true);
+              }}
+              onCreateRandom={() => {
+                setEditingGroupId(undefined);
+                setGroupFormInitial(getRandomGroupFormValues());
                 setGroupFormOpen(true);
               }}
             />
@@ -825,13 +919,16 @@ export default function App() {
                 store={store}
                 baseUrl={BASE_URL}
                 groupId={editingGroupId}
+                initialValues={groupFormInitial}
                 onSave={() => {
                   setGroupFormOpen(false);
                   setEditingGroupId(undefined);
+                  setGroupFormInitial(undefined);
                 }}
                 onCancel={() => {
                   setGroupFormOpen(false);
                   setEditingGroupId(undefined);
+                  setGroupFormInitial(undefined);
                 }}
               />
             )}

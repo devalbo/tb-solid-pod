@@ -7,7 +7,7 @@ Context for AI assistants working on this repo.
 **tb-solid-pod** is a browser-based personal data pod inspired by the [Solid Project](https://solidproject.org/), built with [TinyBase](https://tinybase.org/) for reactive state and LocalStorage. It is **not** a real Solid server (no LDP, no WebID-TLS); it simulates Solid-style data (personas, contacts, groups, type indexes, file metadata) in a single-page app.
 
 - **Dual interface**: graphical UI (tabs, forms, lists) + CLI terminal.
-- **Data**: personas (WebID-style), contacts (including agents), groups (org/team/group), type indexes, virtual file system with metadata, settings/preferences.
+- **Data**: personas (WebID-style), contacts (including agents), groups (org/team/group) with membership of contacts and your personas, type indexes, virtual file system with metadata, settings/preferences.
 - **Stack**: React, TinyBase, Zod, Vite, TypeScript. Vocabularies: FOAF, vCard, Dublin Core, W3C Org, `@inrupt/vocab-*`.
 
 ## Repo layout
@@ -21,7 +21,7 @@ Context for AI assistants working on this repo.
 | `src/utils/` | settings, storeExport, typeIndex helpers, validation. |
 | `src/cli/` | CliTerminal, command registry, parse-args, types. |
 | `src/components/` | PersonaList/Form, ContactList/Form, GroupList/Form, MembershipManager, FileMetadataPanel. |
-| `docs/` | CODING_GUIDELINES.md, DESIGN.md, IMPLEMENTATION_PLAN.md, testing/. |
+| `docs/` | CODING_GUIDELINES.md, DESIGN.md, IMPLEMENTATION_PLAN.md, TEST_PLAN.md, testing/. |
 
 ## What’s done so far
 
@@ -70,7 +70,9 @@ When someone wants to use this in an app they’re working on, point them to the
 
 ## Useful docs
 
-- **README.md** – Overview, limitations, Use as a library (Zod + JSON Schema), Integration Guide (copy-paste vs install-from-GitHub), Getting Started (Node note, Live demo + 404 troubleshooting), CLI command list.  
+- **README.md** – Overview, limitations, Use as a library (Zod + JSON Schema), Integration Guide (copy-paste vs install-from-GitHub), Getting Started (Node note, Live demo + 404 troubleshooting), Testing (unit, BDD, Storybook link), CLI command list.  
 - **docs/CODING_GUIDELINES.md** – TypeScript (strict types, no sloppy types), short functions, simple React components, naming, file length.  
 - **docs/IMPLEMENTATION_PLAN.md** – Feature/phases.  
+- **docs/TEST_PLAN.md** – Test phases and verification.  
+- **docs/testing/** – Unit (unit-tests.md), BDD/E2E (bdd-tests.md), Storybook (storybook.md); BDD does not start the dev server (start it manually).  
 - **DESIGN.md** – Design notes.

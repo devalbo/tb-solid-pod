@@ -24,19 +24,19 @@ To inspect the latest run: open the HTML report, or look at `test-results/.last-
 
 ## Layout
 
-- **Config:** `playwright.config.ts` (defineBddConfig, baseURL, webServer)
+- **Config:** `playwright.config.ts` (defineBddConfig, baseURL; no webServer — start the app yourself)
 - **Features:** `tests/features/*.feature` (Gherkin)
 - **Steps:** `tests/features/steps/*.ts` (Given/When/Then)
 - **Generated specs:** `.features-gen/` (output of `npx bddgen`)
 
-## Running with the app already up
+## Starting the app (required)
 
-If E2E hangs when Playwright starts the dev server, run the app yourself and reuse it:
+The BDD/E2E command does **not** start the dev server. Start the app first, then run the tests:
 
 1. **Terminal 1:** `npm run dev` (leave running; app at http://localhost:5173).
 2. **Terminal 2:** `npx bddgen && npx playwright test`.
 
-Playwright will reuse the server on 5173 when not in CI. For a different port, set `E2E_BASE_URL` (e.g. `E2E_BASE_URL=http://localhost:3000 npx playwright test`).
+For a different port, set `E2E_BASE_URL` (e.g. `E2E_BASE_URL=http://localhost:3000 npx playwright test`).
 
 ## Manual BDD steps
 

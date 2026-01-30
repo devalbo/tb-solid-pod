@@ -23,6 +23,8 @@ interface PersonaFormProps {
   store: Store;
   baseUrl: string;
   personaId?: string; // If provided, we're editing; otherwise creating
+  /** Pre-fill form when creating (e.g. "Add random" demo). */
+  initialValues?: Partial<FormData>;
   onSave: () => void;
   onCancel: () => void;
 }
@@ -65,6 +67,7 @@ const PersonaForm: React.FC<PersonaFormProps> = ({
   store,
   baseUrl,
   personaId,
+  initialValues,
   onSave,
   onCancel,
 }) => {
@@ -72,10 +75,12 @@ const PersonaForm: React.FC<PersonaFormProps> = ({
   const [form, setForm] = useState<FormData>(emptyForm);
   const [error, setError] = useState<string | null>(null);
   const [webIdOpen, setWebIdOpen] = useState(false);
+  const appliedInitialRef = React.useRef(false);
 
   // Load existing persona data when editing
   useEffect(() => {
     if (personaId) {
+      appliedInitialRef.current = false;
       const record = store.getRow(TABLE_NAME, personaId) as Record<string, unknown>;
       if (record) {
         const email = record[VCARD.hasEmail] as string | undefined;
@@ -100,6 +105,15 @@ const PersonaForm: React.FC<PersonaFormProps> = ({
       }
     }
   }, [personaId, store]);
+
+  // Pre-fill form when creating with initialValues (e.g. "Add random" demo)
+  useEffect(() => {
+    if (!personaId && initialValues && !appliedInitialRef.current) {
+      setForm((prev) => ({ ...emptyForm, ...prev, ...initialValues }));
+      appliedInitialRef.current = true;
+    }
+    if (personaId) appliedInitialRef.current = false;
+  }, [personaId, initialValues]);
 
   const handleChange = (field: keyof FormData) => (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
