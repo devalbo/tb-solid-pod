@@ -1,0 +1,174 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "@id": {
+      "type": "string",
+      "format": "uri"
+    },
+    "@type": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      ]
+    },
+    "http://www.w3.org/2006/vcard/ns#fn": {
+      "type": "string",
+      "minLength": 1
+    },
+    "http://www.w3.org/2006/vcard/ns#hasUID": {
+      "type": "string"
+    },
+    "http://www.w3.org/2006/vcard/ns#nickname": {
+      "type": "string"
+    },
+    "http://www.w3.org/2006/vcard/ns#hasEmail": {
+      "anyOf": [
+        {
+          "type": "string",
+          "format": "uri"
+        },
+        {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "uri"
+          }
+        }
+      ]
+    },
+    "http://www.w3.org/2006/vcard/ns#hasTelephone": {
+      "anyOf": [
+        {
+          "type": "string",
+          "format": "uri"
+        },
+        {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "uri"
+          }
+        }
+      ]
+    },
+    "http://www.w3.org/2006/vcard/ns#hasURL": {
+      "anyOf": [
+        {
+          "type": "string",
+          "format": "uri"
+        },
+        {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "uri"
+          }
+        }
+      ]
+    },
+    "http://www.w3.org/2006/vcard/ns#hasPhoto": {
+      "type": "string",
+      "format": "uri"
+    },
+    "http://www.w3.org/2006/vcard/ns#hasNote": {
+      "type": "string"
+    },
+    "http://www.w3.org/2006/vcard/ns#hasOrganizationName": {
+      "type": "string"
+    },
+    "http://www.w3.org/2006/vcard/ns#hasRole": {
+      "type": "string"
+    },
+    "undefined": {
+      "type": "string",
+      "format": "uri"
+    },
+    "http://www.w3.org/2006/vcard/ns#hasRelated": {
+      "anyOf": [
+        {
+          "type": "object",
+          "properties": {
+            "@id": {
+              "type": "string",
+              "format": "uri"
+            }
+          },
+          "required": [
+            "@id"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "@id": {
+                "type": "string",
+                "format": "uri"
+              }
+            },
+            "required": [
+              "@id"
+            ],
+            "additionalProperties": false
+          }
+        }
+      ]
+    },
+    "http://xmlns.com/foaf/0.1/knows": {
+      "anyOf": [
+        {
+          "type": "object",
+          "properties": {
+            "@id": {
+              "type": "string",
+              "format": "uri"
+            }
+          },
+          "required": [
+            "@id"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "@id": {
+                "type": "string",
+                "format": "uri"
+              }
+            },
+            "required": [
+              "@id"
+            ],
+            "additionalProperties": false
+          }
+        }
+      ]
+    },
+    "https://schema.org/applicationCategory": {
+      "type": "string"
+    },
+    "https://schema.org/url": {
+      "type": "string",
+      "format": "uri"
+    }
+  },
+  "required": [
+    "@type",
+    "http://www.w3.org/2006/vcard/ns#fn",
+    "http://www.w3.org/2006/vcard/ns#hasUID"
+  ],
+  "additionalProperties": {}
+}

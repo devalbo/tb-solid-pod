@@ -1,0 +1,41 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "forClass": {
+      "type": "string",
+      "format": "uri"
+    },
+    "instance": {
+      "anyOf": [
+        {
+          "type": "string",
+          "format": "uri"
+        },
+        {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "uri"
+          }
+        }
+      ]
+    },
+    "instanceContainer": {
+      "type": "string",
+      "format": "uri"
+    },
+    "indexType": {
+      "type": "string",
+      "enum": [
+        "public",
+        "private"
+      ]
+    }
+  },
+  "required": [
+    "forClass",
+    "indexType"
+  ],
+  "additionalProperties": false
+}
