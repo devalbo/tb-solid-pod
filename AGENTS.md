@@ -36,9 +36,12 @@ Context for AI assistants working on this repo.
    - **src/index.ts**: Re-exports schemas, utils, CLI, and components.  
    - **README**: “Use as a library” section with `npm install github:devalbo/tb-solid-pod` and example imports.
 
+4. **GitHub Pages (code)**  
+   Vite `base` is env-driven (`BASE_PATH` in CI). `.github/workflows/pages.yml` runs on every push to `main`, builds with `BASE_PATH=/tb-solid-pod/`, and deploys `dist/` to the `gh-pages` branch. README has Live demo link and a "Live demo 404?" note (private repo = no Pages on free plan).
+
 ## What’s not done
 
-- **GitHub Pages (manual)**: In repo **Settings → Pages**, set "Deploy from a branch", branch `gh-pages`, folder root. (Code is done: Vite `base` env-driven, `.github/workflows/pages.yml` deploys `dist/` to `gh-pages`; README has Live demo link.)  
+- **GitHub Pages (manual)**: In repo **Settings → Pages**, set "Deploy from a branch", branch `gh-pages`, folder root. (Code is done: Vite `base` env-driven, `.github/workflows/pages.yml` deploys `dist/` to `gh-pages`; README has Live demo link.) The live site returns **404 if the repo is private** on a free account—make the repo public or use GitHub Pro.  
 - **Optional**: Repo description/topics on GitHub; README “Library usage” expansion; npm publish later.
 
 ## Plan and checklists
@@ -56,7 +59,7 @@ Context for AI assistants working on this repo.
 
 ## Useful docs
 
-- **README.md** – Overview, limitations, Integration Guide (copy-paste vs install-from-GitHub), CLI command list.  
+- **README.md** – Overview, limitations, Use as a library, Integration Guide (copy-paste vs install-from-GitHub), Getting Started (Node note, Live demo + 404 troubleshooting), CLI command list.  
 - **docs/GITHUB_AND_LIBRARY_PLAN.md** – Goals, current state, section checklists, File Summary, Success Criteria.  
 - **docs/IMPLEMENTATION_PLAN.md** – Feature/phases.  
 - **DESIGN.md** – Design notes.

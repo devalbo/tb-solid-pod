@@ -396,6 +396,8 @@ export function createProject(input: { name: string }, baseUrl: string) {
 
 **[Try the live demo](https://devalbo.github.io/tb-solid-pod/)** or run locally. Requires Node 18+ (or use `nvm use` if you use nvm).
 
+**Live demo 404?** GitHub Pages does not work with private repos on a free account. Make the repo public (Settings → General → Danger zone → Change visibility) or use GitHub Pro. Then set **Settings → Pages** → Deploy from branch **gh-pages**, folder **/ (root)**. The workflow deploys on every push to `main`.
+
 ```bash
 npm install
 npm run dev

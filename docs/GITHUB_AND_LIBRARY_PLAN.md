@@ -32,10 +32,10 @@ Summary of what exists in the repo today.
 | **App entry** | Done | `index.html` + `src/main.tsx`; scripts `dev`, `build`, `preview`, `lint` present. |
 | **Source layout** | Done | `src/schemas/`, `src/utils/`, `src/cli/`, `src/components/` with expected files. |
 | **LICENSE** | Done | AGPL-3.0-or-later in repo; `package.json` has `"license": "AGPL-3.0-or-later"`. |
-| **README** | Partial | Has “Getting Started (Demo App)” with `npm install` / `npm run dev`. No Node version note, no “Use as a library” install-from-GitHub section, no “Live demo” link. Integration Guide documents copy-paste and schema-only use. |
-| **Runnable on checkout** | Partial | Commands work; no `.nvmrc`; README matches commands. |
+| **README** | Done | Has “Getting Started (Demo App)” with `npm install` / `npm run dev`. Node 18+ / `nvm use`; "Use as a library" with install-from-GitHub; Live demo link; 404 note. Integration Guide for copy-paste and schema-only use. |
+| **Runnable on checkout** | Done | Commands work; `.nvmrc` (20); README matches. |
 | **Library packaging** | Done | `package.json`: version 0.1.0, description, keywords, main, types, exports, files; `src/index.ts` re-exports schemas, utils, CLI, components; README “Use as a library” section. |
-| **GitHub Pages** | Done (code) | `vite.config.js` base env-driven; `.github/workflows/pages.yml` builds with `BASE_PATH=/tb-solid-pod/` and deploys to `gh-pages`; README has Live demo link. **You must set Settings → Pages: Deploy from branch `gh-pages`.** |
+| **GitHub Pages** | Done (code) | `vite.config.js` base env-driven; `.github/workflows/pages.yml` deploys to `gh-pages` on every push to `main`; README has Live demo link + 404 note. **Manual:** Settings → Pages: Deploy from branch `gh-pages`. **Private repo = 404 on free plan;** make repo public or use GitHub Pro for the live site. |
 | **GitHub repo** | Done | Repo on GitHub (`devalbo/tb-solid-pod`), main pushed, LICENSE in repo. **Repo is private for now**; make public when you want install-from-GitHub or a public Live demo. |
 
 **Next steps (in order):**  
