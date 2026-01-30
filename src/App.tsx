@@ -527,6 +527,7 @@ export default function App() {
   const [editingGroupId, setEditingGroupId] = useState<string | undefined>();
   const [groupFormInitial, setGroupFormInitial] = useState<Record<string, string> | undefined>();
   const [managingMembersGroupId, setManagingMembersGroupId] = useState<string | undefined>();
+  const [explainerExpanded, setExplainerExpanded] = useState(false);
 
   const row = useRow('resources', currentUrl, store ?? undefined) as ResourceRow | undefined;
   const isContainer = row?.type === 'Container';
@@ -706,19 +707,44 @@ export default function App() {
           </div>
         </div>
 
-        {/* Agent hint: point coding agents to AGENTS.md */}
+        {/* Agent hint bar: AGENTS.md link + explainer CTA */}
         <div style={styles.agentHint}>
-          Using a coding agent? Point it to{' '}
-          <a
-            href="https://github.com/devalbo/tb-solid-pod/blob/main/AGENTS.md"
-            target="_blank"
-            rel="noopener noreferrer"
-            style={styles.agentHintLink}
+          <span>
+            Using a coding agent? Point it to{' '}
+            <a
+              href="https://github.com/devalbo/tb-solid-pod/blob/main/AGENTS.md"
+              target="_blank"
+              rel="noopener noreferrer"
+              style={styles.agentHintLink}
+            >
+              AGENTS.md
+            </a>
+            {' '}for project context.
+          </span>
+          <button
+            type="button"
+            style={styles.agentHintCta}
+            onClick={() => setExplainerExpanded((e) => !e)}
+            aria-expanded={explainerExpanded}
           >
-            AGENTS.md
-          </a>
-          {' '}for project context.
+            What the library showcases and why it helps app authors
+            <span style={styles.explainerChevron}>{explainerExpanded ? ' ▲' : ' ▼'}</span>
+          </button>
         </div>
+
+        {/* Explainer detail (when expanded) */}
+        {explainerExpanded && (
+          <div style={styles.explainer}>
+            <div style={styles.explainerDetail}>
+              <p style={styles.explainerLead}>
+                <strong>What this demo showcases:</strong> Personas (WebID-style profiles), contacts, groups, and a virtual file browser; a CLI (Terminal tab); JSON Schemas. Data lives in the browser (LocalStorage) with Export/Import.
+              </p>
+              <p style={styles.explainerWhy}>
+                <strong>Why it helps:</strong> If you’re building an app and want Solid-style data without running a pod server, you can use this as a library—install from GitHub, add a TinyBase store, and plug in the components and schemas. You get a ready-made data model (Zod + TypeScript + JSON Schema), so you can focus on your UI and optional sync later. See the <a href="https://github.com/devalbo/tb-solid-pod/blob/main/README.md" target="_blank" rel="noopener noreferrer" style={styles.explainerLink}>README</a> and <a href="https://github.com/devalbo/tb-solid-pod/blob/main/docs/INTEGRATION_GUIDE.md" target="_blank" rel="noopener noreferrer" style={styles.explainerLink}>Integration Guide</a> for details.
+              </p>
+            </div>
+          </div>
+        )}
 
         {/* Data Browser View */}
         {activeView === 'data' && (
@@ -1052,8 +1078,15 @@ tryToJsonSchema(SomeZodSchema);`}</pre>
 const styles: Record<string, CSSProperties> = {
   app: { fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif', margin: 0, padding: 0, width: '100%', minHeight: '100vh', boxSizing: 'border-box', background: '#f8f9fa', display: 'flex', flexDirection: 'column' },
   topNav: { background: '#1e1e1e', padding: '0 24px', borderBottom: '1px solid #333', display: 'flex', justifyContent: 'space-between', alignItems: 'center' },
-  agentHint: { padding: '8px 24px', background: '#f5e6d3', color: '#6b5344', fontSize: 13, borderBottom: '1px solid #e8d4bc' },
+  agentHint: { width: '100%', boxSizing: 'border-box', padding: '8px 24px', background: '#f5e6d3', color: '#6b5344', fontSize: 13, borderBottom: '1px solid #e8d4bc', display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: 12 },
   agentHintLink: { color: '#c45c26', textDecoration: 'none', fontWeight: 500 },
+  agentHintCta: { padding: 0, border: 'none', background: 'none', color: '#6b5344', fontSize: 13, cursor: 'pointer', font: 'inherit', textAlign: 'left', textDecoration: 'underline', textUnderlineOffset: 2 },
+  explainerChevron: { fontSize: 12, color: '#888' },
+  explainer: { width: '100%', boxSizing: 'border-box', background: '#fff', borderBottom: '1px solid #eee', margin: 0 },
+  explainerDetail: { padding: '16px 24px 20px', borderTop: '1px solid #e8d4bc', maxWidth: 900 },
+  explainerLead: { margin: '12px 0 10px', fontSize: 14, lineHeight: 1.5, color: '#333' },
+  explainerWhy: { margin: 0, fontSize: 14, lineHeight: 1.5, color: '#444' },
+  explainerLink: { color: '#c45c26', textDecoration: 'none', fontWeight: 500 },
   topNavTabs: { display: 'flex', gap: 0 },
   topNavActions: { display: 'flex', gap: 8, alignItems: 'center' },
   navExportBtn: { padding: '6px 12px', cursor: 'pointer', borderRadius: 4, border: '1px solid #444', background: '#2a2a2a', color: '#ccc', fontSize: 12, fontWeight: 500 },
