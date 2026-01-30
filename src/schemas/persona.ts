@@ -4,8 +4,8 @@
  */
 
 import { z } from 'zod';
-import { FOAF, VCARD } from '@inrupt/vocab-common-rdf';
-import { SOLID } from '@inrupt/vocab-solid-common';
+import { FOAF, VCARD, LDP } from '@inrupt/vocab-common-rdf';
+import { SOLID, WS } from '@inrupt/vocab-solid-common';
 import {
   IRI,
   NodeRef,
@@ -84,6 +84,14 @@ export const PersonaSchema = JsonLdBase.extend({
   /** Link to private type index (in preferences) */
   [SOLID.privateTypeIndex]: NodeRef.optional(),
 
+  // ---- WebID Profile (Phase 7) ----
+
+  /** LDP inbox for notifications */
+  [LDP.inbox]: NodeRef.optional(),
+
+  /** Link to preferences document */
+  [WS.preferencesFile]: NodeRef.optional(),
+
   // ---- Metadata ----
 
   /** Document this is the primary topic of */
@@ -135,6 +143,12 @@ export const PersonaInputSchema = z.object({
 
   /** OIDC issuer URL */
   oidcIssuer: z.string().url().optional(),
+
+  /** WebID / Solid profile URLs */
+  inbox: z.string().url().optional(),
+  preferencesFile: z.string().url().optional(),
+  publicTypeIndex: z.string().url().optional(),
+  privateTypeIndex: z.string().url().optional(),
 });
 
 export type PersonaInput = z.infer<typeof PersonaInputSchema>;
@@ -178,6 +192,10 @@ export function createPersona(input: PersonaInput, baseUrl: string): Persona {
   if (input.bio) persona[VCARD.note] = input.bio;
   if (input.homepage) persona[FOAF.homepage] = input.homepage;
   if (input.oidcIssuer) persona[SOLID.oidcIssuer] = { '@id': input.oidcIssuer };
+  if (input.inbox) persona[LDP.inbox] = { '@id': input.inbox };
+  if (input.preferencesFile) persona[WS.preferencesFile] = { '@id': input.preferencesFile };
+  if (input.publicTypeIndex) persona[SOLID.publicTypeIndex] = { '@id': input.publicTypeIndex };
+  if (input.privateTypeIndex) persona[SOLID.privateTypeIndex] = { '@id': input.privateTypeIndex };
 
   return persona;
 }

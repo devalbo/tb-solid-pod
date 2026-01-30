@@ -11,6 +11,7 @@ This library provides a complete foundation for **user-owned social data** in we
 - FOAF/vCard vocabulary for interoperable profile data
 - Set a default persona for authoring content
 - Profile fields: name, nickname, email, phone, bio, homepage, avatar
+- **WebID profile (Phase 7)**: optional `ldp:inbox`, `pim:preferencesFile`, `solid:publicTypeIndex`, `solid:privateTypeIndex`, `solid:oidcIssuer`; persona form has collapsible WebID section; CLI: `persona show --full`, `set-inbox`, `set-typeindex`
 
 ### Contact Management
 - Address book with support for people and AI agents/bots
@@ -103,7 +104,6 @@ The ACL phase is planned but not implemented. Currently:
 - No server-side rendering or API
 
 ### Missing Solid Features (Planned)
-- WebID-compliant profile documents (Phase 7)
 - Web Access Control / ACL (Phase 8)
 
 ### Missing Solid Features (Not Planned)
@@ -158,6 +158,7 @@ src/
 │   ├── contact.ts     # Contact/agent schema
 │   ├── group.ts       # Organization/team schema
 │   ├── typeIndex.ts   # Type index and type registration schema
+│   ├── preferences.ts # Solid preferences document schema
 │   └── file.ts        # File metadata schema
 ├── utils/
 │   ├── settings.ts    # Settings utilities (optional)
@@ -382,7 +383,7 @@ npm run dev
 
 ```
 help                          Show available commands
-persona list|create|show|edit|delete|set-default
+persona list|create|show [--full]|edit|delete|set-default|set-inbox|set-typeindex
 contact list|add|show|edit|delete|search|link
 group list|create|show|edit|delete|add-member|remove-member|list-members
 typeindex list|show|register|unregister   Type index (public/private)

@@ -13,8 +13,9 @@ The app has a working browser-based CLI and file browser UI with:
 - Rich file metadata with UI editor (Phase 4 ✅)
 - Settings and preferences via CLI (Phase 5 ✅)
 - Type indexes for data discovery (Phase 6 ✅)
+- WebID profile format (Phase 7 ✅)
 
-**All core schemas integrated! Settings and type indexes complete!**
+**All core schemas integrated! WebID profile format complete!**
 
 ## Phase 1: Persona Management ✅ COMPLETE
 
@@ -253,7 +254,7 @@ typeindex unregister <type> [--public] [--private]
 
 ---
 
-## Phase 7: WebID Profile Format (Future)
+## Phase 7: WebID Profile Format ✅ COMPLETE
 
 ### Goal
 Make personas proper WebID profile documents that conform to Solid expectations.
@@ -261,41 +262,35 @@ Make personas proper WebID profile documents that conform to Solid expectations.
 ### Background
 A Solid WebID profile document includes specific predicates that apps expect:
 - `solid:oidcIssuer` - Identity provider (already in PersonaSchema)
-- `solid:publicTypeIndex` - Link to public type index (added in Phase 6)
-- `solid:privateTypeIndex` - Link to private type index (added in Phase 6)
+- `solid:publicTypeIndex` - Link to public type index (Phase 6)
+- `solid:privateTypeIndex` - Link to private type index (Phase 6)
 - `ldp:inbox` - Notification inbox location
-- `pim:preferencesFile` - Link to preferences document
+- `pim:preferencesFile` - Link to preferences document (WS.preferencesFile)
 
 ### Changes to Persona Schema
-```typescript
-// Additional fields for WebID compliance (oidcIssuer, publicTypeIndex, privateTypeIndex already in schema)
-{
-  // Existing FOAF fields...
-  'solid:oidcIssuer': { '@id': 'https://...' },  // Optional - for real auth
-  'solid:publicTypeIndex': { '@id': 'https://.../settings/publicTypeIndex' },  // Phase 6
-  'solid:privateTypeIndex': { '@id': '...' },  // Phase 6
-  'ldp:inbox': { '@id': 'https://.../inbox/' },  // To add
-  'pim:preferencesFile': { '@id': 'https://.../settings/prefs' },  // To add
-}
-```
+- Added `ldp:inbox` (LDP.inbox) and `pim:preferencesFile` (WS.preferencesFile) to PersonaSchema
+- PersonaInputSchema extended with inbox, preferencesFile, publicTypeIndex, privateTypeIndex
+- createPersona sets all WebID fields when provided
 
 ### CLI Commands
 ```
-persona show <id> --full        # Show full WebID document
-persona set-inbox <id> <url>    # Set inbox location
-persona set-typeindex <id> <url> [--private]
+persona show <id> [--full]           # Show persona; --full = full WebID JSON
+persona set-inbox <id> <url>         # Set LDP inbox URL
+persona set-typeindex <id> <url> [--private]  # Set public or private type index link
+persona edit <id> [--oidc-issuer=...] [--inbox=...] [--preferences-file=...] [--public-type-index=...] [--private-type-index=...]
 ```
 
 ### Data Storage
-- Extend `PersonaSchema` with Solid-specific fields
-- Create preferences document structure
-- Link type indexes from profile
+- PersonaSchema extended with LDP.inbox and WS.preferencesFile
+- Preferences document schema in `src/schemas/preferences.ts` for future use
+- Persona show displays WebID fields (OIDC issuer, inbox, preferences file, type indexes)
 
-### Files to Create/Modify
-- `src/schemas/persona.ts` - Extend with Solid WebID fields
-- `src/schemas/preferences.ts` - Preferences file schema
-- `src/cli/commands/persona.tsx` - Add WebID-specific subcommands
-- `src/components/PersonaForm.tsx` - Add advanced WebID fields (collapsible)
+### Files Created/Modified
+- `src/schemas/persona.ts` - LDP.inbox, WS.preferencesFile; PersonaInputSchema and createPersona ✅
+- `src/schemas/preferences.ts` - Preferences document schema ✅
+- `src/schemas/index.ts` - Export preferences ✅
+- `src/cli/commands/persona.tsx` - show --full, set-inbox, set-typeindex; PersonaDetails WebID fields; edit options ✅
+- `src/components/PersonaForm.tsx` - Collapsible "WebID / Solid profile" section (inbox, preferences, type indexes, OIDC issuer) ✅
 
 ---
 
@@ -351,7 +346,7 @@ Enable multi-device sync and federation with external Solid servers.
 4. **Phase 4: File Metadata** ✅ - Enhance existing functionality
 5. **Phase 5: Settings** ✅ - Quality of life
 6. **Phase 6: Type Indexes** ✅ - Solid data discovery
-7. **Phase 7: WebID Profile** - Solid-compliant identity documents
+7. **Phase 7: WebID Profile** ✅ - Solid-compliant identity documents
 8. **Phase 8: ACL** - Security layer
 9. **Phase 9: Sync** - Federation
 
@@ -365,7 +360,7 @@ Enable multi-device sync and federation with external Solid servers.
 | 4. File Metadata ✅ | 0 | 2 | Low |
 | 5. Settings ✅ | 2 | 1 | Low |
 | 6. Type Indexes ✅ | 3 | 5 | Medium |
-| 7. WebID Profile | 2 | 3 | Medium |
+| 7. WebID Profile ✅ | 1 | 4 | Medium |
 | 8. ACL | 3 | 3 | High |
 | 9. Sync | 4 | 4 | High |
 

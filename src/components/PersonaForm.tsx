@@ -1,12 +1,20 @@
 import React, { useState, useEffect, CSSProperties } from 'react';
 import { Store } from 'tinybase';
-import { FOAF, VCARD } from '@inrupt/vocab-common-rdf';
+import { FOAF, VCARD, LDP } from '@inrupt/vocab-common-rdf';
+import { SOLID, WS } from '@inrupt/vocab-solid-common';
 import {
   createPersona,
   PersonaInputSchema,
   safeParsePersona,
   type PersonaInput,
 } from '../schemas/persona';
+
+function getIdFromRef(value: unknown): string {
+  if (value && typeof value === 'object' && '@id' in value) {
+    return (value as { '@id': string })['@id'];
+  }
+  return '';
+}
 
 const TABLE_NAME = 'personas';
 const DEFAULT_PERSONA_KEY = 'defaultPersonaId';
@@ -29,6 +37,11 @@ interface FormData {
   bio: string;
   homepage: string;
   image: string;
+  oidcIssuer: string;
+  inbox: string;
+  preferencesFile: string;
+  publicTypeIndex: string;
+  privateTypeIndex: string;
 }
 
 const emptyForm: FormData = {
@@ -41,6 +54,11 @@ const emptyForm: FormData = {
   bio: '',
   homepage: '',
   image: '',
+  oidcIssuer: '',
+  inbox: '',
+  preferencesFile: '',
+  publicTypeIndex: '',
+  privateTypeIndex: '',
 };
 
 const PersonaForm: React.FC<PersonaFormProps> = ({
@@ -53,6 +71,7 @@ const PersonaForm: React.FC<PersonaFormProps> = ({
   const isEditing = !!personaId;
   const [form, setForm] = useState<FormData>(emptyForm);
   const [error, setError] = useState<string | null>(null);
+  const [webIdOpen, setWebIdOpen] = useState(false);
 
   // Load existing persona data when editing
   useEffect(() => {
@@ -72,6 +91,11 @@ const PersonaForm: React.FC<PersonaFormProps> = ({
           bio: (record[VCARD.note] as string) || '',
           homepage: (record[FOAF.homepage] as string) || '',
           image: (record[FOAF.img] as string) || '',
+          oidcIssuer: getIdFromRef(record[SOLID.oidcIssuer]) || '',
+          inbox: getIdFromRef(record[LDP.inbox]) || '',
+          preferencesFile: getIdFromRef(record[WS.preferencesFile]) || '',
+          publicTypeIndex: getIdFromRef(record[SOLID.publicTypeIndex]) || '',
+          privateTypeIndex: getIdFromRef(record[SOLID.privateTypeIndex]) || '',
         });
       }
     }
@@ -99,6 +123,11 @@ const PersonaForm: React.FC<PersonaFormProps> = ({
       bio: form.bio.trim() || undefined,
       homepage: form.homepage.trim() || undefined,
       image: form.image.trim() || undefined,
+      oidcIssuer: form.oidcIssuer.trim() || undefined,
+      inbox: form.inbox.trim() || undefined,
+      preferencesFile: form.preferencesFile.trim() || undefined,
+      publicTypeIndex: form.publicTypeIndex.trim() || undefined,
+      privateTypeIndex: form.privateTypeIndex.trim() || undefined,
     };
 
     // Validate input using Zod schema
@@ -165,6 +194,32 @@ const PersonaForm: React.FC<PersonaFormProps> = ({
         updates[FOAF.img] = form.image.trim();
       } else {
         delete updates[FOAF.img];
+      }
+
+      if (form.oidcIssuer.trim()) {
+        updates[SOLID.oidcIssuer] = { '@id': form.oidcIssuer.trim() };
+      } else {
+        delete updates[SOLID.oidcIssuer];
+      }
+      if (form.inbox.trim()) {
+        updates[LDP.inbox] = { '@id': form.inbox.trim() };
+      } else {
+        delete updates[LDP.inbox];
+      }
+      if (form.preferencesFile.trim()) {
+        updates[WS.preferencesFile] = { '@id': form.preferencesFile.trim() };
+      } else {
+        delete updates[WS.preferencesFile];
+      }
+      if (form.publicTypeIndex.trim()) {
+        updates[SOLID.publicTypeIndex] = { '@id': form.publicTypeIndex.trim() };
+      } else {
+        delete updates[SOLID.publicTypeIndex];
+      }
+      if (form.privateTypeIndex.trim()) {
+        updates[SOLID.privateTypeIndex] = { '@id': form.privateTypeIndex.trim() };
+      } else {
+        delete updates[SOLID.privateTypeIndex];
       }
 
       // Validate the final persona object
@@ -312,6 +367,79 @@ const PersonaForm: React.FC<PersonaFormProps> = ({
               placeholder="https://example.com/avatar.jpg"
               style={styles.input}
             />
+          </div>
+
+          <div style={styles.section}>
+            <button
+              type="button"
+              onClick={() => setWebIdOpen((o) => !o)}
+              style={{
+                ...styles.label,
+                background: 'none',
+                border: 'none',
+                cursor: 'pointer',
+                padding: 0,
+                display: 'flex',
+                alignItems: 'center',
+                gap: 6,
+              }}
+            >
+              {webIdOpen ? '▼' : '▶'} WebID / Solid profile (inbox, type index, preferences)
+            </button>
+            {webIdOpen && (
+              <div style={{ marginTop: 12, paddingLeft: 8, borderLeft: '2px solid #e0e0e0' }}>
+                <div style={styles.section}>
+                  <label style={styles.label}>OIDC Issuer URL</label>
+                  <input
+                    type="url"
+                    value={form.oidcIssuer}
+                    onChange={handleChange('oidcIssuer')}
+                    placeholder="https://idp.example.com/"
+                    style={styles.input}
+                  />
+                </div>
+                <div style={styles.section}>
+                  <label style={styles.label}>Inbox (LDP)</label>
+                  <input
+                    type="url"
+                    value={form.inbox}
+                    onChange={handleChange('inbox')}
+                    placeholder="https://pod.example/inbox/"
+                    style={styles.input}
+                  />
+                </div>
+                <div style={styles.section}>
+                  <label style={styles.label}>Preferences File</label>
+                  <input
+                    type="url"
+                    value={form.preferencesFile}
+                    onChange={handleChange('preferencesFile')}
+                    placeholder="https://pod.example/settings/prefs"
+                    style={styles.input}
+                  />
+                </div>
+                <div style={styles.section}>
+                  <label style={styles.label}>Public Type Index</label>
+                  <input
+                    type="url"
+                    value={form.publicTypeIndex}
+                    onChange={handleChange('publicTypeIndex')}
+                    placeholder="https://pod.example/settings/publicTypeIndex"
+                    style={styles.input}
+                  />
+                </div>
+                <div style={styles.section}>
+                  <label style={styles.label}>Private Type Index</label>
+                  <input
+                    type="url"
+                    value={form.privateTypeIndex}
+                    onChange={handleChange('privateTypeIndex')}
+                    placeholder="https://pod.example/settings/privateTypeIndex"
+                    style={styles.input}
+                  />
+                </div>
+              </div>
+            )}
           </div>
 
           <div style={styles.actions}>

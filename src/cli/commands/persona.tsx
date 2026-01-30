@@ -1,7 +1,8 @@
 import React from 'react';
 import type { Command } from '../types';
-import { parseCliArgs, getOptionString } from '../parse-args';
-import { FOAF, VCARD } from '@inrupt/vocab-common-rdf';
+import { parseCliArgs, getOptionString, getOptionBoolean } from '../parse-args';
+import { FOAF, VCARD, LDP } from '@inrupt/vocab-common-rdf';
+import { SOLID, WS } from '@inrupt/vocab-solid-common';
 import { createPersona, type PersonaInput } from '../../schemas/persona';
 
 const TABLE_NAME = 'personas';
@@ -40,10 +41,12 @@ export const personaCommand: Command = {
             <div>Subcommands:</div>
             <div style={{ marginLeft: 16 }}>list                  - List all personas</div>
             <div style={{ marginLeft: 16 }}>create &lt;name&gt;        - Create a new persona</div>
-            <div style={{ marginLeft: 16 }}>show &lt;id&gt;            - Show persona details</div>
+            <div style={{ marginLeft: 16 }}>show &lt;id&gt; [--full]   - Show persona (--full = WebID document)</div>
             <div style={{ marginLeft: 16 }}>edit &lt;id&gt; [options]  - Edit a persona</div>
             <div style={{ marginLeft: 16 }}>delete &lt;id&gt;          - Delete a persona</div>
             <div style={{ marginLeft: 16 }}>set-default &lt;id&gt;     - Set default persona</div>
+            <div style={{ marginLeft: 16 }}>set-inbox &lt;id&gt; &lt;url&gt;     - Set LDP inbox URL</div>
+            <div style={{ marginLeft: 16 }}>set-typeindex &lt;id&gt; &lt;url&gt; [--private] - Set type index link</div>
           </div>
         </div>
       );
@@ -65,6 +68,10 @@ export const personaCommand: Command = {
         return personaDeleteExecute(subArgs, context);
       case 'set-default':
         return personaSetDefaultExecute(subArgs, context);
+      case 'set-inbox':
+        return personaSetInboxExecute(subArgs, context);
+      case 'set-typeindex':
+        return personaSetTypeIndexExecute(subArgs, context);
       default:
         addOutput(
           <span style={{ color: '#ff6b6b' }}>
@@ -175,15 +182,17 @@ const personaCreateExecute: Command['execute'] = (args, context) => {
 };
 
 /**
- * persona show <id> - Show persona details
+ * persona show <id> [--full] - Show persona details or full WebID document
  */
 const personaShowExecute: Command['execute'] = (args, context) => {
   const { store, addOutput } = context;
-  const idArg = args[0];
+  const { positional, options } = parseCliArgs(args);
+  const idArg = positional[0];
+  const full = getOptionBoolean(options, 'full');
 
   if (!idArg) {
     addOutput(
-      <span style={{ color: '#ff6b6b' }}>Usage: persona show &lt;id or partial-id&gt;</span>,
+      <span style={{ color: '#ff6b6b' }}>Usage: persona show &lt;id or partial-id&gt; [--full]</span>,
       'error'
     );
     return;
@@ -205,6 +214,15 @@ const personaShowExecute: Command['execute'] = (args, context) => {
   const defaultId = store.getValue(DEFAULT_PERSONA_KEY) as string | undefined;
   const isDefault = personaId === defaultId;
 
+  if (full) {
+    addOutput(
+      <pre style={{ margin: 0, fontSize: '0.85em', whiteSpace: 'pre-wrap', wordBreak: 'break-all' }}>
+        {JSON.stringify(record, null, 2)}
+      </pre>
+    );
+    return;
+  }
+
   addOutput(
     <div>
       <div style={{ marginBottom: 8 }}>
@@ -220,6 +238,16 @@ const personaShowExecute: Command['execute'] = (args, context) => {
 };
 
 /**
+ * Helper to get @id from a NodeRef value
+ */
+const getIdFromRef = (value: unknown): string | null => {
+  if (value && typeof value === 'object' && '@id' in value) {
+    return (value as { '@id': string })['@id'];
+  }
+  return null;
+};
+
+/**
  * Helper component to display persona details
  */
 const PersonaDetails: React.FC<{ record: Record<string, unknown> }> = ({ record }) => {
@@ -232,18 +260,25 @@ const PersonaDetails: React.FC<{ record: Record<string, unknown> }> = ({ record 
     { label: 'Bio', key: VCARD.note },
     { label: 'Homepage', key: FOAF.homepage },
     { label: 'Image', key: FOAF.img },
+    { label: 'OIDC Issuer', key: SOLID.oidcIssuer, ref: true },
+    { label: 'Inbox', key: LDP.inbox, ref: true },
+    { label: 'Preferences File', key: WS.preferencesFile, ref: true },
+    { label: 'Public Type Index', key: SOLID.publicTypeIndex, ref: true },
+    { label: 'Private Type Index', key: SOLID.privateTypeIndex, ref: true },
   ];
 
   return (
     <div style={{ fontSize: '0.9em' }}>
-      {fields.map(({ label, key }) => {
+      {fields.map(({ label, key, ref }) => {
         const value = record[key];
         if (!value) return null;
-        const displayValue = typeof value === 'string'
-          ? value.replace(/^mailto:/, '').replace(/^tel:/, '')
-          : JSON.stringify(value);
+        const displayValue = ref
+          ? getIdFromRef(value) ?? JSON.stringify(value)
+          : typeof value === 'string'
+            ? value.replace(/^mailto:/, '').replace(/^tel:/, '')
+            : JSON.stringify(value);
         return (
-          <div key={key} style={{ marginBottom: 2 }}>
+          <div key={String(key)} style={{ marginBottom: 2 }}>
             <span style={{ color: '#888' }}>{label}:</span>{' '}
             <span style={{ color: '#f5f5f5' }}>{displayValue}</span>
           </div>
@@ -286,7 +321,7 @@ const personaEditExecute: Command['execute'] = (args, context) => {
   // Update fields based on options
   const updates: Record<string, unknown> = {};
 
-  const optionMappings: Array<{ option: string; key: string; transform?: (v: string) => string }> = [
+  const optionMappings: Array<{ option: string; key: string; transform?: (v: string) => unknown }> = [
     { option: 'name', key: FOAF.name },
     { option: 'nickname', key: FOAF.nick },
     { option: 'nick', key: FOAF.nick },
@@ -298,6 +333,11 @@ const personaEditExecute: Command['execute'] = (args, context) => {
     { option: 'homepage', key: FOAF.homepage },
     { option: 'image', key: FOAF.img },
     { option: 'avatar', key: FOAF.img },
+    { option: 'oidc-issuer', key: SOLID.oidcIssuer, transform: (v) => ({ '@id': v }) },
+    { option: 'inbox', key: LDP.inbox, transform: (v) => ({ '@id': v }) },
+    { option: 'preferences-file', key: WS.preferencesFile, transform: (v) => ({ '@id': v }) },
+    { option: 'public-type-index', key: SOLID.publicTypeIndex, transform: (v) => ({ '@id': v }) },
+    { option: 'private-type-index', key: SOLID.privateTypeIndex, transform: (v) => ({ '@id': v }) },
   ];
 
   for (const { option, key, transform } of optionMappings) {
@@ -413,6 +453,73 @@ const personaSetDefaultExecute: Command['execute'] = (args, context) => {
 
   addOutput(
     <span style={{ color: '#2ecc71' }}>Set default persona: {name}</span>,
+    'success'
+  );
+};
+
+/**
+ * persona set-inbox <id> <url> - Set LDP inbox URL
+ */
+const personaSetInboxExecute: Command['execute'] = (args, context) => {
+  const { store, addOutput } = context;
+  const idArg = args[0];
+  const urlArg = args[1];
+
+  if (!idArg || !urlArg) {
+    addOutput(
+      <span style={{ color: '#ff6b6b' }}>Usage: persona set-inbox &lt;id&gt; &lt;url&gt;</span>,
+      'error'
+    );
+    return;
+  }
+
+  const personas = store.getTable(TABLE_NAME) || {};
+  const personaId = findPersonaId(personas, idArg);
+
+  if (!personaId) {
+    addOutput(<span style={{ color: '#ff6b6b' }}>Persona not found: {idArg}</span>, 'error');
+    return;
+  }
+
+  store.setCell(TABLE_NAME, personaId, LDP.inbox, { '@id': urlArg });
+  addOutput(
+    <span style={{ color: '#2ecc71' }}>Set inbox for {getPersonaName(store.getRow(TABLE_NAME, personaId) as Record<string, unknown>)}: {urlArg}</span>,
+    'success'
+  );
+};
+
+/**
+ * persona set-typeindex <id> <url> [--private] - Set type index link
+ */
+const personaSetTypeIndexExecute: Command['execute'] = (args, context) => {
+  const { store, addOutput } = context;
+  const { positional, options } = parseCliArgs(args);
+  const idArg = positional[0];
+  const urlArg = positional[1];
+  const isPrivate = getOptionBoolean(options, 'private');
+
+  if (!idArg || !urlArg) {
+    addOutput(
+      <span style={{ color: '#ff6b6b' }}>Usage: persona set-typeindex &lt;id&gt; &lt;url&gt; [--private]</span>,
+      'error'
+    );
+    return;
+  }
+
+  const personas = store.getTable(TABLE_NAME) || {};
+  const personaId = findPersonaId(personas, idArg);
+
+  if (!personaId) {
+    addOutput(<span style={{ color: '#ff6b6b' }}>Persona not found: {idArg}</span>, 'error');
+    return;
+  }
+
+  const key = isPrivate ? SOLID.privateTypeIndex : SOLID.publicTypeIndex;
+  store.setCell(TABLE_NAME, personaId, key, { '@id': urlArg });
+  addOutput(
+    <span style={{ color: '#2ecc71' }}>
+      Set {isPrivate ? 'private' : 'public'} type index for {getPersonaName(store.getRow(TABLE_NAME, personaId) as Record<string, unknown>)}: {urlArg}
+    </span>,
     'success'
   );
 };

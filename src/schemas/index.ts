@@ -134,6 +134,15 @@ export {
   type ContainerInput,
 } from './file';
 
+// Preferences (Solid preferences document)
+export {
+  PreferencesSchema,
+  createPreferences,
+  parsePreferences,
+  safeParsePreferences,
+  type Preferences,
+} from './preferences';
+
 // ============================================================================
 // Vocabulary Re-exports (for convenience)
 // ============================================================================
