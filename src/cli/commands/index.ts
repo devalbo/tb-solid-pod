@@ -7,3 +7,4 @@ export { personaCommand } from './persona';
 export { contactCommand } from './contact';
 export { groupCommand } from './group';
 export { fileCommand } from './file';
+export { configCommand } from './config';

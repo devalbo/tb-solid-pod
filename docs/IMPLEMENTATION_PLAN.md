@@ -11,8 +11,9 @@ The app has a working browser-based CLI and file browser UI with:
 - Contact management with search/filter (Phase 2 ✅)
 - Group management with membership (Phase 3 ✅)
 - Rich file metadata with UI editor (Phase 4 ✅)
+- Settings and preferences via CLI (Phase 5 ✅)
 
-**All core schemas integrated!**
+**All core schemas integrated! Settings system complete!**
 
 ## Phase 1: Persona Management ✅ COMPLETE
 
@@ -157,7 +158,7 @@ file set-description <path> <desc>
 
 ---
 
-## Phase 5: Settings & Preferences
+## Phase 5: Settings & Preferences ✅ COMPLETE
 
 ### Goal
 Store user preferences and app settings.
@@ -167,22 +168,27 @@ Store user preferences and app settings.
 config list                     # Show all settings
 config get <key>                # Get setting value
 config set <key> <value>        # Set setting value
-config reset                    # Reset to defaults
+config reset [key]              # Reset setting(s) to defaults
 ```
 
-### Settings to Support
-- Default persona
-- Theme preference
-- CLI history size
-- Auto-save interval
+### Settings Supported
+- `defaultPersonaId` - Default persona for authoring content
+- `theme` - Color theme (light | dark | system)
+- `cliHistorySize` - Number of CLI commands to keep in history
+- `autoSaveInterval` - Auto-save interval in ms (0 = disabled)
+- `showHiddenFiles` - Show hidden files in browser
+- `defaultContentType` - Default MIME type for new files
 
 ### Data Storage
 - Store in TinyBase `values` (not tables)
-- Simple key-value pairs
+- Simple key-value pairs with type validation
+- Default values for all settings
 
-### Files to Create
-- `src/cli/commands/config.tsx` - CLI commands
-- `src/utils/settings.ts` - Settings utilities
+### Files Created/Modified
+- `src/utils/settings.ts` - Settings utilities with type-safe helpers ✅
+- `src/cli/commands/config.tsx` - CLI commands ✅
+- `src/cli/commands/index.ts` - Export config command ✅
+- `src/cli/registry.tsx` - Register config command ✅
 
 ---
 

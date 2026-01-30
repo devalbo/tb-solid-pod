@@ -16,6 +16,7 @@ import {
   contactCommand,
   groupCommand,
   fileCommand,
+  configCommand,
 } from './commands';
 
 /**
@@ -37,6 +38,7 @@ export const commands: Record<string, Command> = {
   contact: contactCommand,
   group: groupCommand,
   file: fileCommand,
+  config: configCommand,
 };
 
 /**
