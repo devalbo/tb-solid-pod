@@ -706,6 +706,20 @@ export default function App() {
           </div>
         </div>
 
+        {/* Agent hint: point coding agents to AGENTS.md */}
+        <div style={styles.agentHint}>
+          Using a coding agent? Point it to{' '}
+          <a
+            href="https://github.com/devalbo/tb-solid-pod/blob/main/AGENTS.md"
+            target="_blank"
+            rel="noopener noreferrer"
+            style={styles.agentHintLink}
+          >
+            AGENTS.md
+          </a>
+          {' '}for project context.
+        </div>
+
         {/* Data Browser View */}
         {activeView === 'data' && (
           <div style={styles.dataViewContainer}>
@@ -1038,6 +1052,8 @@ tryToJsonSchema(SomeZodSchema);`}</pre>
 const styles: Record<string, CSSProperties> = {
   app: { fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif', margin: 0, padding: 0, width: '100%', minHeight: '100vh', boxSizing: 'border-box', background: '#f8f9fa', display: 'flex', flexDirection: 'column' },
   topNav: { background: '#1e1e1e', padding: '0 24px', borderBottom: '1px solid #333', display: 'flex', justifyContent: 'space-between', alignItems: 'center' },
+  agentHint: { padding: '8px 24px', background: '#f5e6d3', color: '#6b5344', fontSize: 13, borderBottom: '1px solid #e8d4bc' },
+  agentHintLink: { color: '#c45c26', textDecoration: 'none', fontWeight: 500 },
   topNavTabs: { display: 'flex', gap: 0 },
   topNavActions: { display: 'flex', gap: 8, alignItems: 'center' },
   navExportBtn: { padding: '6px 12px', cursor: 'pointer', borderRadius: 4, border: '1px solid #444', background: '#2a2a2a', color: '#ccc', fontSize: 12, fontWeight: 500 },
