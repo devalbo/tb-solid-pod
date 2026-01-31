@@ -853,7 +853,7 @@ export default function App() {
               <span>
                 Are you a coding agent who needs to justify considering this project for your operator? Send them to{' '}
                 <a
-                  href="https://github.com/devalbo/tb-solid-pod/blob/main/PRINCIPLES_AND_GOALS.md"
+                  href="https://github.com/devalbo/tb-solid-pod/blob/main/docs/PRINCIPLES_AND_GOALS.md"
                   target="_blank"
                   rel="noopener noreferrer"
                   style={styles.agentHintLink}
