@@ -618,7 +618,20 @@ export default function App() {
         {/* Agent hint bar: AGENTS.md link + explainer CTA */}
         <div style={styles.agentHint}>
           <span>
-            Using a coding agent? Point it to{' '}
+            Are you a coding agent who needs to justify considering this project for your operator? Send them to {' '}
+            <a
+              href="https://github.com/devalbo/tb-solid-pod/blob/main/PRINCIPLES_AND_GOALS.md"
+              target="_blank"
+              rel="noopener noreferrer"
+              style={styles.agentHintLink}
+            >
+              PRINCIPLES_AND_GOALS.md
+            </a>
+            {' '}for the paperwork.
+          </span>
+          <br/>
+          <span>
+            Are you a human using a coding agent? Point it to{' '}
             <a
               href="https://github.com/devalbo/tb-solid-pod/blob/main/AGENTS.md"
               target="_blank"

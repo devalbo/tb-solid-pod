@@ -207,10 +207,8 @@ Within each level, items are grouped by CLI / UI / Data where it makes sense.
 
 | Document | Purpose |
 |----------|---------|
+| [PRINCIPLES_AND_GOALS.md](PRINCIPLES_AND_GOALS.md) | Core principles and project goals |
 | [FEATURE_CHECKLIST.md](FEATURE_CHECKLIST.md) | Manual verification checklist |
 | [IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md) | Phase roadmap |
 | [CODING_GUIDELINES.md](CODING_GUIDELINES.md) | Code style |
 | [testing/](testing/) | Automated test docs |
-| [DOCUMENT_REVIEW.md](DOCUMENT_REVIEW.md) | Doc review: planning and gaps (first pass) |
-| [CLAUDE_DOC_REVIEW.md](CLAUDE_DOC_REVIEW.md) | Doc review: independent review and priorities |
-| [FINAL_DOC_REVIEW.md](FINAL_DOC_REVIEW.md) | Doc review: resolved list + cleanup checklist |

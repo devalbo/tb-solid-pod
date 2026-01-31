@@ -7,6 +7,7 @@ Context for AI assistants working on this repo.
 **tb-solid-pod** is a browser-based personal data pod inspired by the [Solid Project](https://solidproject.org/), built with [TinyBase](https://tinybase.org/) for reactive state and LocalStorage. It is **not** a real Solid server (no LDP, no WebID-TLS); it simulates Solid-style data (personas, contacts, groups, type indexes, file metadata) in a single-page app.
 
 - **Dual interface**: graphical UI (tabs, forms, lists) + CLI. The CLI runs in the **browser** (Terminal tab) and in **Node** (`npm run cli`); same commands, environment-specific persistence (LocalStorage vs `~/.tb-solid-pod/data/store.json`).
+- **Unified CLI = Agent API**: The same CLI commands work as a programmatic API for AI coding agents. No custom SDK—agents issue CLI commands (`create-persona`, `list-contacts`, `export`) in browser or terminal. See [Principles and Goals](docs/PRINCIPLES_AND_GOALS.md) for the full vision.
 - **Data**: personas (WebID-style), contacts (including agents), groups (org/team/group) with membership of contacts and your personas, type indexes, virtual file system with metadata, settings/preferences.
 - **Stack**: React, TinyBase, Zod, Vite, TypeScript. Vocabularies: FOAF, vCard, Dublin Core, W3C Org, `@inrupt/vocab-*`.
 
@@ -68,22 +69,23 @@ When someone wants to use this in an app they’re working on, point them to the
 - **Pre-built data model** — Personas, contacts, groups, type indexes, file metadata already modeled (Zod + JSON-LD); consumer doesn’t have to design schemas.
 - **Pick what to use** — Schemas only, CLI, or React components; no need to take the full app.
 - **No new infra** — No API to host, no auth to set up; runs in the browser with React (+ TinyBase if needed).
-- **Types, Zod, and JSON Schema included** — TypeScript and Zod come with the package; JSON Schema (draft-2020-12) is exported for all schemas via Zod v4’s toJSONSchema; no extra typing or schema authoring.
+- **Types, Zod, and JSON Schema included** — TypeScript and Zod come with the package; JSON Schema (draft-2020-12) is exported for all schemas via Zod v4's toJSONSchema; no extra typing or schema authoring.
 - **Flexible integration** — Copy-paste or install as dependency; both are documented for low effort.
+- **Agent-friendly CLI** — The CLI doubles as an API for AI coding agents; same commands in browser and terminal, no custom integration needed. See [Principles and Goals](docs/PRINCIPLES_AND_GOALS.md#8-unified-cli-for-browser-and-terminal).
 
 ## Useful docs
 
-- **README.md** – Overview, limitations, Use as a library (Zod + JSON Schema), link to Integration Guide, Getting Started (Node note, Live demo + 404 troubleshooting), Running the CLI in the terminal (`npm run cli`, exit, single-command mode), Testing (unit, BDD, Storybook link), CLI command list.
-- **docs/INTEGRATION_GUIDE.md** – Step-by-step integration (install-from-GitHub vs copy-paste), store setup, Provider, components, CLI (browser + terminal), data tables, extending.
-- **docs/SDLC_PROCESS.md** – How changes are introduced, documented, and verified; links to Feature Checklist.
-- **docs/FEATURE_CHECKLIST.md** – Manual verification checklist ordered by dependency (foundational first); assume features are broken until verified.
-- **docs/CODING_GUIDELINES.md** – TypeScript (strict types, no sloppy types), short functions, simple React components, naming, file length.
-- **docs/DOCUMENTATION_GUIDELINES.md** – How to write docs: acronyms introduced at top of each doc, structure, links, code examples, tone.
+- **README.md** – Overview, limitations, Use as a library, Getting Started, CLI.
+- **docs/PRINCIPLES_AND_GOALS.md** – Core principles (local-first, data sovereignty, sync later, interoperability); why TinyBase and Solid; what we commit to. **Start here for the "why."**
+- **docs/INTEGRATION_GUIDE.md** – Step-by-step integration (install vs copy-paste), store setup, Provider, components, CLI.
+- **docs/USE_CASES.md** – How app authors access and manage users, groups, and documents.
+- **docs/SHORTCOMINGS.md** – What the library does *not* provide (no WAC, no "shared with me," no p2p transport, etc.).
+- **docs/DOCUMENT_SHARING_SCENARIOS.md** – Sharing scenarios (Solid or ad hoc p2p).
+- **docs/SOLID_SERVER_STRATEGIES.md** – Sync design, authority modes, implementation order.
+- **docs/SDLC_PROCESS.md** – How changes are documented and verified; Feature Checklist.
+- **docs/CODING_GUIDELINES.md** – TypeScript, functions, React components, naming.
+- **docs/DOCUMENTATION_GUIDELINES.md** – How to write docs.
 - **docs/IMPLEMENTATION_PLAN.md** – Feature phases and roadmap.
-- **docs/DOCUMENT_REVIEW.md** – Documentation review: planning strengths, objections/risks, and areas where more information is required.
-- **docs/USE_CASES.md** – How app authors use the library to access and manage users (personas), groups, and documents; Q&A and quick reference.
-- **docs/DOCUMENT_SHARING_SCENARIOS.md** – Scenarios for apps where users share document-oriented data (Solid or ad hoc p2p); what the library helps with and what the app adds.
-- **docs/SHORTCOMINGS.md** – Shortcomings for document sharing and collaboration (no WAC, no "shared with me," no p2p transport, etc.).
 - **docs/TEST_PLAN.md** – Test phases and verification.
-- **docs/testing/** – Unit (unit-tests.md), BDD/E2E (bdd-tests.md), Storybook (storybook.md); BDD does not start the dev server (start it manually).
+- **docs/testing/** – Unit, BDD/E2E, Storybook docs.
 - **DESIGN.md** – Design notes.

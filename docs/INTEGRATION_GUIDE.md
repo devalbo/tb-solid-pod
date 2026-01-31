@@ -1,8 +1,8 @@
 # Integration Guide
 
-This guide explains how to integrate **tb-solid-pod** into an application you are building. It is for developers who want to add Solid-style personas, contacts, groups, type indexes, or file metadata to their app, either by installing the package from GitHub or by copying source files.
+This guide explains *how* to integrate **tb-solid-pod** into your app. For *why* (principles, local-first, data sovereignty), see [PRINCIPLES_AND_GOALS.md](PRINCIPLES_AND_GOALS.md). For practical "how do I…" questions, see [USE_CASES.md](USE_CASES.md).
 
-**Terms:** **TinyBase** is the reactive store and persistence library used by this project. **JSON-LD** (JavaScript Object Notation for Linked Data) is the data format used for personas, contacts, and groups. **CLI** (command-line interface) refers to the terminal provided by the library: in-app (browser Terminal tab) or Node (`npm run cli`).
+**Terms:** **TinyBase** = reactive store + persistence. **JSON-LD** = data format for personas, contacts, groups. **CLI** = terminal (browser or Node).
 
 ## Two ways to integrate
 

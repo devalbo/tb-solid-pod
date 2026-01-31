@@ -1,8 +1,8 @@
 # Use cases for app authors
 
-This document answers questions about how an application that uses **tb-solid-pod** as a library can access and manage data about **users** (personas), **groups**, and **documents** (files and metadata). It is written for app authors who are integrating the library into their own React/TinyBase app or using the schemas and utilities directly.
+This document answers "how do I…" questions for app authors integrating **tb-solid-pod**. For the *why* (principles, goals, why TinyBase and Solid), see [PRINCIPLES_AND_GOALS.md](PRINCIPLES_AND_GOALS.md).
 
-**Terms used here:** A **pod** is the user’s personal data store (in this library, a TinyBase store backed by LocalStorage). **Personas** are identity profiles (WebID-style); **contacts** are people or agents in the user’s address book; **groups** are organizations, teams, or informal groups with membership; **documents** and **files** refer to the virtual file system and its metadata (title, description, author, MIME type, etc.).
+**Terms:** **Pod** = user's data store (TinyBase + LocalStorage). **Personas** = identity profiles. **Contacts** = address book entries. **Groups** = orgs/teams with membership. **Documents/files** = resources with metadata.
 
 ---
 
@@ -150,8 +150,8 @@ The library expects the following TinyBase layout. Use this when you set up the 
 
 ## Related docs
 
-- **[README – Integration Guide](../README.md#integration-guide)** – Store setup, Provider, table layout, and copy-paste vs install.
-- **[DOCUMENT_SHARING_SCENARIOS.md](DOCUMENT_SHARING_SCENARIOS.md)** – How the library supports apps where users share document-oriented data (Solid-style or ad hoc p2p).
-- **[SHORTCOMINGS.md](SHORTCOMINGS.md)** – What the library does *not* provide for document sharing and collaboration (WAC, “shared with me,” p2p transport, etc.).
-- **[DESIGN.md](DESIGN.md)** – Data model, vocabularies, and architecture.
-- **[SOLID_SERVER_STRATEGIES.md](SOLID_SERVER_STRATEGIES.md)** – How a future Solid server or sync target could fit in; authority and sync patterns.
+- **[PRINCIPLES_AND_GOALS.md](PRINCIPLES_AND_GOALS.md)** – Why TinyBase, why Solid, what we commit to.
+- **[INTEGRATION_GUIDE.md](INTEGRATION_GUIDE.md)** – Store setup, Provider, table layout.
+- **[DOCUMENT_SHARING_SCENARIOS.md](DOCUMENT_SHARING_SCENARIOS.md)** – Sharing scenarios (Solid-style or ad hoc).
+- **[SHORTCOMINGS.md](SHORTCOMINGS.md)** – What the library does *not* provide.
+- **[SOLID_SERVER_STRATEGIES.md](SOLID_SERVER_STRATEGIES.md)** – Sync target and authority patterns.

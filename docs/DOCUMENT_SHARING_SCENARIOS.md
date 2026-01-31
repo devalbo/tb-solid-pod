@@ -1,27 +1,25 @@
 # Document-sharing scenarios
 
-This doc describes how **tb-solid-pod** can support applications where **users share document-oriented data** with one another—ideally following **Solid** principles (pod URLs, access control, federation) or, as a fallback, **ad hoc peer-to-peer** (export/import, link, or custom channel). It is written for app authors who are evaluating or integrating the library for sharing and collaboration features.
+This doc describes how **tb-solid-pod** supports applications where users share document-oriented data. It covers Solid-style sharing (pod URLs, WAC) and ad hoc peer-to-peer (export/import). For core principles (local-first, data sovereignty, interoperability), see [PRINCIPLES_AND_GOALS.md](PRINCIPLES_AND_GOALS.md). For what the library does *not* provide, see [SHORTCOMINGS.md](SHORTCOMINGS.md).
 
-**Terms used here:** **Solid** is the [Solid Project](https://solidproject.org/) vision: user-owned data in **pods** (personal online data stores) with **WebID** identity and **WAC** (Web Access Control) for sharing. **LDP** (Linked Data Platform) is the W3C standard for HTTP read/write of linked data; Solid pods expose LDP. **Document-oriented data** means files, folders, and metadata (title, author, description) that users create and want to share with contacts or groups. **P2P** (peer-to-peer) here means ad hoc sharing without a central server—e.g. export/import, QR, messenger, or WebRTC—as a worst-case or complement to Solid.
-
-For what the library *does not* provide today (no WAC, no “shared with me,” no built-in p2p transport), see [SHORTCOMINGS.md](SHORTCOMINGS.md).
+**Terms:** **Document-oriented data** = files, folders, and metadata (title, author, description). **P2P** = ad hoc sharing without a server (export/import, QR, messenger).
 
 ---
 
-## How this library helps document-sharing apps
+## What enables sharing
 
-The library gives you a **consistent data model** and **portable data** that work across scenarios:
+The library's data model supports sharing scenarios (see [PRINCIPLES_AND_GOALS.md](PRINCIPLES_AND_GOALS.md) for why):
 
-| What you get | Why it helps sharing |
-|--------------|----------------------|
-| **Personas** (identity) | “Who is the author?” and “Who is the current user?”—needed for attribution and for designating share targets. |
-| **Contacts** (address book) | “Who can I share with?” Contacts are natural share targets; you can later map them to WebIDs when syncing to a Solid pod. |
-| **Groups** (org/team/group + membership) | “Share with a team” or “share with this list.” Membership (contacts + your personas) defines the audience. |
-| **Resources** (files/folders + metadata) | Documents live in the `resources` table with title, author, description, MIME type. Author can be a persona `@id`; same shape works locally and (after transform) on an LDP server. |
-| **Export/import** | `exportStore()` / import produce portable JSON. Users can send a document (or full pod snapshot) to someone else; the recipient can import into their own store. |
-| **Vocabularies** (FOAF, vCard, Dublin Core, Schema.org) | Data is interoperable; when you sync to a Solid pod or send JSON, other Solid-aware apps can understand it. |
+| Data | Sharing role |
+|------|--------------|
+| **Personas** | Author attribution; designating share targets by identity. |
+| **Contacts** | Natural recipients; map to WebIDs when syncing to a pod. |
+| **Groups** | "Share with team"; membership defines the audience. |
+| **Resources** | Documents with metadata; same shape locally and on LDP. |
+| **Export/import** | Portable JSON for ad hoc sharing. |
+| **Vocabularies** | Interoperable data (FOAF, vCard, etc.). |
 
-What the library **does not** provide (see [SHORTCOMINGS.md](SHORTCOMINGS.md)): **WAC** (per-document “share with contact/group”), **“shared with me”** views, **resolvable document URLs** (until you sync to an LDP server), or a **p2p transport** (WebRTC, etc.). Your app can still use the data model and export/import to implement sharing flows that work today and align with Solid later.
+**Not provided:** WAC, "shared with me" views, resolvable URLs (until synced), p2p transport. See [SHORTCOMINGS.md](SHORTCOMINGS.md).
 
 ---
 
@@ -116,7 +114,7 @@ What the library **does not** provide (see [SHORTCOMINGS.md](SHORTCOMINGS.md)): 
 
 ## Related docs
 
-- **[USE_CASES.md](USE_CASES.md)** – How to access and manage users, groups, and documents in your app (store, components, factory functions).
-- **[SHORTCOMINGS.md](SHORTCOMINGS.md)** – What the library does *not* provide for document sharing and collaboration (WAC, “shared with me,” p2p transport, etc.).
-- **[SOLID_SERVER_STRATEGIES.md](SOLID_SERVER_STRATEGIES.md)** – How to add a persistent Solid server as a sync target so documents get URLs and can be shared via Solid.
-- **[README – Limitations](../README.md#limitations--where-it-falls-short)** – High-level limitations (no LDP, single-user, no WAC, etc.).
+- **[PRINCIPLES_AND_GOALS.md](PRINCIPLES_AND_GOALS.md)** – Core principles: local-first, data sovereignty, interoperability.
+- **[USE_CASES.md](USE_CASES.md)** – How to access and manage users, groups, and documents.
+- **[SHORTCOMINGS.md](SHORTCOMINGS.md)** – What the library does *not* provide.
+- **[SOLID_SERVER_STRATEGIES.md](SOLID_SERVER_STRATEGIES.md)** – How to add a sync target for resolvable URLs.

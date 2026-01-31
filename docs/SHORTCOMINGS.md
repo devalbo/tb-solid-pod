@@ -1,8 +1,8 @@
 # Shortcomings for document sharing and collaboration
 
-This document lists **shortcomings** of **tb-solid-pod** for applications where **users share document-oriented data** with one another—whether via **Solid** principles (pod URLs, access control, federation) or **ad hoc peer-to-peer** (export/import, link, custom channel). It is written for app authors who need to know what the library does *not* provide so they can plan workarounds or complementary systems.
+This document lists what **tb-solid-pod** does *not* provide for document sharing and collaboration. For what the library *does* provide and why, see [PRINCIPLES_AND_GOALS.md](PRINCIPLES_AND_GOALS.md). For scenario-level context (how the library helps despite these shortcomings), see [DOCUMENT_SHARING_SCENARIOS.md](DOCUMENT_SHARING_SCENARIOS.md).
 
-**Terms used here:** **WAC** (Web Access Control) is Solid’s model for per-resource permissions (read/write/append for agents and groups). **LDP** (Linked Data Platform) is the W3C standard for HTTP read/write of linked data; Solid pods expose LDP. **Pod** here means a personal data store (in this library, the TinyBase store in the browser; in Solid, an online server). For scenario-level context (how the library helps despite these shortcomings), see [DOCUMENT_SHARING_SCENARIOS.md](DOCUMENT_SHARING_SCENARIOS.md).
+**Terms:** **WAC** = Web Access Control (per-resource permissions). **LDP** = Linked Data Platform (HTTP read/write of linked data). **Pod** = personal data store (browser TinyBase store or online Solid pod).
 
 Shortcomings are grouped below by **likely application-author desired feature sets**. For each feature set, the Solid scenarios that our implementation does *not* fulfill are listed. A cross-cutting view of **benefit to app authors** and **difficulty to implement** is in [SOLID_SERVER_STRATEGIES.md – Missing features: benefit vs difficulty](SOLID_SERVER_STRATEGIES.md#missing-features-benefit-to-app-authors-vs-difficulty-to-implement).
 
@@ -142,6 +142,6 @@ The following groups correspond to **feature sets** app authors often want. Unde
 
 ## Related docs
 
-- **[DOCUMENT_SHARING_SCENARIOS.md](DOCUMENT_SHARING_SCENARIOS.md)** – How the library *does* help in each sharing scenario and what the app author adds.
-- **[SOLID_SERVER_STRATEGIES.md](SOLID_SERVER_STRATEGIES.md)** – How to add a Solid server as a sync target; includes [Missing features: benefit vs difficulty](SOLID_SERVER_STRATEGIES.md#missing-features-benefit-to-app-authors-vs-difficulty-to-implement).
-- **[README – Limitations](../README.md#limitations--where-it-falls-short)** – High-level project limitations (no LDP, single-user, no WAC, etc.).
+- **[PRINCIPLES_AND_GOALS.md](PRINCIPLES_AND_GOALS.md)** – Why TinyBase, why Solid, what we commit to.
+- **[DOCUMENT_SHARING_SCENARIOS.md](DOCUMENT_SHARING_SCENARIOS.md)** – How the library *does* help in each sharing scenario.
+- **[SOLID_SERVER_STRATEGIES.md](SOLID_SERVER_STRATEGIES.md)** – How to add a sync target; includes [Missing features: benefit vs difficulty](SOLID_SERVER_STRATEGIES.md#missing-features-benefit-to-app-authors-vs-difficulty-to-implement).

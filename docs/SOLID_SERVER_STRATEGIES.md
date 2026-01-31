@@ -1,28 +1,20 @@
 # Strategies for Instantiating a Persistent Solid Server
 
-This doc lays out practical strategies for running a **persistent Solid server** as a **sync target** (or, when the user chooses, **source of truth**) for the browser-based pod, so data can eventually be always-online, resolvable (WebID), and optionally federated. A **required workflow** is that users can add Solid-style data from **first page load** with no server or account; **later**, they can connect a pod and synchronize that data to a permanently online server. The doc builds on [DESIGN.md](DESIGN.md) (Future: Add Always-Online Sync Target) and our current data model (personas, contacts, groups, type indexes, file metadata) and export format.
+This doc lays out practical strategies for running a **persistent Solid server** as a **sync target** for the browser-based pod. It builds on the core principles in [PRINCIPLES_AND_GOALS.md](PRINCIPLES_AND_GOALS.md)—especially **local-first from day one** and **sync later**—and details the technical paths, server options, and implementation order.
 
-**Terms:** **LDP** (Linked Data Platform) is a [W3C standard](https://www.w3.org/TR/ldp/) for read-write linked data over HTTP. Resources (documents) and containers (folders) are identified by URLs; clients use **GET** (read), **PUT** (create/overwrite), **POST** (create in container), **PATCH** (partial update), and **DELETE** on those URLs, with RDF payloads (e.g. `application/ld+json` or `text/turtle`). Solid pods implement LDP (plus auth and conventions); in this doc, “LDP” means this HTTP+RDF interface.
-
----
-
-## Required workflow: start local, sync later
-
-**It is critical** that when a user first lands on the page where this site is hosted, they can **add Solid-style data immediately** — no account, no pod, no server. Personas, contacts, groups, and other data are created and stored **locally** (TinyBase + localStorage). **Later**, when the user wants a permanent, always-online copy, they can **connect a Solid pod** and **synchronize** that local data to it.
-
-- **First use (required):** On first load, the app works without any Solid server or login. The user can create and edit personas, contacts, groups, etc. All data lives in the browser. This is the default and only required path to start.
-- **Sync later (required capability):** The design must support a **later** step: the user connects a pod (e.g. signs up at a hosted provider or points to a self-hosted pod), authenticates once, and the app **synchronizes** existing local data to that pod. From then on, sync can be continuous or on-demand.
-- **Authority after the server is established:** Once the online server (pod) is connected, the user may want **the server to become the authority** instead of the browser. The design must account for this: support a **user choice** (e.g. “Use pod as main storage” / “Server is source of truth”) so that the pod can be the system of record and the browser a cache or offline mirror. When server is authority, the sync layer pulls from the server first, pushes local changes to the server, and resolves conflicts in favor of the server. See [Authority mode: browser vs server](#authority-mode-browser-vs-server).
-- All recommendations and technical choices in this doc assume **local-first from first page load**, **sync to a permanently online server** when the user is ready, and **optional server-as-authority** once the pod is established.
+**Terms:** **LDP** (Linked Data Platform) is a [W3C standard](https://www.w3.org/TR/ldp/) for read-write linked data over HTTP. Resources (documents) and containers (folders) are identified by URLs; clients use **GET** (read), **PUT** (create/overwrite), **POST** (create in container), **PATCH** (partial update), and **DELETE** on those URLs, with RDF payloads (e.g. `application/ld+json` or `text/turtle`). Solid pods implement LDP (plus auth and conventions); in this doc, "LDP" means this HTTP+RDF interface.
 
 ---
 
-## Design principle: sync is a must-have; authority is configurable once pod is connected
+## Core assumptions (from principles)
 
-- **First use is local-only.** No pod or login is required for the user to create data (see [Required workflow: start local, sync later](#required-workflow-start-local-sync-later)). Connecting a pod and syncing is something the user does **later**, when they want a permanent, always-online copy. The app must support this from first page load.
-- **Syncing is critical** once the user connects a pod. Any persistent Solid server must be designed and chosen in the context of **sync**: getting changes between the browser and the server in a reliable, understandable way. One-off “publish” or “backup” is a stepping stone; **continuous or on-demand sync is a must-have** when a pod is connected.
-- **Authority is configurable once the pod is established.** By default (and for “start local, sync later”), the **browser (TinyBase) is the source of truth** and the remote Solid server is a **sync target**. Once the online server is established, the user may choose to make the **server the authority** so the pod is the system of record and the browser is a cache or offline mirror. The sync layer, conflict policy, and persistence behavior must support both modes. See [Authority mode: browser vs server](#authority-mode-browser-vs-server).
-- Implications: we need a **sync layer** that activates when the user has connected a pod; it must support **browser authority** (push from local, optional pull, conflicts per policy) and **server authority** (pull from server first, push changes, server wins on conflict). Server choice is “where does the sync target (or source of truth) live?” — hosted pod (minimal config) or self-hosted. Auth and push/pull semantics are part of the core design; **conflict policy depends on authority mode**.
+This doc assumes the principles from [PRINCIPLES_AND_GOALS.md](PRINCIPLES_AND_GOALS.md):
+
+1. **Local-first from first page load**: Users can add data immediately with no server or account.
+2. **Sync later**: When ready, users connect a pod and synchronize existing local data.
+3. **Authority is configurable**: By default the browser is the source of truth; users can choose server-as-authority once a pod is connected.
+
+All technical paths and strategies below support these requirements.
 
 ---
 

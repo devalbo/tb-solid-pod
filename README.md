@@ -52,27 +52,16 @@ This library provides a complete foundation for **user-owned social data** in we
 
 ## Benefits for Social Applications
 
-### 1. User Data Ownership
-Users control their data in their browser's LocalStorage. No server-side database required for basic functionality. Data can be exported as JSON-LD for portability.
+See [docs/PRINCIPLES_AND_GOALS.md](docs/PRINCIPLES_AND_GOALS.md) for the full rationale (why TinyBase, why Solid, what we commit to).
 
-### 2. Interoperable Schemas
-Built on established vocabularies (FOAF, vCard, Dublin Core, Schema.org, W3C Org), making data portable to other Solid-compatible systems or any RDF-aware application.
-
-### 3. Relationship Modeling
-The contact + group + persona architecture supports:
-- Friend/follower relationships
-- Team collaboration structures
-- Organization hierarchies
-- Agent/bot permissions (who can act on your behalf)
-
-### 4. Offline-First
-TinyBase with LocalStorage means the app works entirely offline. No network requests required for core functionality.
-
-### 5. Reactive UI
-TinyBase's reactive hooks (`useRow`, `useTable`, `useSliceRowIds`) keep UI in sync with data automatically. Changes in CLI reflect immediately in the graphical UI and vice versa.
-
-### 6. Extensible Foundation
-The schema system (Zod + JSON-LD) provides a pattern for adding new data types. The CLI command registry makes adding new commands straightforward.
+| Benefit | Summary |
+|---------|---------|
+| **User Data Ownership** | Data in browser LocalStorage; export as JSON-LD anytime. |
+| **Interoperable Schemas** | FOAF, vCard, Dublin Core, Schema.org, W3C Org—portable to Solid/RDF systems. |
+| **Relationship Modeling** | Personas + contacts + groups support friend/follower, team, org, and agent patterns. |
+| **Offline-First** | TinyBase + LocalStorage; no network required for core features. |
+| **Reactive UI** | TinyBase hooks keep UI in sync; CLI and UI reflect changes immediately. |
+| **Extensible** | Zod + JSON-LD schemas and CLI command registry for adding new types. |
 
 ## Limitations & Where It Falls Short
 
