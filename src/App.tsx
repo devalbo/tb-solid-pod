@@ -22,14 +22,181 @@ import FileMetadataPanel from './components/FileMetadataPanel';
 import { DemoFooter } from './components/DemoFooter';
 
 const DEFAULT_PERSONA_KEY = 'defaultPersonaId';
+const AGENT_HINT_HIDDEN_KEY = 'agentHintHidden';
 
 const STORAGE_KEY = 'tb-solid-pod';
 const BASE_URL = 'https://myapp.com/pod/';
+const DISPLAY_BASE_URL = 'tb://local/';
+const LAYOUT_PADDING_LEFT = 24;
+// Explorer sizing (kept separate from the file viewer).
+const EXPLORER_WIDTH = 420;
+const EXPLORER_CONTROLS_WIDTH = 140;
+const EXPLORER_CONTROLS_GAP = 12;
 
 /** Base URL for static assets (e.g. '' in dev, '/tb-solid-pod/' on GitHub Pages). */
 function getAssetBase(): string {
   const m = import.meta as { env?: { BASE_URL?: string } };
   return m.env?.BASE_URL ?? '';
+}
+
+type AppView = 'files' | 'terminal' | 'personas' | 'contacts' | 'groups' | 'schemas';
+
+const VIEW_LABELS: Record<AppView, string> = {
+  files: 'File Browser',
+  personas: 'Personas',
+  contacts: 'Contacts',
+  groups: 'Groups',
+  schemas: 'Schemas',
+  terminal: 'Terminal',
+};
+
+// “Data” menu = core data types you browse/manage in the UI.
+// Keep “Schemas” and “Terminal” as top-level tools.
+const VIEW_MENU_VIEWS: AppView[] = ['files', 'personas', 'contacts', 'groups'];
+
+type DropdownItem = {
+  id: string;
+  label: string;
+  onSelect: () => void;
+  active?: boolean;
+  disabled?: boolean;
+};
+
+type Breadcrumb = {
+  label: string;
+  url: string;
+  isCurrent: boolean;
+};
+
+function toDisplayUrl(baseUrl: string, displayBaseUrl: string, currentUrl: string): string {
+  try {
+    const baseStr = new URL(baseUrl).toString();
+    const curStr = new URL(currentUrl).toString();
+    if (!curStr.startsWith(baseStr)) return curStr;
+    return displayBaseUrl + curStr.slice(baseStr.length);
+  } catch {
+    return currentUrl;
+  }
+}
+
+function toDisplayPath(baseUrl: string, displayBaseUrl: string, currentUrl: string): string {
+  const u = toDisplayUrl(baseUrl, displayBaseUrl, currentUrl);
+  // For compact headers, strip scheme/host and show path-ish part.
+  if (u.startsWith(displayBaseUrl)) {
+    const rel = u.slice(displayBaseUrl.length);
+    return '/' + rel;
+  }
+  return u;
+}
+
+function getBreadcrumbs(baseUrl: string, displayBaseUrl: string, currentUrl: string): Breadcrumb[] {
+  try {
+    // Normalize and compute a relative path from baseUrl.
+    const base = new URL(baseUrl);
+    const cur = new URL(currentUrl);
+    const baseStr = base.toString();
+    const curStr = cur.toString();
+
+    const isUnderBase = curStr.startsWith(baseStr);
+    const rel = isUnderBase ? curStr.slice(baseStr.length) : `${cur.pathname}${cur.search}${cur.hash}`.replace(/^\//, '');
+
+    const isContainer = curStr.endsWith('/');
+    const parts = rel.split('/').filter(Boolean);
+
+    const crumbs: Breadcrumb[] = [{ label: displayBaseUrl.replace(/\/$/, ''), url: baseStr, isCurrent: parts.length === 0 }];
+
+    let acc = baseStr;
+    for (let i = 0; i < parts.length; i++) {
+      const isLast = i === parts.length - 1;
+      const seg = parts[i]!;
+      // Containers always end in '/', files do not. We don't know which intermediate segments are containers,
+      // but for this virtual pod UI, path segments are navigable as containers.
+      const nextUrl = acc + seg + (isLast ? (isContainer ? '/' : '') : '/');
+      crumbs.push({ label: seg, url: nextUrl, isCurrent: isLast });
+      acc = acc + seg + '/';
+    }
+
+    return crumbs;
+  } catch {
+    return [{ label: 'Pod', url: baseUrl, isCurrent: true }];
+  }
+}
+
+function DropdownMenu(props: {
+  label: string;
+  items: DropdownItem[];
+  buttonStyle: CSSProperties;
+  menuStyle: CSSProperties;
+  itemStyle: CSSProperties;
+  itemActiveStyle?: CSSProperties;
+  itemDisabledStyle?: CSSProperties;
+  menuAlign?: 'left' | 'right';
+}): React.ReactElement {
+  const { label, items, buttonStyle, menuStyle, itemStyle, itemActiveStyle, itemDisabledStyle, menuAlign } = props;
+  const [open, setOpen] = useState(false);
+  const wrapRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const onMouseDown = (e: MouseEvent) => {
+      const el = wrapRef.current;
+      if (!el) return;
+      if (e.target instanceof Node && !el.contains(e.target)) setOpen(false);
+    };
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setOpen(false);
+    };
+    document.addEventListener('mousedown', onMouseDown);
+    document.addEventListener('keydown', onKeyDown);
+    return () => {
+      document.removeEventListener('mousedown', onMouseDown);
+      document.removeEventListener('keydown', onKeyDown);
+    };
+  }, [open]);
+
+  return (
+    <div ref={wrapRef} style={styles.menuWrap}>
+      <button
+        type="button"
+        style={buttonStyle}
+        aria-haspopup="menu"
+        aria-expanded={open}
+        onClick={() => setOpen((v) => !v)}
+      >
+        {label} <span style={styles.menuChevron}>{open ? '▲' : '▼'}</span>
+      </button>
+      {open && (
+        <div
+          role="menu"
+          style={{
+            ...menuStyle,
+            ...(menuAlign === 'right' ? { left: 'auto', right: 0 } : { left: 0, right: 'auto' }),
+          }}
+        >
+          {items.map((it) => (
+            <button
+              key={it.id}
+              type="button"
+              role="menuitem"
+              disabled={it.disabled}
+              style={{
+                ...itemStyle,
+                ...(it.active ? itemActiveStyle : null),
+                ...(it.disabled ? itemDisabledStyle : null),
+              }}
+              onClick={() => {
+                if (it.disabled) return;
+                setOpen(false);
+                it.onSelect();
+              }}
+            >
+              {it.label}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
 }
 
 // Metadata for the Schemas view: descriptions and Solid doc links
@@ -179,7 +346,7 @@ const FileBrowser: React.FC<FileBrowserProps> = ({ url, onNavigate, parentUrl, o
         >
           ↑
         </button>
-        📂 {url.replace('https://myapp.com/pod/', '/')}
+        📂 {toDisplayPath(BASE_URL, DISPLAY_BASE_URL, url)}
       </h3>
       <div style={styles.list}>
         {children.length === 0 && <i style={{color: '#888'}}>Empty Folder</i>}
@@ -413,9 +580,10 @@ export default function App() {
   const uploadImageInputRef = useRef<HTMLInputElement>(null);
   const importFileInputRef = useRef<HTMLInputElement>(null);
   const [copyStatus, setCopyStatus] = useState<'success' | 'error' | null>(null);
-  const [activeView, setActiveView] = useState<'data' | 'terminal' | 'personas' | 'contacts' | 'groups' | 'schemas'>(() =>
-    (typeof window !== 'undefined' && window.location.hash === '#schemas') ? 'schemas' : 'data'
+  const [activeView, setActiveView] = useState<AppView>(() =>
+    (typeof window !== 'undefined' && window.location.hash === '#schemas') ? 'schemas' : 'files'
   );
+  const [agentHintHidden, setAgentHintHidden] = useState(false);
   useEffect(() => {
     const onHash = () => {
       if (window.location.hash === '#schemas') setActiveView('schemas');
@@ -441,6 +609,15 @@ export default function App() {
   const row = useRow('resources', currentUrl, store ?? undefined) as ResourceRow | undefined;
   const isContainer = row?.type === 'Container';
   const parentUrl = row?.parentId;
+
+  // Persisted preference (via TinyBase LocalStorage persister).
+  // Keep this in React state so the agent hint bar can be hidden "permanently".
+  useEffect(() => {
+    if (!store) return;
+    const hidden = (store.getValue(AGENT_HINT_HIDDEN_KEY) as boolean | undefined) === true;
+    setAgentHintHidden(hidden);
+    if (hidden) setExplainerExpanded(false);
+  }, [store]);
 
   const openNewFileDialog = () => {
     setNewFileName('');
@@ -536,66 +713,81 @@ export default function App() {
       <div style={styles.app}>
         {/* Top Navigation Bar */}
         <div style={styles.topNav}>
-          <div style={styles.topNavTabs}>
+          <div style={styles.topNavLeft}>
+            <div style={styles.topNavBrand}>
+              <div style={styles.topNavTitle}>tb-solid-pod</div>
+              <div style={styles.topNavSubtitle}>TinyBase-powered Solid-style pod (demo)</div>
+            </div>
+            <DropdownMenu
+              label={VIEW_MENU_VIEWS.includes(activeView) ? `Data: ${VIEW_LABELS[activeView]}` : 'Data'}
+              items={VIEW_MENU_VIEWS.map((v) => ({
+                id: v,
+                label: VIEW_LABELS[v],
+                active: v === activeView,
+                onSelect: () => setActiveView(v),
+              }))}
+              buttonStyle={styles.navMenuBtn}
+              menuStyle={styles.menuPanel}
+              itemStyle={styles.menuItem}
+              itemActiveStyle={styles.menuItemActive}
+              itemDisabledStyle={styles.menuItemDisabled}
+            />
             <button
-              style={{ ...styles.topNavTab, ...(activeView === 'data' ? styles.topNavTabActive : {}) }}
-              onClick={() => setActiveView('data')}
-            >
-              Data Browser
-            </button>
-            <button
-              style={{ ...styles.topNavTab, ...(activeView === 'personas' ? styles.topNavTabActive : {}) }}
-              onClick={() => setActiveView('personas')}
-            >
-              Personas
-            </button>
-            <button
-              style={{ ...styles.topNavTab, ...(activeView === 'contacts' ? styles.topNavTabActive : {}) }}
-              onClick={() => setActiveView('contacts')}
-            >
-              Contacts
-            </button>
-            <button
-              style={{ ...styles.topNavTab, ...(activeView === 'groups' ? styles.topNavTabActive : {}) }}
-              onClick={() => setActiveView('groups')}
-            >
-              Groups
-            </button>
-            <button
-              style={{ ...styles.topNavTab, ...(activeView === 'schemas' ? styles.topNavTabActive : {}) }}
+              type="button"
+              style={{ ...styles.navTopBtn, ...(activeView === 'schemas' ? styles.navTopBtnActive : null) }}
               onClick={() => setActiveView('schemas')}
             >
               Schemas
             </button>
             <button
-              style={{ ...styles.topNavTab, ...(activeView === 'terminal' ? styles.topNavTabActive : {}) }}
+              type="button"
+              style={{ ...styles.navTopBtn, ...(activeView === 'terminal' ? styles.navTopBtnActive : null) }}
               onClick={() => setActiveView('terminal')}
             >
               Terminal
             </button>
           </div>
           <div style={styles.topNavActions}>
-            <button
-              style={styles.navExportBtn}
-              onClick={handleCopyToClipboard}
-              title="Copy store data to clipboard"
-            >
-              {copyStatus === 'success' ? 'Copied!' : copyStatus === 'error' ? 'Failed' : 'Copy'}
-            </button>
-            <button
-              style={styles.navExportBtn}
-              onClick={handleDownload}
-              title="Download store as JSON file"
-            >
-              Export
-            </button>
-            <button
-              style={styles.navExportBtn}
-              onClick={handleImportClick}
-              title="Import store from JSON file"
-            >
-              Import
-            </button>
+            {agentHintHidden && (
+              <button
+                type="button"
+                style={styles.navHelpBtn}
+                onClick={() => {
+                  store.setValue(AGENT_HINT_HIDDEN_KEY, false);
+                  setAgentHintHidden(false);
+                }}
+                aria-label="Show agent hint bar"
+                title="Show the agent hint bar"
+              >
+                ?
+              </button>
+            )}
+            <DropdownMenu
+              label="Import/Export"
+              items={[
+                {
+                  id: 'copy',
+                  label: copyStatus === 'success' ? 'Copy (copied)' : copyStatus === 'error' ? 'Copy (failed)' : 'Copy to clipboard',
+                  onSelect: handleCopyToClipboard,
+                },
+                {
+                  id: 'export',
+                  label: 'Export JSON…',
+                  onSelect: handleDownload,
+                },
+                {
+                  id: 'import',
+                  label: 'Import JSON…',
+                  onSelect: handleImportClick,
+                },
+              ]}
+              buttonStyle={styles.navExportBtn}
+              menuStyle={styles.menuPanel}
+              itemStyle={styles.menuItem}
+              itemActiveStyle={styles.menuItemActive}
+              itemDisabledStyle={styles.menuItemDisabled}
+              menuAlign="right"
+            />
             <input
               ref={importFileInputRef}
               type="file"
@@ -608,42 +800,59 @@ export default function App() {
         </div>
 
         {/* Agent hint bar: AGENTS.md link + explainer CTA */}
-        <div style={styles.agentHint}>
-          <span>
-            Are you a coding agent who needs to justify considering this project for your operator? Send them to {' '}
-            <a
-              href="https://github.com/devalbo/tb-solid-pod/blob/main/PRINCIPLES_AND_GOALS.md"
-              target="_blank"
-              rel="noopener noreferrer"
-              style={styles.agentHintLink}
+        {!agentHintHidden && (
+          <div style={styles.agentHint}>
+            <div style={styles.agentHintContent}>
+              <span>
+                Are you a coding agent who needs to justify considering this project for your operator? Send them to{' '}
+                <a
+                  href="https://github.com/devalbo/tb-solid-pod/blob/main/PRINCIPLES_AND_GOALS.md"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={styles.agentHintLink}
+                >
+                  PRINCIPLES_AND_GOALS.md
+                </a>
+                {' '}for the paperwork.
+              </span>
+              <br/>
+              <span>
+                Are you a human using a coding agent? Point it to{' '}
+                <a
+                  href="https://github.com/devalbo/tb-solid-pod/blob/main/AGENTS.md"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={styles.agentHintLink}
+                >
+                  AGENTS.md
+                </a>
+                {' '}for project context.
+              </span>
+              <button
+                type="button"
+                style={styles.agentHintCta}
+                onClick={() => setExplainerExpanded((e) => !e)}
+                aria-expanded={explainerExpanded}
+              >
+                What the library showcases and why it helps app authors
+                <span style={styles.explainerChevron}>{explainerExpanded ? ' ▲' : ' ▼'}</span>
+              </button>
+            </div>
+            <button
+              type="button"
+              style={styles.agentHintDismiss}
+              onClick={() => {
+                store.setValue(AGENT_HINT_HIDDEN_KEY, true);
+                setAgentHintHidden(true);
+                setExplainerExpanded(false);
+              }}
+              aria-label="Dismiss agent hint bar"
+              title="Hide this bar"
             >
-              PRINCIPLES_AND_GOALS.md
-            </a>
-            {' '}for the paperwork.
-          </span>
-          <br/>
-          <span>
-            Are you a human using a coding agent? Point it to{' '}
-            <a
-              href="https://github.com/devalbo/tb-solid-pod/blob/main/AGENTS.md"
-              target="_blank"
-              rel="noopener noreferrer"
-              style={styles.agentHintLink}
-            >
-              AGENTS.md
-            </a>
-            {' '}for project context.
-          </span>
-          <button
-            type="button"
-            style={styles.agentHintCta}
-            onClick={() => setExplainerExpanded((e) => !e)}
-            aria-expanded={explainerExpanded}
-          >
-            What the library showcases and why it helps app authors
-            <span style={styles.explainerChevron}>{explainerExpanded ? ' ▲' : ' ▼'}</span>
-          </button>
-        </div>
+              ×
+            </button>
+          </div>
+        )}
 
         {/* Explainer detail (when expanded) */}
         {explainerExpanded && (
@@ -659,32 +868,9 @@ export default function App() {
           </div>
         )}
 
-        {/* Data Browser View */}
-        {activeView === 'data' && (
+        {/* File Browser View */}
+        {activeView === 'files' && (
           <div style={styles.dataViewContainer}>
-            <div style={styles.toolbar}>
-              <div style={styles.urlBar}>{currentUrl}</div>
-            </div>
-            <div style={styles.actions}>
-              <button style={styles.actionBtn} onClick={createNote}>+ New File</button>
-              <button
-                type="button"
-                style={styles.actionBtn}
-                onClick={() => uploadImageInputRef.current?.click()}
-              >
-                + Upload Image
-              </button>
-              <input
-                ref={uploadImageInputRef}
-                type="file"
-                accept="image/*"
-                onChange={onUploadImageSelect}
-                style={{ display: 'none' }}
-                aria-hidden
-              />
-              <button style={styles.actionBtn} onClick={createFolder}>+ New Folder</button>
-            </div>
-
             {/* New File dialog */}
             {newFileOpen && (
               <div style={styles.dialogOverlay} onClick={closeNewFileDialog}>
@@ -714,14 +900,62 @@ export default function App() {
               </div>
             )}
 
+            <div style={styles.dataHeader}>
+              {/* Align breadcrumbs with explorer (not the controls column). */}
+              <div style={styles.breadcrumbSpacer} aria-hidden />
+              <nav
+                aria-label="Breadcrumb"
+                style={styles.breadcrumbBar}
+                title={toDisplayUrl(BASE_URL, DISPLAY_BASE_URL, currentUrl)}
+              >
+                {getBreadcrumbs(BASE_URL, DISPLAY_BASE_URL, currentUrl).map((c, idx, arr) => (
+                  <React.Fragment key={c.url}>
+                    {c.isCurrent ? (
+                      <span style={styles.breadcrumbCurrent}>{c.label}</span>
+                    ) : (
+                      <button
+                        type="button"
+                        style={styles.breadcrumbBtn}
+                        onClick={() => setCurrentUrl(c.url)}
+                      >
+                        {c.label}
+                      </button>
+                    )}
+                    {idx < arr.length - 1 && <span style={styles.breadcrumbSep}>/</span>}
+                  </React.Fragment>
+                ))}
+              </nav>
+            </div>
+
             <div style={styles.mainLayout}>
-              <div style={styles.navColumn}>
-                <FileBrowser
-                  url={isContainer ? currentUrl : (parentUrl ?? BASE_URL)}
-                  onNavigate={setCurrentUrl}
-                  parentUrl={parentUrl}
-                  onNavigateUp={parentUrl ? () => setCurrentUrl(parentUrl) : undefined}
-                />
+              <div style={styles.explorerWrap}>
+                <div style={styles.explorerControls}>
+                  <button style={styles.explorerControlBtn} onClick={createNote}>+ New File</button>
+                  <button
+                    type="button"
+                    style={styles.explorerControlBtn}
+                    onClick={() => uploadImageInputRef.current?.click()}
+                  >
+                    + Upload Image
+                  </button>
+                  <input
+                    ref={uploadImageInputRef}
+                    type="file"
+                    accept="image/*"
+                    onChange={onUploadImageSelect}
+                    style={{ display: 'none' }}
+                    aria-hidden
+                  />
+                  <button style={styles.explorerControlBtn} onClick={createFolder}>+ New Folder</button>
+                </div>
+                <div style={styles.navColumn}>
+                  <FileBrowser
+                        url={isContainer ? currentUrl : (parentUrl ?? BASE_URL)}
+                    onNavigate={setCurrentUrl}
+                    parentUrl={parentUrl}
+                    onNavigateUp={parentUrl ? () => setCurrentUrl(parentUrl) : undefined}
+                  />
+                </div>
               </div>
               <div style={styles.mainContent}>
                 {!row ? (
@@ -993,19 +1227,34 @@ const styles: Record<string, CSSProperties> = {
   app: { fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif', margin: 0, padding: 0, width: '100%', minHeight: '100vh', boxSizing: 'border-box', background: '#f8f9fa', display: 'flex', flexDirection: 'column' },
   topNav: { background: '#1e1e1e', padding: '0 24px', borderBottom: '1px solid #333', display: 'flex', justifyContent: 'space-between', alignItems: 'center' },
   agentHint: { width: '100%', boxSizing: 'border-box', padding: '8px 24px', background: '#f5e6d3', color: '#6b5344', fontSize: 13, borderBottom: '1px solid #e8d4bc', display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: 12 },
+  agentHintContent: { display: 'flex', flexDirection: 'column', gap: 2, flex: 1, minWidth: 260 },
   agentHintLink: { color: '#c45c26', textDecoration: 'none', fontWeight: 500 },
   agentHintCta: { padding: 0, border: 'none', background: 'none', color: '#6b5344', fontSize: 13, cursor: 'pointer', font: 'inherit', textAlign: 'left', textDecoration: 'underline', textUnderlineOffset: 2 },
+  agentHintDismiss: { border: 'none', background: 'transparent', color: '#6b5344', fontSize: 18, lineHeight: 1, padding: '4px 8px', cursor: 'pointer' },
   explainerChevron: { fontSize: 12, color: '#888' },
   explainer: { width: '100%', boxSizing: 'border-box', background: '#fff', borderBottom: '1px solid #eee', margin: 0 },
   explainerDetail: { padding: '16px 24px 20px', borderTop: '1px solid #e8d4bc', maxWidth: 900 },
   explainerLead: { margin: '12px 0 10px', fontSize: 14, lineHeight: 1.5, color: '#333' },
   explainerWhy: { margin: 0, fontSize: 14, lineHeight: 1.5, color: '#444' },
   explainerLink: { color: '#c45c26', textDecoration: 'none', fontWeight: 500 },
-  topNavTabs: { display: 'flex', gap: 0 },
+  topNavLeft: { display: 'flex', alignItems: 'center', gap: 20, minWidth: 0 },
+  topNavBrand: { display: 'flex', flexDirection: 'column', justifyContent: 'center', lineHeight: 1.1, padding: '10px 0', minWidth: 0 },
+  topNavTitle: { fontSize: 14, fontWeight: 700, color: '#f2f2f2', letterSpacing: 0.2, whiteSpace: 'nowrap' },
+  topNavSubtitle: { fontSize: 11, fontWeight: 500, color: '#9aa0a6', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: 340 },
   topNavActions: { display: 'flex', gap: 8, alignItems: 'center' },
-  navExportBtn: { padding: '6px 12px', cursor: 'pointer', borderRadius: 4, border: '1px solid #444', background: '#2a2a2a', color: '#ccc', fontSize: 12, fontWeight: 500 },
+  navExportBtn: { padding: '6px 12px', cursor: 'pointer', borderRadius: 4, borderWidth: 1, borderStyle: 'solid', borderColor: '#444', background: '#2a2a2a', color: '#ccc', fontSize: 12, fontWeight: 500 },
   topNavTab: { padding: '14px 24px', border: 'none', background: 'transparent', color: '#888', cursor: 'pointer', fontSize: 14, fontWeight: 500, borderBottom: '2px solid transparent', transition: 'all 0.2s' },
   topNavTabActive: { color: '#4ecdc4', borderBottom: '2px solid #4ecdc4' },
+  navMenuBtn: { padding: '8px 12px', minWidth: 170, cursor: 'pointer', borderRadius: 6, borderWidth: 1, borderStyle: 'solid', borderColor: '#444', background: '#2a2a2a', color: '#ddd', fontSize: 12, fontWeight: 600, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, whiteSpace: 'nowrap' },
+  navTopBtn: { padding: '8px 12px', cursor: 'pointer', borderRadius: 6, borderWidth: 1, borderStyle: 'solid', borderColor: '#444', background: '#2a2a2a', color: '#ddd', fontSize: 12, fontWeight: 700 },
+  navTopBtnActive: { borderColor: '#4ecdc4', color: '#eafffd' },
+  navHelpBtn: { width: 30, height: 30, padding: 0, cursor: 'pointer', borderRadius: 999, borderWidth: 1, borderStyle: 'solid', borderColor: '#444', background: '#2a2a2a', color: '#ddd', fontSize: 14, fontWeight: 800, lineHeight: 1, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' },
+  menuWrap: { position: 'relative', display: 'inline-flex' },
+  menuChevron: { fontSize: 10, opacity: 0.8 },
+  menuPanel: { position: 'absolute', top: 'calc(100% + 8px)', left: 0, minWidth: 220, background: '#ffffff', border: '1px solid #e6e8eb', borderRadius: 10, boxShadow: '0 12px 32px rgba(0,0,0,0.18)', padding: 6, zIndex: 2000 },
+  menuItem: { width: '100%', textAlign: 'left', padding: '10px 10px', borderRadius: 8, border: 'none', background: 'transparent', cursor: 'pointer', color: '#1f2937', fontSize: 13, fontWeight: 600 },
+  menuItemActive: { background: '#eff6ff', color: '#1d4ed8' },
+  menuItemDisabled: { opacity: 0.5, cursor: 'not-allowed' },
   terminalView: { padding: 0, height: 'calc(100vh - 49px)', minHeight: 320, width: '100%', background: '#1e1e1e', display: 'flex', flexDirection: 'column' },
   personasViewContainer: { padding: 24, flex: 1, maxWidth: 800, margin: '0 auto', width: '100%', boxSizing: 'border-box' },
   contactsViewContainer: { padding: 24, flex: 1, maxWidth: 800, margin: '0 auto', width: '100%', boxSizing: 'border-box' },
@@ -1027,15 +1276,51 @@ const styles: Record<string, CSSProperties> = {
   schemaDesc: { margin: 0, fontSize: 14, lineHeight: 1.45, color: '#444' },
   schemaFields: { margin: 0, fontSize: 13, color: '#666', lineHeight: 1.4 },
   dataViewContainer: { width: '100%', flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' },
-  toolbar: { display: 'flex', alignItems: 'center', marginBottom: 20, gap: 10, padding: '20px 24px 0', width: '100%', boxSizing: 'border-box' },
   navBtn: { padding: '8px 12px', cursor: 'pointer', borderRadius: 6, border: '1px solid #ccc', background: '#fff' },
-  urlBar: { flex: 1, padding: '8px 12px', background: '#f5f5f5', borderRadius: 6, fontSize: '14px', color: '#555', fontFamily: 'monospace' },
+  dataHeader: { display: 'flex', alignItems: 'center', gap: 12, paddingTop: 20, paddingRight: 24, paddingBottom: 12, paddingLeft: LAYOUT_PADDING_LEFT, width: '100%', boxSizing: 'border-box' },
+  breadcrumbSpacer: { width: EXPLORER_CONTROLS_WIDTH + EXPLORER_CONTROLS_GAP, flexShrink: 0 },
+  breadcrumbBar: {
+    flex: 1,
+    minWidth: 0,
+    padding: '8px 12px',
+    background: '#f5f5f5',
+    borderRadius: 6,
+    fontSize: '13px',
+    color: '#555',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'flex-start',
+    flexWrap: 'wrap',
+    gap: 0,
+    overflowX: 'auto',
+    WebkitOverflowScrolling: 'touch',
+  },
+  breadcrumbBtn: { padding: 0, border: 'none', background: 'none', cursor: 'pointer', color: '#0070f3', fontWeight: 600, fontSize: 13 },
+  breadcrumbCurrent: { color: '#555', fontWeight: 700, fontSize: 13 },
+  breadcrumbSep: { padding: '0 8px', color: '#9aa0a6' },
   actions: { display: 'flex', gap: 10, marginBottom: 20, padding: '0 24px', width: '100%', boxSizing: 'border-box' },
   actionBtn: { padding: '8px 16px', cursor: 'pointer', borderRadius: 6, border: 'none', background: '#0070f3', color: '#fff', fontWeight: 500, fontSize: '13px' },
   actionDivider: { color: '#ccc', alignSelf: 'center', margin: '0 4px' },
   exportBtn: { padding: '8px 14px', cursor: 'pointer', borderRadius: 6, border: '1px solid #ccc', background: '#fff', color: '#333', fontWeight: 500, fontSize: '13px' },
-  mainLayout: { display: 'flex', gap: 20, alignItems: 'flex-start', minHeight: 400, padding: '0 24px 30px', flex: 1, width: '100%', minWidth: 0, boxSizing: 'border-box' },
-  navColumn: { width: 260, flexShrink: 0 },
+  mainLayout: {
+    display: 'flex',
+    gap: 20,
+    alignItems: 'flex-start',
+    minHeight: 400,
+    paddingTop: 0,
+    paddingRight: 24,
+    paddingBottom: 30,
+    paddingLeft: LAYOUT_PADDING_LEFT,
+    flex: 1,
+    width: '100%',
+    minWidth: 0,
+    boxSizing: 'border-box',
+  },
+  explorerWrap: { display: 'flex', alignItems: 'flex-start', gap: EXPLORER_CONTROLS_GAP, flexShrink: 0, minWidth: 0 },
+  explorerControls: { width: EXPLORER_CONTROLS_WIDTH, flexShrink: 0, display: 'flex', flexDirection: 'column', gap: 10, alignItems: 'stretch' },
+  explorerControlBtn: { padding: '8px 12px', cursor: 'pointer', borderRadius: 6, border: 'none', background: '#0070f3', color: '#fff', fontWeight: 600, fontSize: '13px', textAlign: 'left' },
+  // Explorer card column width matches breadcrumbs exactly.
+  navColumn: { width: EXPLORER_WIDTH, flexShrink: 0 },
   mainContent: { flex: 1, minWidth: 0 },
   tabBar: { display: 'flex', gap: 0, borderBottom: '1px solid #eee', background: '#fafafa' },
   tabBtn: { padding: '10px 16px', border: 'none', borderBottom: '2px solid transparent', background: 'none', cursor: 'pointer', fontSize: 14, fontWeight: 500, color: '#666' },

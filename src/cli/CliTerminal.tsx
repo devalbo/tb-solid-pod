@@ -80,7 +80,9 @@ export const CliTerminal: React.FC<CliTerminalProps> = ({
 
   // Stable callback so useMemo deps don't change when parent re-renders; avoids remounting Ink (and losing CLI output) when CliTerminal re-renders after E2E mirror updates.
   const setCurrentUrlRef = useRef(setCurrentUrl);
-  setCurrentUrlRef.current = setCurrentUrl;
+  useEffect(() => {
+    setCurrentUrlRef.current = setCurrentUrl;
+  }, [setCurrentUrl]);
   const setCurrentUrlStable = useCallback((url: string) => {
     setCurrentUrlRef.current(url);
   }, []);

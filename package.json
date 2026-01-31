@@ -30,7 +30,7 @@
   "author": "",
   "scripts": {
     "dev": "vite",
-    "build": "npm run test:run && vite build",
+    "build": "npm run lint && npm run test:run && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
     "generate:schemas": "tsx scripts/generate-json-schemas.ts",
