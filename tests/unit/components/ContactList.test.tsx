@@ -18,16 +18,16 @@ describe('ContactList', () => {
 
   describe('Empty state', () => {
     it('shows empty message when no contacts', () => {
-      const { testStore } = renderWithProviders(
-        <ContactList store={null as unknown as typeof testStore.store} {...defaultProps} />
+      const { testStore: _testStore } = renderWithProviders(
+        <ContactList store={null as unknown as typeof _testStore.store} {...defaultProps} />
       )
 
       expect(screen.getByText('No contacts yet.')).toBeInTheDocument()
     })
 
     it('shows hint text in empty state', () => {
-      const { testStore } = renderWithProviders(
-        <ContactList store={null as unknown as typeof testStore.store} {...defaultProps} />
+      const { testStore: _testStore } = renderWithProviders(
+        <ContactList store={null as unknown as typeof _testStore.store} {...defaultProps} />
       )
 
       expect(screen.getByText('Add contacts to build your address book.')).toBeInTheDocument()

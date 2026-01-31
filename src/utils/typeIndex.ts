@@ -279,7 +279,7 @@ export function removeInstanceFromRegistration(
   if (!existing?.instance) return false;
 
   const current = existing.instance as string;
-  let instances: string[] = current.startsWith('[')
+  const instances: string[] = current.startsWith('[')
     ? JSON.parse(current)
     : [current];
 

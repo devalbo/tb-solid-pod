@@ -22,6 +22,12 @@ export interface VirtualPod {
 }
 
 /**
+ * Global key for E2E output mirror: CliTerminal sets a setter here so CliApp
+ * (running in Ink's root) can push output lines without relying on prop passthrough.
+ */
+export const E2E_OUTPUT_LINES_SETTER_KEY = '__tbSolidPodSetOutputLines';
+
+/**
  * Output entry for the terminal display
  */
 export interface OutputEntry {
@@ -35,7 +41,7 @@ export interface OutputEntry {
  */
 export interface CliContext {
   // Core output
-  addOutput: (content: ReactNode, type?: OutputEntry['type']) => void;
+  addOutput: (content: ReactNode, type?: OutputEntry['type'], plainText?: string) => void;
   clearOutput: () => void;
 
   // State

@@ -1,9 +1,20 @@
-import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { Text } from 'ink';
+/**
+ * Browser CLI: renders the shared CliApp inside InkTerminalBox (ink-web).
+ * Ink runs the full layout pipeline and displays output in an xterm terminal.
+ * We wait for yoga WASM to initialize before mounting InkTerminalBox so that
+ * content appears immediately instead of a blank terminal.
+ * Import ink-web CSS so .ink-terminal-reset gets position:absolute and the
+ * xterm container has non-zero dimensions (otherwise InkXterm never initializes).
+ */
+
+import 'ink-web/css';
+import 'xterm/css/xterm.css';
+import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
+import { InkTerminalBox, waitForYogaInit } from 'ink-web';
 import type { Store } from 'tinybase';
-import type { VirtualPod, OutputEntry, CliContext } from './types';
-import { useCliInput } from './use-cli-input';
-import { commands, executeCommand } from './registry';
+import type { VirtualPod } from './types';
+import { CliApp } from './CliApp';
+import { E2E_OUTPUT_LINES_SETTER_KEY } from './types';
 
 interface CliTerminalProps {
   store: Store;
@@ -13,65 +24,20 @@ interface CliTerminalProps {
   baseUrl: string;
 }
 
-const styles: Record<string, React.CSSProperties> = {
-  container: {
-    background: '#1e1e1e',
-    borderRadius: 8,
-    overflow: 'hidden',
-    fontFamily: 'Monaco, Menlo, "Ubuntu Mono", Consolas, monospace',
-    fontSize: 13,
-    lineHeight: 1.5,
-  },
-  header: {
-    background: '#333',
-    padding: '8px 12px',
-    display: 'flex',
-    alignItems: 'center',
-    gap: 8,
-    borderBottom: '1px solid #444',
-  },
-  headerDot: {
-    width: 12,
-    height: 12,
-    borderRadius: '50%',
-  },
-  headerTitle: {
-    color: '#888',
-    fontSize: 12,
-    marginLeft: 8,
-  },
-  output: {
-    padding: 12,
-    maxHeight: 300,
-    overflowY: 'auto',
-    color: '#f5f5f5',
-    userSelect: 'text',
-    cursor: 'text',
-  },
-  outputLine: {
-    marginBottom: 4,
-  },
-  inputLine: {
-    display: 'flex',
-    alignItems: 'center',
-    padding: '8px 12px',
-    borderTop: '1px solid #333',
-    background: '#252525',
-  },
-  prompt: {
-    color: '#4ecdc4',
-    marginRight: 8,
-    userSelect: 'none',
-  },
-  input: {
-    flex: 1,
-    background: 'transparent',
-    border: 'none',
-    outline: 'none',
-    color: '#f5f5f5',
-    fontFamily: 'inherit',
-    fontSize: 'inherit',
-  },
+const ROWS = 24;
+
+/** Extra xterm options: scrollback so viewport can scroll and cursor stays visible. */
+const TERM_OPTIONS = { scrollback: 1000 };
+
+const loadingStyle: React.CSSProperties = {
+  height: '100%',
+  minHeight: 200,
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  background: '#1e1e1e',
+  color: 'rgba(255,255,255,0.7)',
+  fontSize: 14,
 };
 
 export const CliTerminal: React.FC<CliTerminalProps> = ({
@@ -81,176 +47,83 @@ export const CliTerminal: React.FC<CliTerminalProps> = ({
   setCurrentUrl,
   baseUrl,
 }) => {
-  const [output, setOutput] = useState<OutputEntry[]>([
-    {
-      id: 0,
-      content: (
-        <Text color="cyan">
-          Welcome to the Solid Pod CLI. Type "help" for available commands.
-        </Text>
-      ),
-    },
-  ]);
-  const [busy, setBusy] = useState(false);
-  const outputIdRef = useRef(1);
-  const outputRef = useRef<HTMLDivElement>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
+  const [yogaReady, setYogaReady] = useState(false);
+  const welcomeLine = 'Welcome to the Solid Pod CLI. Type "help" for available commands.';
+  // Use ref to hold full output lines for E2E mirror; append/clear without re-renders (avoids remounting CliApp via ink-web)
+  const outputLinesRef = useRef<string[]>([welcomeLine]);
+  const outputDivRef = useRef<HTMLDivElement>(null);
 
-  const commandNames = Object.keys(commands);
-  const {
-    input,
-    setInput,
-    handleHistoryUp,
-    handleHistoryDown,
-    handleTab,
-    addToHistory,
-    clearInput,
-  } = useCliInput({ commandNames });
-
-  // Auto-scroll to bottom when output changes
   useEffect(() => {
-    if (outputRef.current) {
-      outputRef.current.scrollTop = outputRef.current.scrollHeight;
-    }
-  }, [output]);
-
-  // Focus input when terminal is clicked
-  const focusInput = useCallback(() => {
-    inputRef.current?.focus();
+    waitForYogaInit().then(() => setYogaReady(true));
   }, []);
 
-  const addOutput = useCallback(
-    (content: React.ReactNode, type?: OutputEntry['type']) => {
-      setOutput((prev) => [
-        ...prev,
-        { id: outputIdRef.current++, content, type },
-      ]);
-    },
-    []
-  );
-
-  const clearOutput = useCallback(() => {
-    setOutput([]);
-  }, []);
-
-  const context: CliContext = {
-    addOutput,
-    clearOutput,
-    setBusy,
-    currentUrl,
-    setCurrentUrl,
-    baseUrl,
-    store,
-    pod,
-    commands,
-  };
-
-  const handleSubmit = useCallback(() => {
-    if (busy || !input.trim()) return;
-
-    // Echo the input
-    addOutput(
-      <Text dimColor>$ {input}</Text>,
-      'input'
-    );
-    addToHistory(input);
-
-    const result = executeCommand(input, context);
-    if (result instanceof Promise) {
-      setBusy(true);
-      result.finally(() => {
-        setBusy(false);
-        clearInput();
-      });
+  // Append a line or clear to welcome; update the E2E div directly
+  const updateOutputDiv = useCallback((lineOrClear: string | null) => {
+    if (lineOrClear === null) {
+      outputLinesRef.current = [welcomeLine];
     } else {
-      clearInput();
+      outputLinesRef.current = [...outputLinesRef.current, lineOrClear];
     }
-  }, [input, busy, context, addToHistory, clearInput, addOutput]);
+    if (outputDivRef.current) {
+      outputDivRef.current.textContent = outputLinesRef.current.join('\n');
+    }
+  }, []);
 
-  const handleKeyDown = useCallback(
-    (e: React.KeyboardEvent<HTMLInputElement>) => {
-      if (busy) return;
+  useEffect(() => {
+    (globalThis as unknown as Record<string, (l: string | null) => void>)[E2E_OUTPUT_LINES_SETTER_KEY] = (lineOrClear) => {
+      queueMicrotask(() => updateOutputDiv(lineOrClear));
+    };
+    return () => {
+      delete (globalThis as unknown as Record<string, unknown>)[E2E_OUTPUT_LINES_SETTER_KEY];
+    };
+  }, [updateOutputDiv]);
 
-      switch (e.key) {
-        case 'Enter':
-          e.preventDefault();
-          handleSubmit();
-          break;
-        case 'ArrowUp':
-          e.preventDefault();
-          handleHistoryUp();
-          break;
-        case 'ArrowDown':
-          e.preventDefault();
-          handleHistoryDown();
-          break;
-        case 'Tab':
-          e.preventDefault();
-          handleTab();
-          break;
-        case 'c':
-          if (e.ctrlKey) {
-            e.preventDefault();
-            clearInput();
-            addOutput(<Text dimColor>^C</Text>);
-          }
-          break;
-        case 'l':
-          if (e.ctrlKey) {
-            e.preventDefault();
-            clearOutput();
-          }
-          break;
-      }
-    },
-    [
-      busy,
-      handleSubmit,
-      handleHistoryUp,
-      handleHistoryDown,
-      handleTab,
-      clearInput,
-      clearOutput,
-      addOutput,
-    ]
+  // Stable callback so useMemo deps don't change when parent re-renders; avoids remounting Ink (and losing CLI output) when CliTerminal re-renders after E2E mirror updates.
+  const setCurrentUrlRef = useRef(setCurrentUrl);
+  setCurrentUrlRef.current = setCurrentUrl;
+  const setCurrentUrlStable = useCallback((url: string) => {
+    setCurrentUrlRef.current(url);
+  }, []);
+
+  const cliAppElement = useMemo(
+    () => (
+      <CliApp
+        store={store}
+        pod={pod}
+        baseUrl={baseUrl}
+        currentUrl={currentUrl}
+        setCurrentUrl={setCurrentUrlStable}
+        onOutputLines={updateOutputDiv}
+      />
+    ),
+    [store, pod, baseUrl, currentUrl, setCurrentUrlStable, updateOutputDiv]
   );
 
-  // Get short path for prompt
-  const shortPath = currentUrl.replace(baseUrl, '/').replace(/\/$/, '') || '/';
+  if (!yogaReady) {
+    return <div style={loadingStyle}>Loading terminal…</div>;
+  }
 
   return (
-    <div style={styles.container} onClick={focusInput}>
-      <div style={styles.header}>
-        <span style={{ ...styles.headerDot, background: '#ff5f56' }} />
-        <span style={{ ...styles.headerDot, background: '#ffbd2e' }} />
-        <span style={{ ...styles.headerDot, background: '#27c93f' }} />
-        <span style={styles.headerTitle}>Solid Pod CLI</span>
+    <>
+      <InkTerminalBox rows={ROWS} focus termOptions={TERM_OPTIONS}>
+        {cliAppElement}
+      </InkTerminalBox>
+      {/* Hidden div for Playwright: CLI output as plain text (terminal renders to canvas) */}
+      <div
+        ref={outputDivRef}
+        data-testid="cli-output"
+        aria-hidden="true"
+        style={{
+          position: 'absolute',
+          left: '-9999px',
+          width: 1,
+          height: 1,
+          overflow: 'hidden',
+          whiteSpace: 'pre-wrap',
+        }}
+      >
+        {welcomeLine}
       </div>
-
-      <div ref={outputRef} style={styles.output} onMouseDown={(e) => e.stopPropagation()} onClick={(e) => e.stopPropagation()}>
-        {output.map((entry) => (
-          <div key={entry.id} style={styles.outputLine}>
-            {entry.content}
-          </div>
-        ))}
-      </div>
-
-      <div style={styles.inputLine}>
-        <span style={styles.prompt}>{shortPath} $</span>
-        <input
-          ref={inputRef}
-          type="text"
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          onKeyDown={handleKeyDown}
-          style={styles.input}
-          disabled={busy}
-          autoFocus
-          spellCheck={false}
-          autoComplete="off"
-          autoCapitalize="off"
-        />
-      </div>
-    </div>
+    </>
   );
 };

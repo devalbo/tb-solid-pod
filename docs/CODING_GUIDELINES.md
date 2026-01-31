@@ -2,6 +2,13 @@
 
 Keep the codebase maintainable: strict types, small units of work, and simple React components.
 
+## React
+
+- **Use the latest stable React** and follow current React best practices. Prefer modern APIs (e.g. hooks, concurrent features where applicable) over legacy patterns.
+- **Effects and event logic:** When a `useEffect` needs to call a callback (e.g. a prop like `onOutputLines`) that should not be in the dependency array—to avoid re-running the effect when the parent passes a new function reference—use **`useEffectEvent`** (React 19+) to wrap that callback. The Effect Event always sees the latest props/state when it runs but does not trigger the effect to re-run when it changes. This keeps the effect’s dependencies minimal and avoids stale closures.
+- **Custom hooks for stateful logic.** If a component has non-trivial state or effects, move that logic into a `useSomething` hook and keep the component mostly presentational.
+- **Composition over complexity.** Prefer many small components and clear data flow over large components with many branches.
+
 ## TypeScript
 
 - **Strict types only.** The project uses `strict: true` in `tsconfig.json`. Do not relax it.
@@ -20,7 +27,6 @@ Keep the codebase maintainable: strict types, small units of work, and simple Re
 
 - **Keep components small.** If a component is long or has many branches, extract subcomponents or custom hooks.
 - **Avoid overly complex components.** Prefer many small components over one large one. Use composition.
-- **Custom hooks for stateful logic.** If a component has non-trivial state or effects, move that logic into a `useSomething` hook and keep the component mostly presentational.
 - **Props: typed and minimal.** Define a clear props interface; avoid spreading large objects “just in case.”
 
 ## General

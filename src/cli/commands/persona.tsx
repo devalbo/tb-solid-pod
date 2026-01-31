@@ -31,7 +31,9 @@ export const personaCommand: Command = {
         <Box flexDirection="column">
           <Text>Usage: persona &lt;subcommand&gt;</Text>
           <Text dimColor>Subcommands: list, create, show, edit, delete, set-default, set-inbox, set-typeindex</Text>
-        </Box>
+        </Box>,
+        undefined,
+        'Usage: persona\nSubcommands: list, create, show, edit, delete, set-default, set-inbox, set-typeindex'
       );
       return;
     }
@@ -76,12 +78,20 @@ const personaListExecute: Command['execute'] = (_args, context) => {
 
   if (personaIds.length === 0) {
     addOutput(
-      <Text dimColor>No personas found. Use "persona create &lt;name&gt;" to create one.</Text>
+      <Text dimColor>No personas found. Use "persona create &lt;name&gt;" to create one.</Text>,
+      undefined,
+      'No personas found. Use "persona create <name>" to create one.'
     );
     return;
   }
 
   const defaultId = store.getValue(DEFAULT_PERSONA_KEY) as string | undefined;
+  const nameLines = personaIds.map((id) => {
+    const record = personas[id] as Record<string, unknown>;
+    const name = getPersonaName(record);
+    return (id === defaultId ? '★ ' : '  ') + name;
+  });
+  const plainText = `Personas (${personaIds.length}):\n${nameLines.join('\n')}`;
 
   addOutput(
     <Box flexDirection="column">
@@ -102,7 +112,9 @@ const personaListExecute: Command['execute'] = (_args, context) => {
           </Box>
         );
       })}
-    </Box>
+    </Box>,
+    undefined,
+    plainText
   );
 };
 
@@ -152,7 +164,8 @@ const personaCreateExecute: Command['execute'] = (args, context) => {
       <Text color="green">Created persona: {name}</Text>
       <Text dimColor>ID: {id}</Text>
     </Box>,
-    'success'
+    'success',
+    `Created persona: ${name}`
   );
 };
 

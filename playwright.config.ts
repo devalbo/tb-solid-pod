@@ -22,7 +22,8 @@ export default defineConfig({
     navigationTimeout: 15_000,
   },
   projects: [
-    { name: 'chromium', use: { ...devices['Desktop Chrome'] } },
+    // Browser scenarios only (Example #1 in each outline). Terminal scenarios run via test:e2e:terminal (no browser).
+    { name: 'chromium', use: { ...devices['Desktop Chrome'] }, grep: /Example #1/ },
   ],
   // No webServer: start the dev server yourself (e.g. npm run dev) before running BDD/E2E tests.
 });

@@ -40,7 +40,9 @@ export const contactCommand: Command = {
         <Box flexDirection="column">
           <Text>Usage: contact &lt;subcommand&gt;</Text>
           <Text dimColor>Subcommands: list, add, show, edit, delete, search, link</Text>
-        </Box>
+        </Box>,
+        undefined,
+        'Usage: contact\nSubcommands: list, add, show, edit, delete, search, link'
       );
       return;
     }
@@ -83,7 +85,9 @@ const contactListExecute: Command['execute'] = (args, context) => {
 
   if (contactIds.length === 0) {
     addOutput(
-      <Text dimColor>No contacts found. Use "contact add &lt;name&gt;" to add one.</Text>
+      <Text dimColor>No contacts found. Use "contact add &lt;name&gt;" to add one.</Text>,
+      undefined,
+      'No contacts found. Use "contact add <name>" to add one.'
     );
     return;
   }
@@ -99,6 +103,15 @@ const contactListExecute: Command['execute'] = (args, context) => {
     if (showPeople && contactIsAgent) return false;
     return true;
   });
+
+  const nameLines = filtered.map((id) => {
+    const record = contacts[id] as Record<string, unknown>;
+    const name = getContactName(record);
+    const contactIsAgent = isAgent(record);
+    const prefix = contactIsAgent ? '🤖 ' : '👤 ';
+    return prefix + name;
+  });
+  const plainText = `Contacts (${filtered.length}):\n${nameLines.join('\n')}`;
 
   addOutput(
     <Box flexDirection="column">
@@ -120,7 +133,9 @@ const contactListExecute: Command['execute'] = (args, context) => {
           </Box>
         );
       })}
-    </Box>
+    </Box>,
+    undefined,
+    plainText
   );
 };
 
@@ -169,7 +184,8 @@ const contactAddExecute: Command['execute'] = (args, context) => {
       <Text color="green">Added contact: {name}</Text>
       <Text dimColor>ID: {id}</Text>
     </Box>,
-    'success'
+    'success',
+    `Added contact: ${name}`
   );
 };
 

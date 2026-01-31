@@ -20,12 +20,15 @@ export const helpCommand: Command = {
         return;
       }
 
+      const plainText = `${cmd.name}\n${cmd.description}\nUsage: ${cmd.usage}`;
       addOutput(
         <Box flexDirection="column">
           <Text color="cyan" bold>{cmd.name}</Text>
           <Text>{cmd.description}</Text>
           <Text dimColor>Usage: {cmd.usage}</Text>
-        </Box>
+        </Box>,
+        undefined,
+        plainText
       );
       return;
     }
@@ -34,6 +37,7 @@ export const helpCommand: Command = {
       a.name.localeCompare(b.name)
     );
 
+    const plainLines = ['Available Commands:', ...cmdList.map((c) => `${c.name} ${c.description}`), 'Type "help <command>" for more details on a specific command.'];
     addOutput(
       <Box flexDirection="column">
         <Text color="cyan" bold>Available Commands:</Text>
@@ -45,7 +49,9 @@ export const helpCommand: Command = {
           </Box>
         ))}
         <Text dimColor>Type "help {'<command>'}" for more details on a specific command.</Text>
-      </Box>
+      </Box>,
+      undefined,
+      plainLines.join('\n')
     );
   },
 };

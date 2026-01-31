@@ -75,10 +75,20 @@ Given('I have the CLI in the {word}', async ({ page, cliSession }, context: stri
 When('I run the command {string}', async ({ page, cliSession }, command: string) => {
   if (cliSession.mode === 'browser') {
     await page.getByRole('button', { name: 'Terminal' }).click();
-    const input = page.getByRole('textbox').first();
-    await input.fill(command);
-    await input.press('Enter');
-    await page.waitForTimeout(400);
+    // Wait for CLI to be ready (mirror shows welcome) so xterm is mounted
+    const output = page.getByTestId('cli-output');
+    await test.expect(output).toContainText('Welcome', { timeout: 10000 });
+    // Give xterm time to attach input and be ready to receive keys (first command often failed without this)
+    await page.waitForTimeout(600);
+    // Click the visible terminal box then focus xterm's input so keyboard events reach the CLI
+    const terminalBox = page.locator('.ink-terminal-box').first();
+    await terminalBox.click();
+    const inputArea = page.locator('.ink-terminal-box .xterm-helper-textarea').first();
+    await inputArea.waitFor({ state: 'attached', timeout: 3000 }).catch(() => {});
+    await inputArea.focus().catch(() => {});
+    await page.keyboard.type(command, { delay: 25 });
+    await page.keyboard.press('Enter');
+    await page.waitForTimeout(800);
     return;
   }
 
@@ -94,7 +104,8 @@ When('I run the command {string}', async ({ page, cliSession }, command: string)
 
 Then('I should see {string} in the output', async ({ page, cliSession }, text: string) => {
   if (cliSession.mode === 'browser') {
-    await test.expect(page.getByText(text, { exact: false }).first()).toBeVisible({ timeout: 10000 });
+    const output = page.getByTestId('cli-output');
+    await test.expect(output).toContainText(text, { timeout: 10000 });
     return;
   }
   const stdout = cliSession.terminalStdout;
@@ -114,15 +125,16 @@ Then('I should see the CLI prompt or welcome message', async ({ page, cliSession
     }
     return;
   }
-  const welcomeOrPrompt = page.locator('text=Welcome').or(page.locator('text=help')).or(page.locator('text=>'));
-  await test.expect(welcomeOrPrompt.first()).toBeVisible({ timeout: 5000 });
+  const output = page.getByTestId('cli-output');
+  await test.expect(output).toContainText(/Welcome|help/, { timeout: 5000 });
 });
 
 Then('the terminal output should be cleared', async ({ page, cliSession }) => {
   if (cliSession.mode === 'browser') {
     await page.waitForTimeout(300);
-    await test.expect(page.getByText('Contacts (', { exact: false })).not.toBeVisible();
-    await test.expect(page.getByText('No contacts found', { exact: false })).not.toBeVisible();
+    const output = page.getByTestId('cli-output');
+    await test.expect(output).not.toContainText('Contacts (');
+    await test.expect(output).not.toContainText('No contacts found');
     return;
   }
   // In terminal mode we clear the buffer when "clear" is run (in When step), so buffer should not contain old output.

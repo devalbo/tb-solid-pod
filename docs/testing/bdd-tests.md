@@ -4,8 +4,9 @@ E2E tests are written in Gherkin (`.feature` files) and run with [Playwright](ht
 
 ## Commands
 
-- **Generate specs and run:** `npx bddgen && npx playwright test` (or `npm run test:e2e` / `npm run test:bdd`)
+- **Generate specs and run (browser only):** `npx bddgen && npx playwright test` (or `npm run test:e2e` / `npm run test:bdd`) — runs only **browser** CLI scenarios (Example #1); no browser is launched for terminal scenarios.
 - **With browser visible:** `npm run test:e2e:headed`
+- **Terminal CLI only (no browser):** `npm run test:e2e:terminal` — runs terminal CLI E2E via Vitest (spawns Node CLI, no Playwright, no browser).
 - **View last report:** `npx playwright show-report`
 
 After changing `.feature` files or step definitions, run `npx bddgen` before `npx playwright test`.
@@ -60,7 +61,12 @@ These are implemented in `tests/features/*.feature` and run with Playwright.
 
 ### CLI in browser vs terminal (Scenario Outline)
 
-The same CLI scenarios run **in the browser** (Terminal tab) and **in the terminal** (Node CLI spawned with piped stdin). One feature file per area (e.g. `cli-contacts.feature`) uses a **Scenario Outline** with `Examples: | context | browser | terminal |`. The step "Given I have the CLI in the &lt;context&gt;" either opens the Terminal tab (browser) or spawns `npx tsx src/cli/run-node.tsx` with a unique temp store path (terminal). "When I run the command" and "Then I should see ... in the output" branch on context. Run with the same command as other E2E: `npm run test:e2e` (dev server must be running for browser; terminal runs without it). In Node, `exit` quits the process; `export` prints JSON (or `--download` writes a file). See README and [INTEGRATION_GUIDE.md](../INTEGRATION_GUIDE.md) for full CLI usage.
+The same CLI scenarios are defined **for both browser and terminal** in the feature files (e.g. `cli-contacts.feature` uses `Examples: | context | browser | terminal |`). In practice they run in two ways so that a browser is never opened for terminal scenarios:
+
+- **Browser (Example #1):** Run with `npm run test:e2e`. Playwright is configured to run only tests named "Example #1" (browser context). The dev server must be running; the test opens the Terminal tab and asserts via the in-page CLI output mirror.
+- **Terminal (no browser):** Run with `npm run test:e2e:terminal`. Vitest runs `tests/e2e-cli-terminal.spec.ts`, which spawns the Node CLI with piped stdin and asserts on stdout. No Playwright, no browser.
+
+The step "Given I have the CLI in the &lt;context&gt;" either opens the Terminal tab (browser) or spawns `npx tsx src/cli/run-node.tsx` (terminal). See README and [INTEGRATION_GUIDE.md](../INTEGRATION_GUIDE.md) for full CLI usage.
 
 ### Not yet automated (manual verification)
 

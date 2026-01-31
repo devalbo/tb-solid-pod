@@ -20,9 +20,10 @@ function contactToFormData(contact: Contact): FormData {
   const phone = contact[VCARD.hasTelephone];
   const phoneStr = typeof phone === 'string' ? phone : (phone as { '@value'?: string })?.['@value'] ?? '';
   const types = contact['@type'];
-  const isAgentType = Array.isArray(types)
-    ? types.includes(SCHEMA_SOFTWARE)
-    : types === SCHEMA_SOFTWARE;
+  const typeStrings: string[] = Array.isArray(types)
+    ? types.map((t) => (typeof t === 'string' ? t : (t as { '@id': string })['@id']))
+    : types ? [types as string] : [];
+  const isAgentType = typeStrings.includes(SCHEMA_SOFTWARE);
   return {
     name: (contact[VCARD.fn] as string) || '',
     nickname: (contact[VCARD.nickname] as string) || '',
@@ -217,18 +218,19 @@ const ContactForm: React.FC<ContactFormProps> = ({
         delete updates[SOLID.webid];
       }
 
-      // Handle type change for agent
-      const currentTypes = existing['@type'];
+      // Handle type change for agent — normalize @type to string[] (schema allows string | string[])
+      const rawTypes = existing['@type'];
+      const currentTypes: string[] = Array.isArray(rawTypes)
+        ? rawTypes.map((t) => (typeof t === 'string' ? t : (t as { '@id': string })['@id']))
+        : rawTypes
+          ? [rawTypes as string]
+          : [];
       let newTypes: string | string[];
       if (form.isAgent) {
-        if (Array.isArray(currentTypes)) {
-          if (!currentTypes.includes(SCHEMA_SOFTWARE)) {
-            newTypes = [...currentTypes, SCHEMA_SOFTWARE];
-          } else {
-            newTypes = currentTypes;
-          }
+        if (!currentTypes.includes(SCHEMA_SOFTWARE)) {
+          newTypes = [...currentTypes, SCHEMA_SOFTWARE];
         } else {
-          newTypes = [currentTypes as string, SCHEMA_SOFTWARE];
+          newTypes = currentTypes.length === 1 ? currentTypes[0] : currentTypes;
         }
         if (form.agentCategory.trim()) {
           updates[SCHEMA_APP_CAT] = form.agentCategory.trim();
@@ -236,12 +238,8 @@ const ContactForm: React.FC<ContactFormProps> = ({
           delete updates[SCHEMA_APP_CAT];
         }
       } else {
-        if (Array.isArray(currentTypes)) {
-          newTypes = currentTypes.filter(t => t !== SCHEMA_SOFTWARE);
-          if (newTypes.length === 1) newTypes = newTypes[0];
-        } else {
-          newTypes = currentTypes as string;
-        }
+        newTypes = currentTypes.filter((t) => t !== SCHEMA_SOFTWARE);
+        if (newTypes.length === 1) newTypes = newTypes[0];
         delete updates[SCHEMA_APP_CAT];
       }
       updates['@type'] = newTypes;
