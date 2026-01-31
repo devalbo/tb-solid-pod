@@ -1,4 +1,5 @@
 import React from 'react';
+import { Box, Text } from 'ink';
 import type { Command } from '../types';
 import { parseCliArgs, getOptionString } from '../parse-args';
 import { VCARD, DCTERMS } from '@inrupt/vocab-common-rdf';
@@ -57,20 +58,10 @@ export const groupCommand: Command = {
 
     if (!subcommand) {
       addOutput(
-        <div>
-          <div style={{ marginBottom: 8 }}>Usage: group &lt;subcommand&gt;</div>
-          <div style={{ color: '#888' }}>
-            <div>Subcommands:</div>
-            <div style={{ marginLeft: 16 }}>list                      - List all groups</div>
-            <div style={{ marginLeft: 16 }}>create &lt;name&gt;            - Create a new group</div>
-            <div style={{ marginLeft: 16 }}>show &lt;id&gt;                - Show group details</div>
-            <div style={{ marginLeft: 16 }}>edit &lt;id&gt; [options]      - Edit a group</div>
-            <div style={{ marginLeft: 16 }}>delete &lt;id&gt;              - Delete a group</div>
-            <div style={{ marginLeft: 16 }}>add-member &lt;group&gt; &lt;contact&gt; - Add member to group</div>
-            <div style={{ marginLeft: 16 }}>remove-member &lt;group&gt; &lt;contact&gt; - Remove member</div>
-            <div style={{ marginLeft: 16 }}>list-members &lt;group&gt;     - List group members</div>
-          </div>
-        </div>
+        <Box flexDirection="column">
+          <Text>Usage: group &lt;subcommand&gt;</Text>
+          <Text dimColor>Subcommands: list, create, show, edit, delete, add-member, remove-member, list-members</Text>
+        </Box>
       );
       return;
     }
@@ -96,9 +87,7 @@ export const groupCommand: Command = {
         return groupListMembersExecute(subArgs, context);
       default:
         addOutput(
-          <span style={{ color: '#ff6b6b' }}>
-            Unknown subcommand: {subcommand}. Use "group" for help.
-          </span>,
+          <Text color="red">Unknown subcommand: {subcommand}. Use "group" for help.</Text>,
           'error'
         );
     }
@@ -117,9 +106,7 @@ const groupListExecute: Command['execute'] = (args, context) => {
 
   if (groupIds.length === 0) {
     addOutput(
-      <span style={{ color: '#888' }}>
-        No groups found. Use "group create &lt;name&gt;" to create one.
-      </span>
+      <Text dimColor>No groups found. Use "group create &lt;name&gt;" to create one.</Text>
     );
     return;
   }
@@ -135,10 +122,10 @@ const groupListExecute: Command['execute'] = (args, context) => {
   });
 
   addOutput(
-    <div>
-      <div style={{ marginBottom: 8, color: '#4ecdc4' }}>
-        Groups ({filtered.length}):
-      </div>
+    <Box flexDirection="column">
+      <Box marginBottom={1}>
+        <Text color="cyan">Groups ({filtered.length}):</Text>
+      </Box>
       {filtered.map((id) => {
         const record = groups[id] as Record<string, unknown>;
         const name = getGroupName(record);
@@ -146,27 +133,23 @@ const groupListExecute: Command['execute'] = (args, context) => {
         const description = record[DCTERMS.description] as string | undefined;
         const members = getMemberIds(record);
         return (
-          <div key={id} style={{ marginBottom: 4 }}>
-            <span style={{ color: '#fff' }}>
-              {getTypeEmoji(groupType)} {name}
-            </span>
-            <span style={{ color: '#888', marginLeft: 8, fontSize: '0.9em' }}>
-              [{getTypeLabel(groupType)}]
-            </span>
-            {members.length > 0 && (
-              <span style={{ color: '#666', marginLeft: 8, fontSize: '0.9em' }}>
-                ({members.length} member{members.length !== 1 ? 's' : ''})
-              </span>
-            )}
+          <Box key={id} flexDirection="column" marginBottom={1}>
+            <Box>
+              <Text>{getTypeEmoji(groupType)} {name}</Text>
+              <Text dimColor> [{getTypeLabel(groupType)}]</Text>
+              {members.length > 0 && (
+                <Text dimColor> ({members.length} member{members.length !== 1 ? 's' : ''})</Text>
+              )}
+            </Box>
             {description && (
-              <div style={{ marginLeft: 24, color: '#666', fontSize: '0.85em' }}>
-                {description.length > 60 ? description.slice(0, 60) + '...' : description}
-              </div>
+              <Box marginLeft={2}>
+                <Text dimColor>{description.length > 60 ? description.slice(0, 60) + '...' : description}</Text>
+              </Box>
             )}
-          </div>
+          </Box>
         );
       })}
-    </div>
+    </Box>
   );
 };
 
@@ -180,9 +163,9 @@ const groupCreateExecute: Command['execute'] = (args, context) => {
   const name = positional[0];
   if (!name) {
     addOutput(
-      <span style={{ color: '#ff6b6b' }}>
+      <Text color="red">
         Usage: group create &lt;name&gt; [--type=organization|team|group] [--description=...] [--url=...]
-      </span>,
+      </Text>,
       'error'
     );
     return;
@@ -193,9 +176,7 @@ const groupCreateExecute: Command['execute'] = (args, context) => {
   const validTypes = ['organization', 'team', 'group'];
   if (!validTypes.includes(typeStr)) {
     addOutput(
-      <span style={{ color: '#ff6b6b' }}>
-        Invalid type "{typeStr}". Must be one of: organization, team, group
-      </span>,
+      <Text color="red">Invalid type "{typeStr}". Must be one of: organization, team, group</Text>,
       'error'
     );
     return;
@@ -219,12 +200,10 @@ const groupCreateExecute: Command['execute'] = (args, context) => {
   setGroup(store, group);
 
   addOutput(
-    <div>
-      <div style={{ color: '#2ecc71' }}>
-        Created {getTypeLabel(input.type).toLowerCase()}: {name}
-      </div>
-      <div style={{ color: '#888', fontSize: '0.9em' }}>ID: {id}</div>
-    </div>,
+    <Box flexDirection="column">
+      <Text color="green">Created {getTypeLabel(input.type).toLowerCase()}: {name}</Text>
+      <Text dimColor>ID: {id}</Text>
+    </Box>,
     'success'
   );
 };
@@ -238,7 +217,7 @@ const groupShowExecute: Command['execute'] = (args, context) => {
 
   if (!idArg) {
     addOutput(
-      <span style={{ color: '#ff6b6b' }}>Usage: group show &lt;id or name&gt;</span>,
+      <Text color="red">Usage: group show &lt;id or name&gt;</Text>,
       'error'
     );
     return;
@@ -250,7 +229,7 @@ const groupShowExecute: Command['execute'] = (args, context) => {
 
   if (!groupId) {
     addOutput(
-      <span style={{ color: '#ff6b6b' }}>Group not found: {idArg}</span>,
+      <Text color="red">Group not found: {idArg}</Text>,
       'error'
     );
     return;
@@ -261,28 +240,26 @@ const groupShowExecute: Command['execute'] = (args, context) => {
   const members = getMemberIds(record);
 
   addOutput(
-    <div>
-      <div style={{ marginBottom: 8 }}>
-        <span style={{ color: '#4ecdc4', fontWeight: 'bold' }}>
+    <Box flexDirection="column">
+      <Box flexDirection="column" marginBottom={1}>
+        <Text color="cyan" bold>
           {getTypeEmoji(groupType)} {getGroupName(record)}
-        </span>
-        <span style={{ color: '#888', marginLeft: 8 }}>
-          [{getTypeLabel(groupType)}]
-        </span>
-      </div>
+        </Text>
+        <Text dimColor> [{getTypeLabel(groupType)}]</Text>
+      </Box>
       <GroupDetails record={record} store={store} />
       {members.length > 0 && (
-        <div style={{ marginTop: 8 }}>
-          <div style={{ color: '#888', marginBottom: 4 }}>
-            Members ({members.length}):
-          </div>
+        <Box flexDirection="column" marginTop={1}>
+          <Box marginBottom={1}>
+            <Text dimColor>Members ({members.length}):</Text>
+          </Box>
           <MemberList memberIds={members} store={store} />
-        </div>
+        </Box>
       )}
-      <div style={{ marginTop: 8, color: '#666', fontSize: '0.85em' }}>
-        ID: {groupId}
-      </div>
-    </div>
+      <Box marginTop={1}>
+        <Text dimColor>ID: {groupId}</Text>
+      </Box>
+    </Box>
   );
 };
 
@@ -297,19 +274,19 @@ const GroupDetails: React.FC<{ record: Record<string, unknown>; store: unknown }
   ];
 
   return (
-    <div style={{ fontSize: '0.9em' }}>
+    <Box flexDirection="column">
       {fields.map(({ label, key }) => {
         const value = record[key];
         if (!value) return null;
         const displayValue = typeof value === 'string' ? value : JSON.stringify(value);
         return (
-          <div key={key} style={{ marginBottom: 2 }}>
-            <span style={{ color: '#888' }}>{label}:</span>{' '}
-            <span style={{ color: '#f5f5f5' }}>{displayValue}</span>
-          </div>
+          <Box key={key} marginBottom={1}>
+            <Text dimColor>{label}: </Text>
+            <Text>{displayValue}</Text>
+          </Box>
         );
       })}
-    </div>
+    </Box>
   );
 };
 
@@ -317,20 +294,18 @@ const GroupDetails: React.FC<{ record: Record<string, unknown>; store: unknown }
  * Helper component to display member list
  */
 const MemberList: React.FC<{ memberIds: string[]; store: unknown }> = ({ memberIds, store }) => {
-  const contacts = (store as { getTable: (name: string) => Record<string, Record<string, unknown>> | undefined }).getTable('contacts') || {};
+  const contacts = (store as { getTable: (name: string) => Record<string, Record<string, unknown>> | undefined }).getTable(STORE_TABLES.CONTACTS) || {};
 
   return (
-    <div style={{ marginLeft: 16, fontSize: '0.9em' }}>
+    <Box flexDirection="column" marginLeft={2}>
       {memberIds.map((memberId) => {
         const contact = contacts[memberId] as Record<string, unknown> | undefined;
         const name = contact ? (contact[VCARD.fn] as string) || memberId : memberId;
         return (
-          <div key={memberId} style={{ color: '#f5f5f5' }}>
-            • {name}
-          </div>
+          <Text key={memberId}>• {name}</Text>
         );
       })}
-    </div>
+    </Box>
   );
 };
 
@@ -344,9 +319,9 @@ const groupEditExecute: Command['execute'] = (args, context) => {
   const idArg = positional[0];
   if (!idArg) {
     addOutput(
-      <span style={{ color: '#ff6b6b' }}>
+      <Text color="red">
         Usage: group edit &lt;id&gt; [--name=...] [--description=...] [--url=...]
-      </span>,
+      </Text>,
       'error'
     );
     return;
@@ -358,7 +333,7 @@ const groupEditExecute: Command['execute'] = (args, context) => {
 
   if (!groupId) {
     addOutput(
-      <span style={{ color: '#ff6b6b' }}>Group not found: {idArg}</span>,
+      <Text color="red">Group not found: {idArg}</Text>,
       'error'
     );
     return;
@@ -384,9 +359,9 @@ const groupEditExecute: Command['execute'] = (args, context) => {
 
   if (Object.keys(updates).length === 0) {
     addOutput(
-      <span style={{ color: '#f9ca24' }}>
+      <Text color="yellow">
         No changes specified. Use options like --name="New Name" --description="..."
-      </span>
+      </Text>
     );
     return;
   }
@@ -397,9 +372,7 @@ const groupEditExecute: Command['execute'] = (args, context) => {
   }
 
   addOutput(
-    <div style={{ color: '#2ecc71' }}>
-      Updated group: {getGroupName(getGroup(store, groupId) ?? {})}
-    </div>,
+    <Text color="green">Updated group: {getGroupName(getGroup(store, groupId) ?? {})}</Text>,
     'success'
   );
 };
@@ -413,7 +386,7 @@ const groupDeleteExecute: Command['execute'] = (args, context) => {
 
   if (!idArg) {
     addOutput(
-      <span style={{ color: '#ff6b6b' }}>Usage: group delete &lt;id or name&gt;</span>,
+      <Text color="red">Usage: group delete &lt;id or name&gt;</Text>,
       'error'
     );
     return;
@@ -425,7 +398,7 @@ const groupDeleteExecute: Command['execute'] = (args, context) => {
 
   if (!groupId) {
     addOutput(
-      <span style={{ color: '#ff6b6b' }}>Group not found: {idArg}</span>,
+      <Text color="red">Group not found: {idArg}</Text>,
       'error'
     );
     return;
@@ -437,7 +410,7 @@ const groupDeleteExecute: Command['execute'] = (args, context) => {
   store.delRow(STORE_TABLES.GROUPS, groupId);
 
   addOutput(
-    <span style={{ color: '#2ecc71' }}>Deleted group: {name}</span>,
+    <Text color="green">Deleted group: {name}</Text>,
     'success'
   );
 };
@@ -452,9 +425,9 @@ const groupAddMemberExecute: Command['execute'] = (args, context) => {
 
   if (!groupArg || !contactArg) {
     addOutput(
-      <span style={{ color: '#ff6b6b' }}>
+      <Text color="red">
         Usage: group add-member &lt;group&gt; &lt;contact&gt; [--role=...]
-      </span>,
+      </Text>,
       'error'
     );
     return;
@@ -466,19 +439,19 @@ const groupAddMemberExecute: Command['execute'] = (args, context) => {
 
   if (!groupId) {
     addOutput(
-      <span style={{ color: '#ff6b6b' }}>Group not found: {groupArg}</span>,
+      <Text color="red">Group not found: {groupArg}</Text>,
       'error'
     );
     return;
   }
 
   // Find contact
-  const contacts = store.getTable('contacts') || {};
+  const contacts = store.getTable(STORE_TABLES.CONTACTS) || {};
   const contactId = findContactId(contacts, contactArg);
 
   if (!contactId) {
     addOutput(
-      <span style={{ color: '#ff6b6b' }}>Contact not found: {contactArg}</span>,
+      <Text color="red">Contact not found: {contactArg}</Text>,
       'error'
     );
     return;
@@ -491,7 +464,7 @@ const groupAddMemberExecute: Command['execute'] = (args, context) => {
   // Check if already a member
   if (currentMembers.includes(contactId)) {
     addOutput(
-      <span style={{ color: '#f9ca24' }}>Contact is already a member of this group</span>
+      <Text color="yellow">Contact is already a member of this group</Text>
     );
     return;
   }
@@ -505,9 +478,7 @@ const groupAddMemberExecute: Command['execute'] = (args, context) => {
   const contactName = (contacts[contactId] as Record<string, unknown>)?.[VCARD.fn] as string || 'contact';
 
   addOutput(
-    <span style={{ color: '#2ecc71' }}>
-      Added {contactName} to {groupName}
-    </span>,
+    <Text color="green">Added {contactName} to {groupName}</Text>,
     'success'
   );
 };
@@ -521,9 +492,9 @@ const groupRemoveMemberExecute: Command['execute'] = (args, context) => {
 
   if (!groupArg || !contactArg) {
     addOutput(
-      <span style={{ color: '#ff6b6b' }}>
+      <Text color="red">
         Usage: group remove-member &lt;group&gt; &lt;contact&gt;
-      </span>,
+      </Text>,
       'error'
     );
     return;
@@ -535,19 +506,19 @@ const groupRemoveMemberExecute: Command['execute'] = (args, context) => {
 
   if (!groupId) {
     addOutput(
-      <span style={{ color: '#ff6b6b' }}>Group not found: {groupArg}</span>,
+      <Text color="red">Group not found: {groupArg}</Text>,
       'error'
     );
     return;
   }
 
   // Find contact
-  const contacts = store.getTable('contacts') || {};
+  const contacts = store.getTable(STORE_TABLES.CONTACTS) || {};
   const contactId = findContactId(contacts, contactArg);
 
   if (!contactId) {
     addOutput(
-      <span style={{ color: '#ff6b6b' }}>Contact not found: {contactArg}</span>,
+      <Text color="red">Contact not found: {contactArg}</Text>,
       'error'
     );
     return;
@@ -560,7 +531,7 @@ const groupRemoveMemberExecute: Command['execute'] = (args, context) => {
   // Check if a member
   if (!currentMembers.includes(contactId)) {
     addOutput(
-      <span style={{ color: '#f9ca24' }}>Contact is not a member of this group</span>
+      <Text color="yellow">Contact is not a member of this group</Text>
     );
     return;
   }
@@ -578,9 +549,7 @@ const groupRemoveMemberExecute: Command['execute'] = (args, context) => {
   const contactName = (contacts[contactId] as Record<string, unknown>)?.[VCARD.fn] as string || 'contact';
 
   addOutput(
-    <span style={{ color: '#2ecc71' }}>
-      Removed {contactName} from {groupName}
-    </span>,
+    <Text color="green">Removed {contactName} from {groupName}</Text>,
     'success'
   );
 };
@@ -594,7 +563,7 @@ const groupListMembersExecute: Command['execute'] = (args, context) => {
 
   if (!idArg) {
     addOutput(
-      <span style={{ color: '#ff6b6b' }}>Usage: group list-members &lt;group&gt;</span>,
+      <Text color="red">Usage: group list-members &lt;group&gt;</Text>,
       'error'
     );
     return;
@@ -606,7 +575,7 @@ const groupListMembersExecute: Command['execute'] = (args, context) => {
 
   if (!groupId) {
     addOutput(
-      <span style={{ color: '#ff6b6b' }}>Group not found: {idArg}</span>,
+      <Text color="red">Group not found: {idArg}</Text>,
       'error'
     );
     return;
@@ -618,36 +587,34 @@ const groupListMembersExecute: Command['execute'] = (args, context) => {
 
   if (memberIds.length === 0) {
     addOutput(
-      <span style={{ color: '#888' }}>
+      <Text dimColor>
         {groupName} has no members. Use "group add-member {idArg} &lt;contact&gt;" to add one.
-      </span>
+      </Text>
     );
     return;
   }
 
-  const contacts = store.getTable('contacts') || {};
+  const contacts = store.getTable(STORE_TABLES.CONTACTS) || {};
 
   addOutput(
-    <div>
-      <div style={{ marginBottom: 8, color: '#4ecdc4' }}>
-        Members of {groupName} ({memberIds.length}):
-      </div>
+    <Box flexDirection="column">
+      <Box marginBottom={1}>
+        <Text color="cyan">Members of {groupName} ({memberIds.length}):</Text>
+      </Box>
       {memberIds.map((memberId) => {
         const contact = contacts[memberId] as Record<string, unknown> | undefined;
         const name = contact ? (contact[VCARD.fn] as string) || memberId : memberId;
         const email = contact?.[VCARD.hasEmail] as string | undefined;
         return (
-          <div key={memberId} style={{ marginBottom: 2 }}>
-            <span style={{ color: '#fff' }}>👤 {name}</span>
+          <Box key={memberId} marginBottom={1}>
+            <Text>👤 {name}</Text>
             {email && (
-              <span style={{ color: '#666', marginLeft: 8, fontSize: '0.9em' }}>
-                {email.replace('mailto:', '')}
-              </span>
+              <Text dimColor> {email.replace('mailto:', '')}</Text>
             )}
-          </div>
+          </Box>
         );
       })}
-    </div>
+    </Box>
   );
 };
 

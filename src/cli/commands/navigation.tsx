@@ -1,3 +1,5 @@
+import React from 'react';
+import { Box, Text } from 'ink';
 import type { Command } from '../types';
 
 /**
@@ -9,7 +11,7 @@ export const pwdCommand: Command = {
   usage: 'pwd',
   execute: (_args, context) => {
     const { currentUrl, addOutput } = context;
-    addOutput(<span style={{ color: '#4ecdc4' }}>{currentUrl}</span>);
+    addOutput(<Text color="cyan">{currentUrl}</Text>);
   },
 };
 
@@ -65,7 +67,7 @@ export const cdCommand: Command = {
 
     if (!store.hasRow('resources', targetUrl)) {
       addOutput(
-        <span style={{ color: '#ff6b6b' }}>cd: no such directory: {path}</span>,
+        <Text color="red">cd: no such directory: {path}</Text>,
         'error'
       );
       return;
@@ -74,7 +76,7 @@ export const cdCommand: Command = {
     const row = store.getRow('resources', targetUrl);
     if (row.type !== 'Container') {
       addOutput(
-        <span style={{ color: '#ff6b6b' }}>cd: not a directory: {path}</span>,
+        <Text color="red">cd: not a directory: {path}</Text>,
         'error'
       );
       return;
@@ -101,7 +103,7 @@ export const lsCommand: Command = {
     const row = store.getRow('resources', targetUrl);
     if (!row) {
       addOutput(
-        <span style={{ color: '#ff6b6b' }}>ls: no such file or directory: {path || targetUrl}</span>,
+        <Text color="red">ls: no such file or directory: {path || targetUrl}</Text>,
         'error'
       );
       return;
@@ -110,7 +112,7 @@ export const lsCommand: Command = {
     // If it's a file, just show the file
     if (row.type !== 'Container') {
       const name = targetUrl.split('/').filter(Boolean).pop() || targetUrl;
-      addOutput(<span>{name}</span>);
+      addOutput(<Text>{name}</Text>);
       return;
     }
 
@@ -126,29 +128,23 @@ export const lsCommand: Command = {
       });
 
     if (children.length === 0) {
-      addOutput(<span style={{ color: '#666' }}>(empty)</span>);
+      addOutput(<Text dimColor>(empty)</Text>);
       return;
     }
 
     addOutput(
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px 16px' }}>
+      <Box flexWrap="wrap" gap={1}>
         {children.map(([url, r]) => {
           const name = url.split('/').filter(Boolean).pop() || url;
           const isDir = r.type === 'Container';
           return (
-            <span
-              key={url}
-              style={{
-                color: isDir ? '#4ecdc4' : '#f5f5f5',
-                fontWeight: isDir ? 'bold' : 'normal',
-              }}
-            >
+            <Text key={url} color={isDir ? 'cyan' : undefined} bold={isDir}>
               {name}
               {isDir ? '/' : ''}
-            </span>
+            </Text>
           );
         })}
-      </div>
+      </Box>
     );
   },
 };

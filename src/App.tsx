@@ -9,6 +9,7 @@ import {
   readFileAsText,
 } from './utils/storeExport';
 import { initializeDefaultTypeRegistrations } from './utils/typeIndex';
+import { VirtualPod, type ResourceRow } from './virtualPod';
 import { CliTerminal } from './cli';
 import PersonaList from './components/PersonaList';
 import PersonaForm from './components/PersonaForm';
@@ -151,101 +152,8 @@ const readFileAsBase64 = (file: File): Promise<string> =>
 // ==========================================
 // Types
 // ==========================================
-interface ResourceRow {
-  type?: string;
-  body?: string | null;
-  contentType?: string;
-  parentId?: string;
-  updated?: string;
-}
-
-interface RequestOptions {
-  method?: string;
-  body?: string | null;
-  headers?: Record<string, string>;
-}
-
-interface RequestResult {
-  status: number;
-  body: string | null;
-  headers?: Record<string, string>;
-}
-
 // ==========================================
-// 1. THE BACKEND (VirtualPod Class)
-// ==========================================
-export class VirtualPod {
-  store: Store;
-  indexes: Indexes;
-  baseUrl: string;
-
-  constructor(store: Store, indexes: Indexes) {
-    this.store = store;
-    this.indexes = indexes;
-    this.baseUrl = BASE_URL;
-
-    // Initialize Schema
-    this.store.setTables({ resources: {} });
-    // Index for fast folder lookups: "Give me files where parentId = X"
-    this.indexes.setIndexDefinition('byParent', 'resources', 'parentId');
-
-    // Create Root Folder if missing
-    if (!this.store.hasRow('resources', this.baseUrl)) {
-      this.store.setRow('resources', this.baseUrl, {
-        type: 'Container',
-        contentType: 'text/turtle',
-        updated: new Date().toISOString()
-      });
-    }
-  }
-
-  // The "Fetch" Interceptor
-  async handleRequest(url: string, options: RequestOptions = { method: 'GET' }): Promise<RequestResult> {
-    const method = options.method?.toUpperCase() || 'GET';
-
-    // Simple Router
-    if (method === 'GET') return this._get(url);
-    if (method === 'PUT') return this._put(url, options.body, options.headers);
-    if (method === 'DELETE') return this._delete(url);
-    return { status: 405, body: "Method Not Allowed" };
-  }
-
-  _get(url: string): RequestResult {
-    if (!this.store.hasRow('resources', url)) return { status: 404, body: "Not Found" };
-    const row = this.store.getRow('resources', url) as ResourceRow;
-    return { status: 200, body: row.body ?? null, headers: { 'Content-Type': row.contentType || 'text/plain' } };
-  }
-
-  _put(url: string, body?: string | null, headers: Record<string, string> = {}): RequestResult {
-    const isContainer = url.endsWith('/');
-    // Logic: Find parent
-    const parentUrl = isContainer
-      ? new URL('..', url).href
-      : new URL('.', url).href;
-
-    if (url !== this.baseUrl && !this.store.hasRow('resources', parentUrl)) {
-      return { status: 409, body: "Parent folder missing" };
-    }
-
-    this.store.setRow('resources', url, {
-      type: isContainer ? 'Container' : 'Resource',
-      body: body || null,
-      contentType: headers['Content-Type'] || 'text/plain',
-      parentId: parentUrl,
-      updated: new Date().toISOString()
-    });
-    return { status: 201, body: "Created" };
-  }
-
-  _delete(url: string): RequestResult {
-    if (url === this.baseUrl) return { status: 405, body: "Cannot delete root" };
-    this.store.delRow('resources', url);
-    return { status: 204, body: "Deleted" };
-  }
-}
-
-// ==========================================
-// 2. THE FRONTEND (Widgets)
+// 1. THE FRONTEND (Widgets)
 // ==========================================
 
 interface FileBrowserProps {
@@ -483,7 +391,7 @@ export default function App() {
     (async () => {
       const s = createStore();
       const i = createIndexes(s);
-      const p = new VirtualPod(s, i);
+      const p = new VirtualPod(s, i, BASE_URL);
       const persister = createLocalPersister(s, STORAGE_KEY);
       persisterRef.current = persister;
       await persister.load(getDefaultContent() as Parameters<LocalPersister['load']>[0]);

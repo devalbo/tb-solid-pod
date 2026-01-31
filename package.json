@@ -42,11 +42,14 @@
     "build-storybook": "storybook build",
     "test:e2e": "npx bddgen && playwright test",
     "test:e2e:headed": "npx bddgen && playwright test --headed",
-    "test:bdd": "npx bddgen && playwright test"
+    "test:bdd": "npx bddgen && playwright test",
+    "cli": "tsx src/cli/run-node.tsx"
   },
   "dependencies": {
     "@inrupt/vocab-common-rdf": "^1.0.5",
     "@inrupt/vocab-solid-common": "^0.7.5",
+    "ink": "^6.0.0",
+    "ink-web": "^0.1.11",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "tinybase": "^7.3.2",

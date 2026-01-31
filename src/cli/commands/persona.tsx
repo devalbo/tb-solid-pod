@@ -1,4 +1,5 @@
 import React from 'react';
+import { Box, Text } from 'ink';
 import type { Command } from '../types';
 import { parseCliArgs, getOptionString, getOptionBoolean } from '../parse-args';
 import { FOAF, VCARD, LDP } from '@inrupt/vocab-common-rdf';
@@ -27,20 +28,10 @@ export const personaCommand: Command = {
 
     if (!subcommand) {
       addOutput(
-        <div>
-          <div style={{ marginBottom: 8 }}>Usage: persona &lt;subcommand&gt;</div>
-          <div style={{ color: '#888' }}>
-            <div>Subcommands:</div>
-            <div style={{ marginLeft: 16 }}>list                  - List all personas</div>
-            <div style={{ marginLeft: 16 }}>create &lt;name&gt;        - Create a new persona</div>
-            <div style={{ marginLeft: 16 }}>show &lt;id&gt; [--full]   - Show persona (--full = WebID document)</div>
-            <div style={{ marginLeft: 16 }}>edit &lt;id&gt; [options]  - Edit a persona</div>
-            <div style={{ marginLeft: 16 }}>delete &lt;id&gt;          - Delete a persona</div>
-            <div style={{ marginLeft: 16 }}>set-default &lt;id&gt;     - Set default persona</div>
-            <div style={{ marginLeft: 16 }}>set-inbox &lt;id&gt; &lt;url&gt;     - Set LDP inbox URL</div>
-            <div style={{ marginLeft: 16 }}>set-typeindex &lt;id&gt; &lt;url&gt; [--private] - Set type index link</div>
-          </div>
-        </div>
+        <Box flexDirection="column">
+          <Text>Usage: persona &lt;subcommand&gt;</Text>
+          <Text dimColor>Subcommands: list, create, show, edit, delete, set-default, set-inbox, set-typeindex</Text>
+        </Box>
       );
       return;
     }
@@ -66,9 +57,7 @@ export const personaCommand: Command = {
         return personaSetTypeIndexExecute(subArgs, context);
       default:
         addOutput(
-          <span style={{ color: '#ff6b6b' }}>
-            Unknown subcommand: {subcommand}. Use "persona" for help.
-          </span>,
+          <Text color="red">Unknown subcommand: {subcommand}. Use "persona" for help.</Text>,
           'error'
         );
     }
@@ -87,38 +76,33 @@ const personaListExecute: Command['execute'] = (_args, context) => {
 
   if (personaIds.length === 0) {
     addOutput(
-      <span style={{ color: '#888' }}>
-        No personas found. Use "persona create &lt;name&gt;" to create one.
-      </span>
+      <Text dimColor>No personas found. Use "persona create &lt;name&gt;" to create one.</Text>
     );
     return;
   }
 
-  // Get default persona
   const defaultId = store.getValue(DEFAULT_PERSONA_KEY) as string | undefined;
 
   addOutput(
-    <div>
-      <div style={{ marginBottom: 8, color: '#4ecdc4' }}>Personas ({personaIds.length}):</div>
+    <Box flexDirection="column">
+      <Text color="cyan">Personas ({personaIds.length}):</Text>
       {personaIds.map((id) => {
         const record = personas[id] as Record<string, unknown>;
         const name = getPersonaName(record);
         const isDefault = id === defaultId;
         const nickname = record[FOAF.nick] as string | undefined;
         return (
-          <div key={id} style={{ marginBottom: 4 }}>
-            <span style={{ color: isDefault ? '#f9ca24' : '#fff' }}>
+          <Box key={id}>
+            <Text color={isDefault ? 'yellow' : undefined}>
               {isDefault ? '★ ' : '  '}
               {name}
-            </span>
-            {nickname && <span style={{ color: '#888', marginLeft: 8 }}>@{nickname}</span>}
-            <span style={{ color: '#666', marginLeft: 8, fontSize: '0.9em' }}>
-              [{id.split('/').pop()?.replace('#me', '')}]
-            </span>
-          </div>
+            </Text>
+            {nickname && <Text dimColor> @{nickname}</Text>}
+            <Text dimColor> [{id.split('/').pop()?.replace('#me', '')}]</Text>
+          </Box>
         );
       })}
-    </div>
+    </Box>
   );
 };
 
@@ -132,7 +116,7 @@ const personaCreateExecute: Command['execute'] = (args, context) => {
   const name = positional[0];
   if (!name) {
     addOutput(
-      <span style={{ color: '#ff6b6b' }}>Usage: persona create &lt;name&gt; [--nickname=...] [--email=...] [--bio=...]</span>,
+      <Text color="red">Usage: persona create &lt;name&gt; [--nickname=...] [--email=...] [--bio=...]</Text>,
       'error'
     );
     return;
@@ -164,10 +148,10 @@ const personaCreateExecute: Command['execute'] = (args, context) => {
   }
 
   addOutput(
-    <div>
-      <div style={{ color: '#2ecc71' }}>Created persona: {name}</div>
-      <div style={{ color: '#888', fontSize: '0.9em' }}>ID: {id}</div>
-    </div>,
+    <Box flexDirection="column">
+      <Text color="green">Created persona: {name}</Text>
+      <Text dimColor>ID: {id}</Text>
+    </Box>,
     'success'
   );
 };
@@ -183,7 +167,7 @@ const personaShowExecute: Command['execute'] = (args, context) => {
 
   if (!idArg) {
     addOutput(
-      <span style={{ color: '#ff6b6b' }}>Usage: persona show &lt;id or partial-id&gt; [--full]</span>,
+      <Text color="red">Usage: persona show &lt;id or partial-id&gt; [--full]</Text>,
       'error'
     );
     return;
@@ -195,7 +179,7 @@ const personaShowExecute: Command['execute'] = (args, context) => {
 
   if (!personaId) {
     addOutput(
-      <span style={{ color: '#ff6b6b' }}>Persona not found: {idArg}</span>,
+      <Text color="red">Persona not found: {idArg}</Text>,
       'error'
     );
     return;
@@ -206,25 +190,19 @@ const personaShowExecute: Command['execute'] = (args, context) => {
   const isDefault = personaId === defaultId;
 
   if (full) {
-    addOutput(
-      <pre style={{ margin: 0, fontSize: '0.85em', whiteSpace: 'pre-wrap', wordBreak: 'break-all' }}>
-        {JSON.stringify(record, null, 2)}
-      </pre>
-    );
+    addOutput(<Text>{JSON.stringify(record, null, 2)}</Text>);
     return;
   }
 
   addOutput(
-    <div>
-      <div style={{ marginBottom: 8 }}>
-        <span style={{ color: '#4ecdc4', fontWeight: 'bold' }}>{getPersonaName(record)}</span>
-        {isDefault && <span style={{ color: '#f9ca24', marginLeft: 8 }}>★ default</span>}
-      </div>
+    <Box flexDirection="column">
+      <Box>
+        <Text color="cyan" bold>{getPersonaName(record)}</Text>
+        {isDefault && <Text color="yellow"> ★ default</Text>}
+      </Box>
       <PersonaDetails record={record} />
-      <div style={{ marginTop: 8, color: '#666', fontSize: '0.85em' }}>
-        ID: {personaId}
-      </div>
-    </div>
+      <Text dimColor>ID: {personaId}</Text>
+    </Box>
   );
 };
 
@@ -259,7 +237,7 @@ const PersonaDetails: React.FC<{ record: Record<string, unknown> }> = ({ record 
   ];
 
   return (
-    <div style={{ fontSize: '0.9em' }}>
+    <Box flexDirection="column">
       {fields.map(({ label, key, ref }) => {
         const value = record[key];
         if (!value) return null;
@@ -269,13 +247,13 @@ const PersonaDetails: React.FC<{ record: Record<string, unknown> }> = ({ record 
             ? value.replace(/^mailto:/, '').replace(/^tel:/, '')
             : JSON.stringify(value);
         return (
-          <div key={String(key)} style={{ marginBottom: 2 }}>
-            <span style={{ color: '#888' }}>{label}:</span>{' '}
-            <span style={{ color: '#f5f5f5' }}>{displayValue}</span>
-          </div>
+          <Box key={String(key)}>
+            <Text dimColor>{label}:</Text>
+            <Text> {displayValue}</Text>
+          </Box>
         );
       })}
-    </div>
+    </Box>
   );
 };
 
@@ -289,9 +267,9 @@ const personaEditExecute: Command['execute'] = (args, context) => {
   const idArg = positional[0];
   if (!idArg) {
     addOutput(
-      <span style={{ color: '#ff6b6b' }}>
+      <Text color="red">
         Usage: persona edit &lt;id&gt; [--name=...] [--nickname=...] [--email=...] [--bio=...]
-      </span>,
+      </Text>,
       'error'
     );
     return;
@@ -303,7 +281,7 @@ const personaEditExecute: Command['execute'] = (args, context) => {
 
   if (!personaId) {
     addOutput(
-      <span style={{ color: '#ff6b6b' }}>Persona not found: {idArg}</span>,
+      <Text color="red">Persona not found: {idArg}</Text>,
       'error'
     );
     return;
@@ -340,9 +318,9 @@ const personaEditExecute: Command['execute'] = (args, context) => {
 
   if (Object.keys(updates).length === 0) {
     addOutput(
-      <span style={{ color: '#f9ca24' }}>
+      <Text color="yellow">
         No changes specified. Use options like --name="New Name" --email="new@email.com"
-      </span>
+      </Text>
     );
     return;
   }
@@ -354,9 +332,9 @@ const personaEditExecute: Command['execute'] = (args, context) => {
 
   const updated = getPersona(store, personaId);
   addOutput(
-    <div style={{ color: '#2ecc71' }}>
-      Updated persona: {updated ? getPersonaName(updated) : '(invalid or missing)'}
-    </div>,
+    <Box flexDirection="column">
+      <Text color="green">Updated persona: {updated ? getPersonaName(updated) : '(invalid or missing)'}</Text>
+    </Box>,
     'success'
   );
 };
@@ -370,7 +348,7 @@ const personaDeleteExecute: Command['execute'] = (args, context) => {
 
   if (!idArg) {
     addOutput(
-      <span style={{ color: '#ff6b6b' }}>Usage: persona delete &lt;id or partial-id&gt;</span>,
+      <Text color="red">Usage: persona delete &lt;id or partial-id&gt;</Text>,
       'error'
     );
     return;
@@ -382,7 +360,7 @@ const personaDeleteExecute: Command['execute'] = (args, context) => {
 
   if (!personaId) {
     addOutput(
-      <span style={{ color: '#ff6b6b' }}>Persona not found: {idArg}</span>,
+      <Text color="red">Persona not found: {idArg}</Text>,
       'error'
     );
     return;
@@ -406,7 +384,7 @@ const personaDeleteExecute: Command['execute'] = (args, context) => {
   }
 
   addOutput(
-    <span style={{ color: '#2ecc71' }}>Deleted persona: {name}</span>,
+    <Text color="green">Deleted persona: {name}</Text>,
     'success'
   );
 };
@@ -420,7 +398,7 @@ const personaSetDefaultExecute: Command['execute'] = (args, context) => {
 
   if (!idArg) {
     addOutput(
-      <span style={{ color: '#ff6b6b' }}>Usage: persona set-default &lt;id or partial-id&gt;</span>,
+      <Text color="red">Usage: persona set-default &lt;id or partial-id&gt;</Text>,
       'error'
     );
     return;
@@ -432,7 +410,7 @@ const personaSetDefaultExecute: Command['execute'] = (args, context) => {
 
   if (!personaId) {
     addOutput(
-      <span style={{ color: '#ff6b6b' }}>Persona not found: {idArg}</span>,
+      <Text color="red">Persona not found: {idArg}</Text>,
       'error'
     );
     return;
@@ -444,7 +422,7 @@ const personaSetDefaultExecute: Command['execute'] = (args, context) => {
   store.setValue(DEFAULT_PERSONA_KEY, personaId);
 
   addOutput(
-    <span style={{ color: '#2ecc71' }}>Set default persona: {name}</span>,
+    <Text color="green">Set default persona: {name}</Text>,
     'success'
   );
 };
@@ -459,7 +437,7 @@ const personaSetInboxExecute: Command['execute'] = (args, context) => {
 
   if (!idArg || !urlArg) {
     addOutput(
-      <span style={{ color: '#ff6b6b' }}>Usage: persona set-inbox &lt;id&gt; &lt;url&gt;</span>,
+      <Text color="red">Usage: persona set-inbox &lt;id&gt; &lt;url&gt;</Text>,
       'error'
     );
     return;
@@ -469,14 +447,14 @@ const personaSetInboxExecute: Command['execute'] = (args, context) => {
   const personaId = findPersonaId(personas, idArg);
 
   if (!personaId) {
-    addOutput(<span style={{ color: '#ff6b6b' }}>Persona not found: {idArg}</span>, 'error');
+    addOutput(<Text color="red">Persona not found: {idArg}</Text>, 'error');
     return;
   }
 
   store.setCell(STORE_TABLES.PERSONAS, personaId, LDP.inbox, { '@id': urlArg } as unknown as Parameters<typeof store.setCell>[3]);
   const persona = getPersona(store, personaId);
   addOutput(
-    <span style={{ color: '#2ecc71' }}>Set inbox for {getPersonaName(persona ?? {})}: {urlArg}</span>,
+    <Text color="green">Set inbox for {getPersonaName(persona ?? {})}: {urlArg}</Text>,
     'success'
   );
 };
@@ -493,7 +471,7 @@ const personaSetTypeIndexExecute: Command['execute'] = (args, context) => {
 
   if (!idArg || !urlArg) {
     addOutput(
-      <span style={{ color: '#ff6b6b' }}>Usage: persona set-typeindex &lt;id&gt; &lt;url&gt; [--private]</span>,
+      <Text color="red">Usage: persona set-typeindex &lt;id&gt; &lt;url&gt; [--private]</Text>,
       'error'
     );
     return;
@@ -503,7 +481,7 @@ const personaSetTypeIndexExecute: Command['execute'] = (args, context) => {
   const personaId = findPersonaId(personas, idArg);
 
   if (!personaId) {
-    addOutput(<span style={{ color: '#ff6b6b' }}>Persona not found: {idArg}</span>, 'error');
+    addOutput(<Text color="red">Persona not found: {idArg}</Text>, 'error');
     return;
   }
 
@@ -511,9 +489,9 @@ const personaSetTypeIndexExecute: Command['execute'] = (args, context) => {
   store.setCell(STORE_TABLES.PERSONAS, personaId, key, { '@id': urlArg } as unknown as Parameters<typeof store.setCell>[3]);
   const persona = getPersona(store, personaId);
   addOutput(
-    <span style={{ color: '#2ecc71' }}>
+    <Text color="green">
       Set {isPrivate ? 'private' : 'public'} type index for {getPersonaName(persona ?? {})}: {urlArg}
-    </span>,
+    </Text>,
     'success'
   );
 };

@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
+import { Text } from 'ink';
 import type { Store } from 'tinybase';
 import type { VirtualPod, OutputEntry, CliContext } from './types';
 import { useCliInput } from './use-cli-input';
@@ -71,9 +72,6 @@ const styles: Record<string, React.CSSProperties> = {
     fontFamily: 'inherit',
     fontSize: 'inherit',
   },
-  inputEcho: {
-    color: '#888',
-  },
 };
 
 export const CliTerminal: React.FC<CliTerminalProps> = ({
@@ -87,9 +85,9 @@ export const CliTerminal: React.FC<CliTerminalProps> = ({
     {
       id: 0,
       content: (
-        <span style={{ color: '#4ecdc4' }}>
+        <Text color="cyan">
           Welcome to the Solid Pod CLI. Type "help" for available commands.
-        </span>
+        </Text>
       ),
     },
   ]);
@@ -152,7 +150,7 @@ export const CliTerminal: React.FC<CliTerminalProps> = ({
 
     // Echo the input
     addOutput(
-      <span style={styles.inputEcho}>$ {input}</span>,
+      <Text dimColor>$ {input}</Text>,
       'input'
     );
     addToHistory(input);
@@ -194,7 +192,7 @@ export const CliTerminal: React.FC<CliTerminalProps> = ({
           if (e.ctrlKey) {
             e.preventDefault();
             clearInput();
-            addOutput(<span style={{ color: '#888' }}>^C</span>);
+            addOutput(<Text dimColor>^C</Text>);
           }
           break;
         case 'l':

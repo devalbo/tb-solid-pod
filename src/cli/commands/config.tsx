@@ -1,3 +1,5 @@
+import React from 'react';
+import { Box, Text } from 'ink';
 import type { Command, CliContext } from '../types';
 import {
   SETTINGS_META,
@@ -21,10 +23,8 @@ const listSubcommand = (_args: string[], context: CliContext) => {
   const keys = getSettingsKeys();
 
   addOutput(
-    <div style={{ fontFamily: 'monospace', lineHeight: 1.8 }}>
-      <div style={{ marginBottom: 12, fontWeight: 600, color: '#4ecdc4' }}>
-        Settings
-      </div>
+    <Box flexDirection="column">
+      <Text color="cyan" bold>Settings</Text>
       {keys.map((key) => {
         const meta = SETTINGS_META[key];
         const currentValue = store.getValue(key);
@@ -32,33 +32,27 @@ const listSubcommand = (_args: string[], context: CliContext) => {
         const isDefault = currentValue === undefined;
 
         return (
-          <div key={key} style={{ marginBottom: 12 }}>
-            <div>
-              <span style={{ color: '#f8f8f2', fontWeight: 500 }}>{key}</span>
+          <Box key={key} flexDirection="column" marginBottom={1}>
+            <Box>
+              <Text bold>{key}</Text>
               {meta.type === 'enum' && meta.options && (
-                <span style={{ color: '#666', marginLeft: 8, fontSize: 12 }}>
-                  [{meta.options.join(' | ')}]
-                </span>
+                <Text dimColor> [{meta.options.join(' | ')}]</Text>
               )}
-            </div>
-            <div style={{ color: '#888', fontSize: 13, marginBottom: 4 }}>
-              {meta.description}
-            </div>
-            <div>
-              <span style={{ color: '#666' }}>Value: </span>
-              <span style={{ color: isDefault ? '#666' : '#2ecc71' }}>
+            </Box>
+            <Text dimColor>{meta.description}</Text>
+            <Box>
+              <Text dimColor>Value: </Text>
+              <Text color={isDefault ? 'gray' : 'green'}>
                 {formatSettingValue(currentValue ?? defaultValue)}
-              </span>
+              </Text>
               {isDefault && (
-                <span style={{ color: '#666', marginLeft: 8, fontSize: 12 }}>
-                  (default)
-                </span>
+                <Text dimColor> (default)</Text>
               )}
-            </div>
-          </div>
+            </Box>
+          </Box>
         );
       })}
-    </div>
+    </Box>
   );
 };
 
@@ -71,7 +65,7 @@ const getSubcommand = (args: string[], context: CliContext) => {
 
   if (!key) {
     addOutput(
-      <span style={{ color: '#ff6b6b' }}>config get: missing key argument</span>,
+      <Text color="red">config get: missing key argument</Text>,
       'error'
     );
     return;
@@ -79,10 +73,10 @@ const getSubcommand = (args: string[], context: CliContext) => {
 
   if (!isValidSettingsKey(key)) {
     addOutput(
-      <span style={{ color: '#ff6b6b' }}>
+      <Text color="red">
         config get: unknown setting: {key}
         {'\n\n'}Valid keys: {getSettingsKeys().join(', ')}
-      </span>,
+      </Text>,
       'error'
     );
     return;
@@ -93,31 +87,21 @@ const getSubcommand = (args: string[], context: CliContext) => {
   const isDefault = store.getValue(key) === undefined;
 
   addOutput(
-    <div style={{ fontFamily: 'monospace' }}>
-      <div style={{ marginBottom: 4 }}>
-        <span style={{ color: '#f8f8f2', fontWeight: 500 }}>{key}</span>
-      </div>
-      <div style={{ color: '#888', fontSize: 13, marginBottom: 8 }}>
-        {meta.description}
-      </div>
-      <div>
-        <span style={{ color: '#666' }}>Value: </span>
-        <span style={{ color: isDefault ? '#666' : '#2ecc71' }}>
-          {formatSettingValue(value)}
-        </span>
-        {isDefault && (
-          <span style={{ color: '#666', marginLeft: 8, fontSize: 12 }}>
-            (default)
-          </span>
-        )}
-      </div>
+    <Box flexDirection="column">
+      <Text bold>{key}</Text>
+      <Text dimColor>{meta.description}</Text>
+      <Box>
+        <Text dimColor>Value: </Text>
+        <Text color={isDefault ? 'gray' : 'green'}>{formatSettingValue(value)}</Text>
+        {isDefault && <Text dimColor> (default)</Text>}
+      </Box>
       {meta.type === 'enum' && meta.options && (
-        <div style={{ marginTop: 4 }}>
-          <span style={{ color: '#666' }}>Options: </span>
-          <span style={{ color: '#888' }}>{meta.options.join(', ')}</span>
-        </div>
+        <Box marginTop={1}>
+          <Text dimColor>Options: </Text>
+          <Text dimColor>{meta.options.join(', ')}</Text>
+        </Box>
       )}
-    </div>
+    </Box>
   );
 };
 
@@ -130,27 +114,21 @@ const setSubcommand = (args: string[], context: CliContext) => {
   const valueStr = args.slice(1).join(' ');
 
   if (!key) {
-    addOutput(
-      <span style={{ color: '#ff6b6b' }}>config set: missing key argument</span>,
-      'error'
-    );
+    addOutput(<Text color="red">config set: missing key argument</Text>, 'error');
     return;
   }
 
   if (!valueStr) {
-    addOutput(
-      <span style={{ color: '#ff6b6b' }}>config set: missing value argument</span>,
-      'error'
-    );
+    addOutput(<Text color="red">config set: missing value argument</Text>, 'error');
     return;
   }
 
   if (!isValidSettingsKey(key)) {
     addOutput(
-      <span style={{ color: '#ff6b6b' }}>
+      <Text color="red">
         config set: unknown setting: {key}
         {'\n\n'}Valid keys: {getSettingsKeys().join(', ')}
-      </span>,
+      </Text>,
       'error'
     );
     return;
@@ -168,19 +146,16 @@ const setSubcommand = (args: string[], context: CliContext) => {
     } else if (meta.type === 'enum' && meta.options) {
       errorMsg += ` (expected one of: ${meta.options.join(', ')})`;
     }
-    addOutput(
-      <span style={{ color: '#ff6b6b' }}>{errorMsg}</span>,
-      'error'
-    );
+    addOutput(<Text color="red">{errorMsg}</Text>, 'error');
     return;
   }
 
   setSetting(store, key as SettingsKey, parsedValue as never);
 
   addOutput(
-    <span style={{ color: '#2ecc71' }}>
+    <Text color="green">
       Set {key} = {formatSettingValue(parsedValue)}
-    </span>,
+    </Text>,
     'success'
   );
 };
@@ -193,13 +168,12 @@ const resetSubcommand = (args: string[], context: CliContext) => {
   const key = args[0];
 
   if (key) {
-    // Reset single setting
     if (!isValidSettingsKey(key)) {
       addOutput(
-        <span style={{ color: '#ff6b6b' }}>
+        <Text color="red">
           config reset: unknown setting: {key}
           {'\n\n'}Valid keys: {getSettingsKeys().join(', ')}
-        </span>,
+        </Text>,
         'error'
       );
       return;
@@ -209,19 +183,15 @@ const resetSubcommand = (args: string[], context: CliContext) => {
     const defaultValue = SETTINGS_DEFAULTS[key as SettingsKey];
 
     addOutput(
-      <span style={{ color: '#2ecc71' }}>
+      <Text color="green">
         Reset {key} to default ({formatSettingValue(defaultValue)})
-      </span>,
+      </Text>,
       'success'
     );
   } else {
-    // Reset all settings
     resetAllSettings(store);
-
     addOutput(
-      <span style={{ color: '#2ecc71' }}>
-        All settings have been reset to defaults
-      </span>,
+      <Text color="green">All settings have been reset to defaults</Text>,
       'success'
     );
   }
@@ -261,11 +231,7 @@ Examples:
     const subArgs = args.slice(1);
 
     if (!subcommand || subcommand === 'help') {
-      context.addOutput(
-        <pre style={{ margin: 0, whiteSpace: 'pre-wrap' }}>
-          {configCommand.usage}
-        </pre>
-      );
+      context.addOutput(<Text>{configCommand.usage}</Text>);
       return;
     }
 
@@ -280,9 +246,9 @@ Examples:
         return resetSubcommand(subArgs, context);
       default:
         context.addOutput(
-          <span style={{ color: '#ff6b6b' }}>
+          <Text color="red">
             config: unknown subcommand: {subcommand}. Type "config help" for usage.
-          </span>,
+          </Text>,
           'error'
         );
     }

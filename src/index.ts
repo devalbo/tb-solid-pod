@@ -29,9 +29,12 @@ export * from './utils/storeAccessors';
 export * from './utils/typeIndex';
 export * from './utils/validation';
 
+// VirtualPod (in-app pod backend; interface in cli/types.ts)
+export { VirtualPod, type ResourceRow } from './virtualPod';
+
 // CLI (terminal component, command registry, hooks, types)
 export { CliTerminal, commands, executeCommand, useCliInput, parseCliArgs, getOptionString, getOptionBoolean, generateId } from './cli';
-export type { Command, CliContext, VirtualPod, OutputEntry, ParsedArgs } from './cli';
+export type { Command, CliContext, OutputEntry, ParsedArgs } from './cli';
 
 // Components (React; default exports re-exported as named)
 export { default as PersonaList } from './components/PersonaList';

@@ -8,4 +8,8 @@ const base = process.env.BASE_PATH ?? '/'
 export default defineConfig({
   base,
   plugins: [react()],
+  resolve: {
+    // Browser bundle uses ink-web so the same CLI JSX runs in both terminal (ink) and browser (ink-web).
+    alias: { ink: 'ink-web' },
+  },
 })

@@ -1,3 +1,5 @@
+import React from 'react';
+import { Box, Text } from 'ink';
 import type { Command } from '../types';
 
 export const helpCommand: Command = {
@@ -9,48 +11,41 @@ export const helpCommand: Command = {
     const cmdName = args[0]?.toLowerCase();
 
     if (cmdName) {
-      // Show help for specific command
       const cmd = commands[cmdName];
       if (!cmd) {
         addOutput(
-          <span style={{ color: '#ff6b6b' }}>Unknown command: {cmdName}</span>,
+          <Text color="red">Unknown command: {cmdName}</Text>,
           'error'
         );
         return;
       }
 
       addOutput(
-        <div>
-          <div style={{ color: '#4ecdc4', fontWeight: 'bold' }}>{cmd.name}</div>
-          <div style={{ marginLeft: 16 }}>{cmd.description}</div>
-          <div style={{ marginLeft: 16, color: '#888' }}>Usage: {cmd.usage}</div>
-        </div>
+        <Box flexDirection="column">
+          <Text color="cyan" bold>{cmd.name}</Text>
+          <Text>{cmd.description}</Text>
+          <Text dimColor>Usage: {cmd.usage}</Text>
+        </Box>
       );
       return;
     }
 
-    // Show all commands
     const cmdList = Object.values(commands).sort((a, b) =>
       a.name.localeCompare(b.name)
     );
 
     addOutput(
-      <div>
-        <div style={{ color: '#4ecdc4', fontWeight: 'bold', marginBottom: 8 }}>
-          Available Commands:
-        </div>
+      <Box flexDirection="column">
+        <Text color="cyan" bold>Available Commands:</Text>
         {cmdList.map((cmd) => (
-          <div key={cmd.name} style={{ marginLeft: 16, marginBottom: 4 }}>
-            <span style={{ color: '#f9ca24', minWidth: 80, display: 'inline-block' }}>
-              {cmd.name}
-            </span>
-            <span style={{ color: '#888' }}>{cmd.description}</span>
-          </div>
+          <Box key={cmd.name}>
+            <Text color="yellow">{cmd.name}</Text>
+            <Text> </Text>
+            <Text dimColor>{cmd.description}</Text>
+          </Box>
         ))}
-        <div style={{ marginTop: 8, color: '#666' }}>
-          Type "help {'<command>'}" for more details on a specific command.
-        </div>
-      </div>
+        <Text dimColor>Type "help {'<command>'}" for more details on a specific command.</Text>
+      </Box>
     );
   },
 };

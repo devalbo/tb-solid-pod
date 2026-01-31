@@ -1,3 +1,5 @@
+import React from 'react';
+import { Box, Text } from 'ink';
 import type { Command, CliContext } from '../types';
 import { DCTERMS } from '@inrupt/vocab-common-rdf';
 import { SCHEMA } from '../../schemas/file';
@@ -65,10 +67,7 @@ const infoSubcommand = (args: string[], context: CliContext) => {
   const path = args[0];
 
   if (!path) {
-    addOutput(
-      <span style={{ color: '#ff6b6b' }}>file info: missing file operand</span>,
-      'error'
-    );
+    addOutput(<Text color="red">file info: missing file operand</Text>, 'error');
     return;
   }
 
@@ -76,18 +75,12 @@ const infoSubcommand = (args: string[], context: CliContext) => {
   const row = store.getRow('resources', targetUrl) as Record<string, unknown> | undefined;
 
   if (!row) {
-    addOutput(
-      <span style={{ color: '#ff6b6b' }}>file info: {path}: No such file</span>,
-      'error'
-    );
+    addOutput(<Text color="red">file info: {path}: No such file</Text>, 'error');
     return;
   }
 
   if (row.type === 'Container') {
-    addOutput(
-      <span style={{ color: '#ff6b6b' }}>file info: {path}: Is a directory</span>,
-      'error'
-    );
+    addOutput(<Text color="red">file info: {path}: Is a directory</Text>, 'error');
     return;
   }
 
@@ -119,51 +112,39 @@ const infoSubcommand = (args: string[], context: CliContext) => {
   }
 
   addOutput(
-    <div style={{ fontFamily: 'monospace', lineHeight: 1.6 }}>
-      <div style={{ marginBottom: 8, fontWeight: 600, color: '#4ecdc4' }}>
-        {name}
-      </div>
-      <div><span style={{ color: '#888', width: 100, display: 'inline-block' }}>URL:</span> {targetUrl}</div>
-      <div><span style={{ color: '#888', width: 100, display: 'inline-block' }}>Type:</span> {contentType || 'unknown'}</div>
-      <div><span style={{ color: '#888', width: 100, display: 'inline-block' }}>Size:</span> {formatSize(size)}</div>
+    <Box flexDirection="column">
+      <Text color="cyan" bold>{name}</Text>
+      <Box><Text dimColor>URL:</Text> <Text>{targetUrl}</Text></Box>
+      <Box><Text dimColor>Type:</Text> <Text>{contentType || 'unknown'}</Text></Box>
+      <Box><Text dimColor>Size:</Text> <Text>{formatSize(size)}</Text></Box>
       {updated && (
-        <div><span style={{ color: '#888', width: 100, display: 'inline-block' }}>Updated:</span> {new Date(updated).toLocaleString()}</div>
+        <Box><Text dimColor>Updated:</Text> <Text>{new Date(updated).toLocaleString()}</Text></Box>
       )}
-      <div style={{ marginTop: 12, marginBottom: 4, fontWeight: 500, color: '#aaa' }}>
-        Metadata
-      </div>
-      <div><span style={{ color: '#888', width: 100, display: 'inline-block' }}>Title:</span> {title || <span style={{ color: '#666' }}>(not set)</span>}</div>
-      <div><span style={{ color: '#888', width: 100, display: 'inline-block' }}>Description:</span> {description || <span style={{ color: '#666' }}>(not set)</span>}</div>
-      <div>
-        <span style={{ color: '#888', width: 100, display: 'inline-block' }}>Author:</span>
-        {authorName ? (
-          <span>{authorName}</span>
-        ) : authorId ? (
-          <span style={{ color: '#666' }}>{authorId}</span>
-        ) : (
-          <span style={{ color: '#666' }}>(not set)</span>
-        )}
-      </div>
+      <Text bold>Metadata</Text>
+      <Box><Text dimColor>Title:</Text> <Text>{title || <Text dimColor>(not set)</Text>}</Text></Box>
+      <Box><Text dimColor>Description:</Text> <Text>{description || <Text dimColor>(not set)</Text>}</Text></Box>
+      <Box>
+        <Text dimColor>Author:</Text>
+        {authorName ? <Text>{authorName}</Text> : authorId ? <Text dimColor>{authorId}</Text> : <Text dimColor>(not set)</Text>}
+      </Box>
       {created && (
-        <div><span style={{ color: '#888', width: 100, display: 'inline-block' }}>Created:</span> {new Date(created).toLocaleString()}</div>
+        <Box><Text dimColor>Created:</Text> <Text>{new Date(created).toLocaleString()}</Text></Box>
       )}
       {modified && (
-        <div><span style={{ color: '#888', width: 100, display: 'inline-block' }}>Modified:</span> {new Date(modified).toLocaleString()}</div>
+        <Box><Text dimColor>Modified:</Text> <Text>{new Date(modified).toLocaleString()}</Text></Box>
       )}
       {isImage && (
-        <>
-          <div style={{ marginTop: 12, marginBottom: 4, fontWeight: 500, color: '#aaa' }}>
-            Image Properties
-          </div>
+        <Box flexDirection="column">
+          <Text bold>Image Properties</Text>
           {(width && height) ? (
-            <div><span style={{ color: '#888', width: 100, display: 'inline-block' }}>Dimensions:</span> {width} × {height} px</div>
+            <Box><Text dimColor>Dimensions:</Text> <Text>{width} × {height} px</Text></Box>
           ) : (
-            <div><span style={{ color: '#888', width: 100, display: 'inline-block' }}>Dimensions:</span> <span style={{ color: '#666' }}>(not set)</span></div>
+            <Box><Text dimColor>Dimensions:</Text> <Text dimColor>(not set)</Text></Box>
           )}
-          <div><span style={{ color: '#888', width: 100, display: 'inline-block' }}>Location:</span> {location || <span style={{ color: '#666' }}>(not set)</span>}</div>
-        </>
+          <Box><Text dimColor>Location:</Text> <Text>{location || <Text dimColor>(not set)</Text>}</Text></Box>
+        </Box>
       )}
-    </div>
+    </Box>
   );
 };
 
@@ -175,18 +156,12 @@ const setAuthorSubcommand = (args: string[], context: CliContext) => {
   const [path, personaQuery] = args;
 
   if (!path) {
-    addOutput(
-      <span style={{ color: '#ff6b6b' }}>file set-author: missing file operand</span>,
-      'error'
-    );
+    addOutput(<Text color="red">file set-author: missing file operand</Text>, 'error');
     return;
   }
 
   if (!personaQuery) {
-    addOutput(
-      <span style={{ color: '#ff6b6b' }}>file set-author: missing persona operand</span>,
-      'error'
-    );
+    addOutput(<Text color="red">file set-author: missing persona operand</Text>, 'error');
     return;
   }
 
@@ -194,28 +169,18 @@ const setAuthorSubcommand = (args: string[], context: CliContext) => {
   const row = store.getRow('resources', targetUrl);
 
   if (!row) {
-    addOutput(
-      <span style={{ color: '#ff6b6b' }}>file set-author: {path}: No such file</span>,
-      'error'
-    );
+    addOutput(<Text color="red">file set-author: {path}: No such file</Text>, 'error');
     return;
   }
 
   if (row.type === 'Container') {
-    addOutput(
-      <span style={{ color: '#ff6b6b' }}>file set-author: {path}: Is a directory</span>,
-      'error'
-    );
+    addOutput(<Text color="red">file set-author: {path}: Is a directory</Text>, 'error');
     return;
   }
 
-  // Find the persona
   const personaId = findPersonaId(store, personaQuery);
   if (!personaId) {
-    addOutput(
-      <span style={{ color: '#ff6b6b' }}>file set-author: persona not found: {personaQuery}</span>,
-      'error'
-    );
+    addOutput(<Text color="red">file set-author: persona not found: {personaQuery}</Text>, 'error');
     return;
   }
 
@@ -228,9 +193,7 @@ const setAuthorSubcommand = (args: string[], context: CliContext) => {
   store.setCell('resources', targetUrl, DCTERMS.modified, new Date().toISOString());
 
   addOutput(
-    <span style={{ color: '#2ecc71' }}>
-      Set author of {path} to {personaName}
-    </span>,
+    <Text color="green">Set author of {path} to {personaName}</Text>,
     'success'
   );
 };
@@ -244,18 +207,12 @@ const setTitleSubcommand = (args: string[], context: CliContext) => {
   const title = args.slice(1).join(' ');
 
   if (!path) {
-    addOutput(
-      <span style={{ color: '#ff6b6b' }}>file set-title: missing file operand</span>,
-      'error'
-    );
+    addOutput(<Text color="red">file set-title: missing file operand</Text>, 'error');
     return;
   }
 
   if (!title) {
-    addOutput(
-      <span style={{ color: '#ff6b6b' }}>file set-title: missing title</span>,
-      'error'
-    );
+    addOutput(<Text color="red">file set-title: missing title</Text>, 'error');
     return;
   }
 
@@ -263,30 +220,19 @@ const setTitleSubcommand = (args: string[], context: CliContext) => {
   const row = store.getRow('resources', targetUrl);
 
   if (!row) {
-    addOutput(
-      <span style={{ color: '#ff6b6b' }}>file set-title: {path}: No such file</span>,
-      'error'
-    );
+    addOutput(<Text color="red">file set-title: {path}: No such file</Text>, 'error');
     return;
   }
 
   if (row.type === 'Container') {
-    addOutput(
-      <span style={{ color: '#ff6b6b' }}>file set-title: {path}: Is a directory</span>,
-      'error'
-    );
+    addOutput(<Text color="red">file set-title: {path}: Is a directory</Text>, 'error');
     return;
   }
 
   store.setCell('resources', targetUrl, DCTERMS.title, title);
   store.setCell('resources', targetUrl, DCTERMS.modified, new Date().toISOString());
 
-  addOutput(
-    <span style={{ color: '#2ecc71' }}>
-      Set title of {path} to "{title}"
-    </span>,
-    'success'
-  );
+  addOutput(<Text color="green">Set title of {path} to "{title}"</Text>, 'success');
 };
 
 /**
@@ -298,18 +244,12 @@ const setDescriptionSubcommand = (args: string[], context: CliContext) => {
   const description = args.slice(1).join(' ');
 
   if (!path) {
-    addOutput(
-      <span style={{ color: '#ff6b6b' }}>file set-description: missing file operand</span>,
-      'error'
-    );
+    addOutput(<Text color="red">file set-description: missing file operand</Text>, 'error');
     return;
   }
 
   if (!description) {
-    addOutput(
-      <span style={{ color: '#ff6b6b' }}>file set-description: missing description</span>,
-      'error'
-    );
+    addOutput(<Text color="red">file set-description: missing description</Text>, 'error');
     return;
   }
 
@@ -317,30 +257,19 @@ const setDescriptionSubcommand = (args: string[], context: CliContext) => {
   const row = store.getRow('resources', targetUrl);
 
   if (!row) {
-    addOutput(
-      <span style={{ color: '#ff6b6b' }}>file set-description: {path}: No such file</span>,
-      'error'
-    );
+    addOutput(<Text color="red">file set-description: {path}: No such file</Text>, 'error');
     return;
   }
 
   if (row.type === 'Container') {
-    addOutput(
-      <span style={{ color: '#ff6b6b' }}>file set-description: {path}: Is a directory</span>,
-      'error'
-    );
+    addOutput(<Text color="red">file set-description: {path}: Is a directory</Text>, 'error');
     return;
   }
 
   store.setCell('resources', targetUrl, DCTERMS.description, description);
   store.setCell('resources', targetUrl, DCTERMS.modified, new Date().toISOString());
 
-  addOutput(
-    <span style={{ color: '#2ecc71' }}>
-      Set description of {path}
-    </span>,
-    'success'
-  );
+  addOutput(<Text color="green">Set description of {path}</Text>, 'success');
 };
 
 /**
@@ -367,11 +296,7 @@ Examples:
     const subArgs = args.slice(1);
 
     if (!subcommand || subcommand === 'help') {
-      context.addOutput(
-        <pre style={{ margin: 0, whiteSpace: 'pre-wrap' }}>
-          {fileCommand.usage}
-        </pre>
-      );
+      context.addOutput(<Text>{fileCommand.usage}</Text>);
       return;
     }
 
@@ -386,9 +311,7 @@ Examples:
         return setDescriptionSubcommand(subArgs, context);
       default:
         context.addOutput(
-          <span style={{ color: '#ff6b6b' }}>
-            file: unknown subcommand: {subcommand}. Type "file help" for usage.
-          </span>,
+          <Text color="red">file: unknown subcommand: {subcommand}. Type "file help" for usage.</Text>,
           'error'
         );
     }

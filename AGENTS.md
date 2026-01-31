@@ -6,7 +6,7 @@ Context for AI assistants working on this repo.
 
 **tb-solid-pod** is a browser-based personal data pod inspired by the [Solid Project](https://solidproject.org/), built with [TinyBase](https://tinybase.org/) for reactive state and LocalStorage. It is **not** a real Solid server (no LDP, no WebID-TLS); it simulates Solid-style data (personas, contacts, groups, type indexes, file metadata) in a single-page app.
 
-- **Dual interface**: graphical UI (tabs, forms, lists) + CLI terminal.
+- **Dual interface**: graphical UI (tabs, forms, lists) + CLI. The CLI runs in the **browser** (Terminal tab) and in **Node** (`npm run cli`); same commands, environment-specific persistence (LocalStorage vs `~/.tb-solid-pod/data/store.json`).
 - **Data**: personas (WebID-style), contacts (including agents), groups (org/team/group) with membership of contacts and your personas, type indexes, virtual file system with metadata, settings/preferences.
 - **Stack**: React, TinyBase, Zod, Vite, TypeScript. Vocabularies: FOAF, vCard, Dublin Core, W3C Org, `@inrupt/vocab-*`.
 
@@ -19,7 +19,7 @@ Context for AI assistants working on this repo.
 | `src/index.ts` | **Library entry** – re-exports schemas, utils, CLI, components for `import from 'tb-solid-pod'`. |
 | `src/schemas/` | Zod schemas + factory functions + **JSON Schema** (json-schema.ts via Zod v4 toJSONSchema; persona, contact, group, file, typeIndex, preferences, base). **Zod is source of truth**—no canonical Solid JSON Schema; we generate from Zod. Static files: `npm run generate:schemas` → `schema/*.json`. |
 | `src/utils/` | settings, storeExport, typeIndex helpers, validation. |
-| `src/cli/` | CliTerminal, command registry, parse-args, types. |
+| `src/cli/` | CliTerminal (browser), run-node.tsx (Node entry), node-store.ts (file persister), command registry, parse-args, types. |
 | `src/components/` | PersonaList/Form, ContactList/Form, GroupList/Form, MembershipManager, FileMetadataPanel. |
 | `docs/` | CODING_GUIDELINES.md, DOCUMENTATION_GUIDELINES.md, DESIGN.md, IMPLEMENTATION_PLAN.md, TEST_PLAN.md, testing/. |
 
@@ -73,8 +73,8 @@ When someone wants to use this in an app they’re working on, point them to the
 
 ## Useful docs
 
-- **README.md** – Overview, limitations, Use as a library (Zod + JSON Schema), link to Integration Guide, Getting Started (Node note, Live demo + 404 troubleshooting), Testing (unit, BDD, Storybook link), CLI command list.
-- **docs/INTEGRATION_GUIDE.md** – Step-by-step integration (install-from-GitHub vs copy-paste), store setup, Provider, components, CLI, data tables, extending.
+- **README.md** – Overview, limitations, Use as a library (Zod + JSON Schema), link to Integration Guide, Getting Started (Node note, Live demo + 404 troubleshooting), Running the CLI in the terminal (`npm run cli`, exit, single-command mode), Testing (unit, BDD, Storybook link), CLI command list.
+- **docs/INTEGRATION_GUIDE.md** – Step-by-step integration (install-from-GitHub vs copy-paste), store setup, Provider, components, CLI (browser + terminal), data tables, extending.
 - **docs/SDLC_PROCESS.md** – How changes are introduced, documented, and verified; links to Feature Checklist.
 - **docs/FEATURE_CHECKLIST.md** – Manual verification checklist ordered by dependency (foundational first); assume features are broken until verified.
 - **docs/CODING_GUIDELINES.md** – TypeScript (strict types, no sloppy types), short functions, simple React components, naming, file length.

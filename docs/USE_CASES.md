@@ -14,7 +14,7 @@ You can use tb-solid-pod in three ways; the use cases below apply across them.
 |----------|--------------|----------------|
 | **Schemas only** | Zod schemas, factory functions, types, JSON Schema | You need the data shapes and validation; no UI or store layout required. |
 | **Schemas + store** | Same as above, plus a TinyBase store with the expected tables and values | You want to read/write personas, contacts, groups, files, and settings in a standard layout. |
-| **Schemas + store + components (and optionally CLI)** | Full UI: lists, forms, membership manager, file metadata panel, terminal | You want ready-made React components and/or the CLI for power users. |
+| **Schemas + store + components (and optionally CLI)** | Full UI: lists, forms, membership manager, file metadata panel; CLI in browser (Terminal tab) or Node (`npm run cli`) | You want ready-made React components and/or the CLI for power users. |
 
 Store setup and table layout are described in the [README Integration Guide](../README.md#integration-guide) and summarized in [Data tables](#data-tables) below.
 

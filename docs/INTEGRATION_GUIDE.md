@@ -2,7 +2,7 @@
 
 This guide explains how to integrate **tb-solid-pod** into an application you are building. It is for developers who want to add Solid-style personas, contacts, groups, type indexes, or file metadata to their app, either by installing the package from GitHub or by copying source files.
 
-**Terms:** **TinyBase** is the reactive store and persistence library used by this project. **JSON-LD** (JavaScript Object Notation for Linked Data) is the data format used for personas, contacts, and groups. **CLI** (command-line interface) refers to the in-app terminal provided by the library.
+**Terms:** **TinyBase** is the reactive store and persistence library used by this project. **JSON-LD** (JavaScript Object Notation for Linked Data) is the data format used for personas, contacts, and groups. **CLI** (command-line interface) refers to the terminal provided by the library: in-app (browser Terminal tab) or Node (`npm run cli`).
 
 ## Two ways to integrate
 
@@ -223,7 +223,9 @@ Settings are stored in TinyBase **values** (not tables):
 
 ## Adding the CLI (Optional)
 
-If you want the terminal interface:
+The CLI runs in **two environments**: (1) in-app Terminal tab in the browser, and (2) from a real terminal (Node.js).
+
+### In the browser
 
 ```tsx
 import { CliTerminal } from 'tb-solid-pod';  // or from your cli
@@ -236,6 +238,10 @@ import { CliTerminal } from 'tb-solid-pod';  // or from your cli
   baseUrl="https://myapp.com/pod/"
 />
 ```
+
+### In the terminal (Node.js)
+
+From the repo: `npm run cli`. Same commands as the browser. Data is stored in `~/.tb-solid-pod/data/store.json` (override with `TB_SOLID_POD_DATA_PATH`). Interactive mode supports **↑/↓** history and **Tab** completion for command names. Use **`exit`** to quit. **Export:** `export` prints JSON to the terminal; `export --download` writes a file to the current directory (Node has no clipboard). Single-command mode: `npm run cli -- help` or `npm run cli -- contact list`.
 
 ---
 

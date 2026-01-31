@@ -58,6 +58,10 @@ These are implemented in `tests/features/*.feature` and run with Playwright.
 
 **Total:** Six feature files; scenarios above are the current automated boundary. The dev server must be running (see [Starting the app](#starting-the-app)); BDD does not start it.
 
+### CLI in browser vs terminal (Scenario Outline)
+
+The same CLI scenarios run **in the browser** (Terminal tab) and **in the terminal** (Node CLI spawned with piped stdin). One feature file per area (e.g. `cli-contacts.feature`) uses a **Scenario Outline** with `Examples: | context | browser | terminal |`. The step "Given I have the CLI in the &lt;context&gt;" either opens the Terminal tab (browser) or spawns `npx tsx src/cli/run-node.tsx` with a unique temp store path (terminal). "When I run the command" and "Then I should see ... in the output" branch on context. Run with the same command as other E2E: `npm run test:e2e` (dev server must be running for browser; terminal runs without it). In Node, `exit` quits the process; `export` prints JSON (or `--download` writes a file). See README and [INTEGRATION_GUIDE.md](../INTEGRATION_GUIDE.md) for full CLI usage.
+
 ### Not yet automated (manual verification)
 
 These are either out of scope for the current BDD suite or not yet implemented as Gherkin scenarios. Verify them manually (or extend the feature files later).

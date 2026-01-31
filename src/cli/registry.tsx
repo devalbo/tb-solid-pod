@@ -1,3 +1,5 @@
+import React from 'react';
+import { Text } from 'ink';
 import type { Command, CliContext } from './types';
 import {
   helpCommand,
@@ -17,6 +19,7 @@ import {
   fileCommand,
   configCommand,
   typeindexCommand,
+  exitCommand,
 } from './commands';
 
 /**
@@ -40,6 +43,7 @@ export const commands: Record<string, Command> = {
   file: fileCommand,
   config: configCommand,
   typeindex: typeindexCommand,
+  exit: exitCommand,
 };
 
 /**
@@ -57,9 +61,9 @@ export const executeCommand = (
 
   if (!command) {
     context.addOutput(
-      <span style={{ color: '#ff6b6b' }}>
+      <Text color="red">
         Unknown command: {cmdName}. Type "help" for available commands.
-      </span>,
+      </Text>,
       'error'
     );
     return;
@@ -70,16 +74,16 @@ export const executeCommand = (
     if (result instanceof Promise) {
       return result.catch((err) => {
         context.addOutput(
-          <span style={{ color: '#ff6b6b' }}>Error: {err.message}</span>,
+          <Text color="red">Error: {err.message}</Text>,
           'error'
         );
       });
     }
   } catch (err) {
     context.addOutput(
-      <span style={{ color: '#ff6b6b' }}>
+      <Text color="red">
         Error: {err instanceof Error ? err.message : String(err)}
-      </span>,
+      </Text>,
       'error'
     );
   }

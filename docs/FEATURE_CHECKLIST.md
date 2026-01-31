@@ -54,13 +54,15 @@ Must work to access features.
 
 ## Level 3: CLI Terminal
 
-Required for CLI-based features.
+Required for CLI-based features. The same CLI runs in the **browser** (Terminal tab) and in **Node** (`npm run cli`). BDD tests cover both (Scenario Outline: browser \| terminal).
 
 - [x] CLI prompt accepts input
 - [x] `help` command shows available commands
 - [x] `clear` command clears terminal
 - [x] Command history (up arrow) works
 - [x] Unknown command shows error message
+- [x] `exit` command quits Node CLI; in browser shows message that exit is terminal-only
+- [x] In Node: `export` prints JSON; `export --download` writes file to cwd
 
 ---
 
@@ -269,7 +271,7 @@ Depends on: Personas, Type Indexes
 
 ### Unit Tests
 - [x] `npm test` runs without errors
-- [x] 385+ tests passing
+- [x] 392+ tests passing
 - [x] Coverage meets 80% threshold
 
 ### Storybook
@@ -280,10 +282,11 @@ Depends on: Personas, Type Indexes
 - [x] FileMetadataPanel stories render
 
 ### BDD/E2E
-- [x] `npm run test:e2e` runs (with dev server running)
+- [x] `npm run test:e2e` runs (dev server required for browser scenarios; terminal scenarios run Node CLI)
 - [x] App shell scenarios pass
-- [x] CLI contact scenarios pass
-- [x] CLI persona scenarios pass
+- [x] CLI contact scenarios pass (browser and terminal)
+- [x] CLI persona scenarios pass (browser and terminal)
+- [x] CLI navigation scenarios pass (browser and terminal)
 
 ---
 

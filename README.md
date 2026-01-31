@@ -190,6 +190,19 @@ npm install
 npm run dev
 ```
 
+## Running the CLI in the terminal
+
+You can run the same CLI from a **real terminal** (Node.js) as well as in the browser’s Terminal tab:
+
+```bash
+npm run cli
+```
+
+- **Interactive**: Full session with the same commands as the browser. Use **↑/↓** for command history and **Tab** for command-name completion.
+- **Single command**: Pass the command as arguments; output is printed and the process exits. Example: `npm run cli -- help` or `npm run cli -- contact list`.
+- **Data**: Stored in `~/.tb-solid-pod/data/store.json` (or set `TB_SOLID_POD_DATA_PATH` to a different path). Same store shape as the browser; data is not shared between browser and terminal unless you point both at the same file.
+
+
 ## CLI Commands
 
 ```
@@ -203,6 +216,7 @@ config list|get|set|reset
 pwd|cd|ls|cat|touch|mkdir|rm  File system operations
 export|import                 Data portability
 clear                         Clear terminal
+exit                          Exit the CLI (Node terminal only)
 ```
 
 ## Testing

@@ -2,7 +2,7 @@ import type { ReactNode } from 'react';
 import type { Store } from 'tinybase';
 
 /**
- * VirtualPod interface - matches the class in App.jsx
+ * VirtualPod interface - implemented by the class in virtualPod.ts
  */
 export interface VirtualPod {
   store: Store;
@@ -52,6 +52,9 @@ export interface CliContext {
 
   // Command registry (for help command)
   commands: Record<string, Command>;
+
+  /** Optional: quit the process (Node CLI only). In browser, undefined. */
+  exit?: () => void;
 }
 
 /**

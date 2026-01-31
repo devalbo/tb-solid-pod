@@ -1,5 +1,5 @@
 import { createBdd } from 'playwright-bdd';
-import { test } from 'playwright-bdd';
+import { test } from './cli.steps';
 
 const { Given, When, Then } = createBdd(test);
 

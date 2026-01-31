@@ -63,7 +63,7 @@
 "test:run": "vitest run"
 ```
 
-**Total: 385 tests passing**
+**Total: 392 tests passing** (includes CLI registry test for exit command)
 
 ---
 
@@ -120,7 +120,7 @@
 
 See [docs/testing/bdd-tests.md](testing/bdd-tests.md) for full details.
 
-**Testing boundary:** The same doc defines [what is automated vs manual](testing/bdd-tests.md#testing-boundary-automated-vs-manual): app shell, tab navigation, Contacts/Personas UI, CLI help/clear/contact/persona are covered by BDD; CLI group/file/files/config/data/typeindex, Groups UI, forms, file browser, settings, export/import, and future features (pod connect, sync, ACL) are left for manual verification until scenarios are added.
+**Testing boundary:** The same doc defines [what is automated vs manual](testing/bdd-tests.md#testing-boundary-automated-vs-manual): app shell, tab navigation, Contacts/Personas UI, CLI help/clear/contact/persona/navigation are covered by BDD in **both browser and terminal** (Scenario Outline); CLI group/file/files/config/data/typeindex, Groups UI, forms, file browser, settings, export/import, and future features (pod connect, sync, ACL) are left for manual verification until scenarios are added.
 
 ### npm Scripts Added
 ```json
@@ -147,7 +147,7 @@ See [docs/testing/bdd-tests.md](testing/bdd-tests.md) for full details.
 
 ## Verification Checklist
 
-- [x] `npm test` - All unit tests pass (385 tests)
+- [x] `npm test` - All unit tests pass (392 tests)
 - [x] `npm run test:coverage` - Coverage meets 80% threshold
 - [x] `npm run storybook` - All stories render without errors
 - [ ] `npm run test:e2e` - All BDD scenarios pass (run with server on 5173; see docs/testing/bdd-tests.md)

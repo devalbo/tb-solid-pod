@@ -1,3 +1,5 @@
+import React from 'react';
+import { Box, Text } from 'ink';
 import type { Command } from '../types';
 import { parseCliArgs, getOptionBoolean } from '../parse-args';
 import {
@@ -6,8 +8,11 @@ import {
   exportStoreAsJson,
 } from '../../utils/storeExport';
 
+const isNode =
+  typeof globalThis.process !== 'undefined' && Boolean(globalThis.process.versions?.node);
+
 /**
- * export - Export store data
+ * export - Export store data (clipboard/file in browser; file or output in Node)
  */
 export const exportCommand: Command = {
   name: 'export',
@@ -17,36 +22,55 @@ export const exportCommand: Command = {
     const { store, addOutput } = context;
     const { options } = parseCliArgs(args);
     const download = getOptionBoolean(options, 'download') || getOptionBoolean(options, 'd');
-    const pretty = getOptionBoolean(options, 'pretty') || getOptionBoolean(options, 'p');
+    const pretty = getOptionBoolean(options, 'pretty') ?? true;
 
+    const json = exportStoreAsJson(store, { pretty });
+
+    if (isNode) {
+      if (download) {
+        const { writeFileSync } = await import('fs');
+        const { join } = await import('path');
+        const filename = `tb-solid-pod-export-${new Date().toISOString().split('T')[0]}.json`;
+        const filepath = join(process.cwd(), filename);
+        writeFileSync(filepath, json, 'utf-8');
+        addOutput(
+          <Text color="green">Exported to {filepath}</Text>,
+          'success'
+        );
+      } else {
+        addOutput(
+          <Box flexDirection="column">
+            <Text color="green">Store data:</Text>
+            <Text>{json}</Text>
+          </Box>,
+          'output'
+        );
+      }
+      return;
+    }
+
+    // Browser
     if (download) {
       downloadStoreAsJson(store);
       addOutput(
-        <span style={{ color: '#2ecc71' }}>Download started: tb-solid-pod-export.json</span>,
+        <Text color="green">Download started: tb-solid-pod-export.json</Text>,
         'success'
       );
       return;
     }
 
-    // Default: copy to clipboard
     const success = await copyStoreToClipboard(store);
     if (success) {
       addOutput(
-        <span style={{ color: '#2ecc71' }}>Store data copied to clipboard</span>,
+        <Text color="green">Store data copied to clipboard</Text>,
         'success'
       );
     } else {
-      // Fallback: show the JSON
-      const json = exportStoreAsJson(store, { pretty });
       addOutput(
-        <div>
-          <div style={{ color: '#ff6b6b', marginBottom: 4 }}>
-            Failed to copy to clipboard. JSON data:
-          </div>
-          <pre style={{ margin: 0, maxHeight: 200, overflow: 'auto', fontSize: 11 }}>
-            {json}
-          </pre>
-        </div>,
+        <Box flexDirection="column">
+          <Text color="red">Failed to copy to clipboard. JSON data:</Text>
+          <Text>{json}</Text>
+        </Box>,
         'error'
       );
     }
@@ -63,14 +87,10 @@ export const importCommand: Command = {
   execute: (_args, context) => {
     const { addOutput } = context;
     addOutput(
-      <div>
-        <div style={{ color: '#f9ca24' }}>
-          The import command requires file system access.
-        </div>
-        <div style={{ marginTop: 4 }}>
-          Please use the <strong>"Import"</strong> button in the toolbar to select a JSON file.
-        </div>
-      </div>
+      <Box flexDirection="column">
+        <Text color="yellow">The import command requires file system access.</Text>
+        <Text>Please use the "Import" button in the toolbar to select a JSON file.</Text>
+      </Box>
     );
   },
 };

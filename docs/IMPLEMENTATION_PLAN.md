@@ -4,10 +4,10 @@
 
 Phases 1–7 complete. See [Feature Checklist](#feature-checklist) for detailed status.
 
-The app has a working browser-based CLI and file browser UI with:
+The app has a working CLI (browser Terminal tab and Node: `npm run cli`) and file browser UI with:
 - Basic file/folder CRUD operations
-- TinyBase persistence with LocalStorage
-- Import/export functionality
+- TinyBase persistence: LocalStorage (browser) or file (Node: `~/.tb-solid-pod/data/store.json`)
+- Import/export functionality (export in Node: print JSON or `export --download` to file)
 - Tab-based navigation (Data Browser / Personas / Contacts / Groups / Terminal)
 - Persona management (Phase 1)
 - Contact management with search/filter (Phase 2)

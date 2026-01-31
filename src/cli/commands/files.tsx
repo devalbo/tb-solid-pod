@@ -1,3 +1,5 @@
+import React from 'react';
+import { Box, Text } from 'ink';
 import type { Command } from '../types';
 import { parseCliArgs, getOptionString } from '../parse-args';
 
@@ -29,10 +31,7 @@ export const catCommand: Command = {
     const path = args[0];
 
     if (!path) {
-      addOutput(
-        <span style={{ color: '#ff6b6b' }}>cat: missing file operand</span>,
-        'error'
-      );
+      addOutput(<Text color="red">cat: missing file operand</Text>, 'error');
       return;
     }
 
@@ -40,52 +39,33 @@ export const catCommand: Command = {
     const row = store.getRow('resources', targetUrl);
 
     if (!row) {
-      addOutput(
-        <span style={{ color: '#ff6b6b' }}>cat: {path}: No such file</span>,
-        'error'
-      );
+      addOutput(<Text color="red">cat: {path}: No such file</Text>, 'error');
       return;
     }
 
     if (row.type === 'Container') {
-      addOutput(
-        <span style={{ color: '#ff6b6b' }}>cat: {path}: Is a directory</span>,
-        'error'
-      );
+      addOutput(<Text color="red">cat: {path}: Is a directory</Text>, 'error');
       return;
     }
 
     const body = row.body;
     const contentType = typeof row.contentType === 'string' ? row.contentType : 'text/plain';
 
-    // Handle images
     if (typeof contentType === 'string' && contentType.startsWith('image/')) {
       addOutput(
-        <div>
-          <div style={{ color: '#888', marginBottom: 4 }}>
-            [{contentType}] (base64 image data)
-          </div>
-          <img
-            src={`data:${contentType};base64,${typeof body === 'string' ? body : ''}`}
-            alt={path}
-            style={{ maxWidth: 300, maxHeight: 200 }}
-          />
-        </div>
+        <Box flexDirection="column">
+          <Text dimColor>[{contentType}] (base64 image data - view in Data Browser)</Text>
+        </Box>
       );
       return;
     }
 
-    // Handle text content
     if (!body) {
-      addOutput(<span style={{ color: '#666' }}>(empty file)</span>);
+      addOutput(<Text dimColor>(empty file)</Text>);
       return;
     }
 
-    addOutput(
-      <pre style={{ margin: 0, whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
-        {body}
-      </pre>
-    );
+    addOutput(<Text>{String(body)}</Text>);
   },
 };
 
@@ -102,20 +82,13 @@ export const touchCommand: Command = {
     const filename = positional[0];
 
     if (!filename) {
-      addOutput(
-        <span style={{ color: '#ff6b6b' }}>touch: missing file operand</span>,
-        'error'
-      );
+      addOutput(<Text color="red">touch: missing file operand</Text>, 'error');
       return;
     }
 
-    // Ensure we're in a container
     const row = context.store.getRow('resources', currentUrl);
     if (!row || row.type !== 'Container') {
-      addOutput(
-        <span style={{ color: '#ff6b6b' }}>touch: current location is not a directory</span>,
-        'error'
-      );
+      addOutput(<Text color="red">touch: current location is not a directory</Text>, 'error');
       return;
     }
 
@@ -130,13 +103,10 @@ export const touchCommand: Command = {
     });
 
     if (result.status === 201) {
-      addOutput(
-        <span style={{ color: '#2ecc71' }}>Created: {filename}</span>,
-        'success'
-      );
+      addOutput(<Text color="green">Created: {filename}</Text>, 'success');
     } else {
       addOutput(
-        <span style={{ color: '#ff6b6b' }}>touch: failed to create {filename}: {result.body}</span>,
+        <Text color="red">touch: failed to create {filename}: {result.body}</Text>,
         'error'
       );
     }
@@ -155,20 +125,13 @@ export const mkdirCommand: Command = {
     const name = args[0];
 
     if (!name) {
-      addOutput(
-        <span style={{ color: '#ff6b6b' }}>mkdir: missing operand</span>,
-        'error'
-      );
+      addOutput(<Text color="red">mkdir: missing operand</Text>, 'error');
       return;
     }
 
-    // Ensure we're in a container
     const row = context.store.getRow('resources', currentUrl);
     if (!row || row.type !== 'Container') {
-      addOutput(
-        <span style={{ color: '#ff6b6b' }}>mkdir: current location is not a directory</span>,
-        'error'
-      );
+      addOutput(<Text color="red">mkdir: current location is not a directory</Text>, 'error');
       return;
     }
 
@@ -182,13 +145,10 @@ export const mkdirCommand: Command = {
     });
 
     if (result.status === 201) {
-      addOutput(
-        <span style={{ color: '#2ecc71' }}>Created directory: {name}</span>,
-        'success'
-      );
+      addOutput(<Text color="green">Created directory: {name}</Text>, 'success');
     } else {
       addOutput(
-        <span style={{ color: '#ff6b6b' }}>mkdir: failed to create {name}: {result.body}</span>,
+        <Text color="red">mkdir: failed to create {name}: {result.body}</Text>,
         'error'
       );
     }
@@ -207,10 +167,7 @@ export const rmCommand: Command = {
     const path = args[0];
 
     if (!path) {
-      addOutput(
-        <span style={{ color: '#ff6b6b' }}>rm: missing operand</span>,
-        'error'
-      );
+      addOutput(<Text color="red">rm: missing operand</Text>, 'error');
       return;
     }
 
@@ -218,24 +175,17 @@ export const rmCommand: Command = {
     const row = store.getRow('resources', targetUrl);
 
     if (!row) {
-      addOutput(
-        <span style={{ color: '#ff6b6b' }}>rm: {path}: No such file or directory</span>,
-        'error'
-      );
+      addOutput(<Text color="red">rm: {path}: No such file or directory</Text>, 'error');
       return;
     }
 
-    // Check if directory is empty
     if (row.type === 'Container') {
       const allRows = store.getTable('resources') || {};
       const children = Object.values(allRows).filter(
         (r) => r.parentId === targetUrl
       );
       if (children.length > 0) {
-        addOutput(
-          <span style={{ color: '#ff6b6b' }}>rm: {path}: Directory not empty</span>,
-          'error'
-        );
+        addOutput(<Text color="red">rm: {path}: Directory not empty</Text>, 'error');
         return;
       }
     }
@@ -243,18 +193,12 @@ export const rmCommand: Command = {
     const result = await pod.handleRequest(targetUrl, { method: 'DELETE' });
 
     if (result.status === 204) {
-      addOutput(
-        <span style={{ color: '#2ecc71' }}>Removed: {path}</span>,
-        'success'
-      );
+      addOutput(<Text color="green">Removed: {path}</Text>, 'success');
     } else if (result.status === 405) {
-      addOutput(
-        <span style={{ color: '#ff6b6b' }}>rm: cannot remove root directory</span>,
-        'error'
-      );
+      addOutput(<Text color="red">rm: cannot remove root directory</Text>, 'error');
     } else {
       addOutput(
-        <span style={{ color: '#ff6b6b' }}>rm: failed to remove {path}: {result.body}</span>,
+        <Text color="red">rm: failed to remove {path}: {result.body}</Text>,
         'error'
       );
     }

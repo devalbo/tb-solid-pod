@@ -1,3 +1,5 @@
+import React from 'react';
+import { Box, Text } from 'ink';
 import type { Command, CliContext } from '../types';
 import { parseCliArgs, getOptionBoolean } from '../parse-args';
 import {
@@ -10,33 +12,26 @@ import {
 } from '../../utils/typeIndex';
 import { resolveClassIri, type TypeIndexType } from '../../schemas/typeIndex';
 
-/**
- * typeindex list - List all type registrations
- */
 const typeindexListExecute = (_args: string[], context: CliContext) => {
   const { store, addOutput } = context;
   const registrations = getAllTypeRegistrations(store);
 
   if (registrations.length === 0) {
     addOutput(
-      <span style={{ color: '#888' }}>
+      <Text dimColor>
         No type registrations. Use "typeindex register &lt;type&gt; &lt;location&gt; [--public]" to add one.
-      </span>
+      </Text>
     );
     return;
   }
 
   addOutput(
-    <div>
-      <div style={{ marginBottom: 8, color: '#4ecdc4' }}>
-        Type registrations ({registrations.length}):
-      </div>
+    <Box flexDirection="column">
+      <Text color="cyan">Type registrations ({registrations.length}):</Text>
       {registrations.map((reg, i) => (
-        <div key={i} style={{ marginBottom: 8, fontFamily: 'monospace', whiteSpace: 'pre-wrap' }}>
-          {formatRegistration(reg)}
-        </div>
+        <Text key={i}>{formatRegistration(reg)}</Text>
       ))}
-    </div>
+    </Box>
   );
 };
 
@@ -49,9 +44,7 @@ const typeindexShowExecute = (args: string[], context: CliContext) => {
 
   if (!indexArg || (indexArg !== 'public' && indexArg !== 'private')) {
     addOutput(
-      <span style={{ color: '#ff6b6b' }}>
-        Usage: typeindex show &lt;public|private&gt;
-      </span>,
+      <Text color="red">Usage: typeindex show &lt;public|private&gt;</Text>,
       'error'
     );
     return;
@@ -61,20 +54,16 @@ const typeindexShowExecute = (args: string[], context: CliContext) => {
   const registrations = getTypeRegistrationsByType(store, indexType);
 
   addOutput(
-    <div>
-      <div style={{ marginBottom: 8, color: '#4ecdc4', textTransform: 'capitalize' }}>
-        {indexType} type index
-      </div>
+    <Box flexDirection="column">
+      <Text color="cyan">{indexType} type index</Text>
       {registrations.length === 0 ? (
-        <span style={{ color: '#888' }}>No registrations in this index.</span>
+        <Text dimColor>No registrations in this index.</Text>
       ) : (
         registrations.map((reg, i) => (
-          <div key={i} style={{ marginBottom: 8, fontFamily: 'monospace', whiteSpace: 'pre-wrap' }}>
-            {formatRegistration(reg)}
-          </div>
+          <Text key={i}>{formatRegistration(reg)}</Text>
         ))
       )}
-    </div>
+    </Box>
   );
 };
 
@@ -92,10 +81,10 @@ const typeindexRegisterExecute = (args: string[], context: CliContext) => {
 
   if (!typeArg || !locationArg) {
     addOutput(
-      <span style={{ color: '#ff6b6b' }}>
+      <Text color="red">
         Usage: typeindex register &lt;type&gt; &lt;location&gt; [--public]{'\n'}
         Example: typeindex register vcard:Individual {baseUrl}contacts/ [--public]
-      </span>,
+      </Text>,
       'error'
     );
     return;
@@ -111,9 +100,9 @@ const typeindexRegisterExecute = (args: string[], context: CliContext) => {
 
   if (!forClass.startsWith('http')) {
     addOutput(
-      <span style={{ color: '#ff6b6b' }}>
+      <Text color="red">
         Unknown type: {typeArg}. Use a full IRI or one of: {getCommonTypeNames().slice(0, 8).join(', ')}...
-      </span>,
+      </Text>,
       'error'
     );
     return;
@@ -123,17 +112,17 @@ const typeindexRegisterExecute = (args: string[], context: CliContext) => {
   if (isContainer) {
     registerType(store, { forClass, instanceContainer: location, indexType });
     addOutput(
-      <span style={{ color: '#2ecc71' }}>
+      <Text color="green">
         Registered {typeArg} → container {location} ({indexType} index)
-      </span>,
+      </Text>,
       'success'
     );
   } else {
     registerType(store, { forClass, instance: location, indexType });
     addOutput(
-      <span style={{ color: '#2ecc71' }}>
+      <Text color="green">
         Registered {typeArg} → instance {location} ({indexType} index)
-      </span>,
+      </Text>,
       'success'
     );
   }
@@ -152,10 +141,10 @@ const typeindexUnregisterExecute = (args: string[], context: CliContext) => {
 
   if (!typeArg) {
     addOutput(
-      <span style={{ color: '#ff6b6b' }}>
+      <Text color="red">
         Usage: typeindex unregister &lt;type&gt; [--public] [--private]{'\n'}
         If neither --public nor --private, removes from both indexes.
-      </span>,
+      </Text>,
       'error'
     );
     return;
@@ -164,9 +153,9 @@ const typeindexUnregisterExecute = (args: string[], context: CliContext) => {
   const forClass = resolveClassIri(typeArg);
   if (!forClass.startsWith('http')) {
     addOutput(
-      <span style={{ color: '#ff6b6b' }}>
+      <Text color="red">
         Unknown type: {typeArg}. Use a full IRI or one of: {getCommonTypeNames().slice(0, 8).join(', ')}...
-      </span>,
+      </Text>,
       'error'
     );
     return;
@@ -179,17 +168,13 @@ const typeindexUnregisterExecute = (args: string[], context: CliContext) => {
   const removed = unregisterType(store, forClass, indexType);
   if (removed) {
     addOutput(
-      <span style={{ color: '#2ecc71' }}>
+      <Text color="green">
         Unregistered {typeArg}{indexType ? ` from ${indexType} index` : ' from all indexes'}
-      </span>,
+      </Text>,
       'success'
     );
   } else {
-    addOutput(
-      <span style={{ color: '#888' }}>
-        No registration found for {typeArg}
-      </span>
-    );
+    addOutput(<Text dimColor>No registration found for {typeArg}</Text>);
   }
 };
 
@@ -206,16 +191,12 @@ export const typeindexCommand: Command = {
 
     if (!subcommand) {
       addOutput(
-        <div>
-          <div style={{ marginBottom: 8 }}>Usage: typeindex &lt;subcommand&gt;</div>
-          <div style={{ color: '#888' }}>
-            <div>Subcommands:</div>
-            <div style={{ marginLeft: 16 }}>list                      - List all type registrations</div>
-            <div style={{ marginLeft: 16 }}>show &lt;public|private&gt;       - Show specific type index</div>
-            <div style={{ marginLeft: 16 }}>register &lt;type&gt; &lt;location&gt; [--public] - Register type</div>
-            <div style={{ marginLeft: 16 }}>unregister &lt;type&gt; [--public] [--private] - Remove registration</div>
-          </div>
-        </div>
+        <Box flexDirection="column">
+          <Text>Usage: typeindex &lt;subcommand&gt;</Text>
+          <Text dimColor>
+            Subcommands: list, show &lt;public|private&gt;, register &lt;type&gt; &lt;location&gt; [--public], unregister &lt;type&gt; [--public] [--private]
+          </Text>
+        </Box>
       );
       return;
     }
@@ -233,9 +214,7 @@ export const typeindexCommand: Command = {
         return typeindexUnregisterExecute(subArgs, context);
       default:
         addOutput(
-          <span style={{ color: '#ff6b6b' }}>
-            Unknown subcommand: {subcommand}. Use "typeindex" for help.
-          </span>,
+          <Text color="red">Unknown subcommand: {subcommand}. Use "typeindex" for help.</Text>,
           'error'
         );
     }

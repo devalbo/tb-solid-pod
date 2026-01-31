@@ -1,3 +1,5 @@
+import React from 'react';
+import { Box, Text } from 'ink';
 import type { Command } from '../types';
 import { parseCliArgs, getOptionString } from '../parse-args';
 import { VCARD } from '@inrupt/vocab-common-rdf';
@@ -35,19 +37,10 @@ export const contactCommand: Command = {
 
     if (!subcommand) {
       addOutput(
-        <div>
-          <div style={{ marginBottom: 8 }}>Usage: contact &lt;subcommand&gt;</div>
-          <div style={{ color: '#888' }}>
-            <div>Subcommands:</div>
-            <div style={{ marginLeft: 16 }}>list                  - List all contacts</div>
-            <div style={{ marginLeft: 16 }}>add &lt;name&gt;           - Add a new contact</div>
-            <div style={{ marginLeft: 16 }}>show &lt;id&gt;            - Show contact details</div>
-            <div style={{ marginLeft: 16 }}>edit &lt;id&gt; [options]  - Edit a contact</div>
-            <div style={{ marginLeft: 16 }}>delete &lt;id&gt;          - Delete a contact</div>
-            <div style={{ marginLeft: 16 }}>search &lt;query&gt;       - Search contacts</div>
-            <div style={{ marginLeft: 16 }}>link &lt;contact&gt; &lt;persona&gt; - Link contact to persona</div>
-          </div>
-        </div>
+        <Box flexDirection="column">
+          <Text>Usage: contact &lt;subcommand&gt;</Text>
+          <Text dimColor>Subcommands: list, add, show, edit, delete, search, link</Text>
+        </Box>
       );
       return;
     }
@@ -71,9 +64,7 @@ export const contactCommand: Command = {
         return contactLinkExecute(subArgs, context);
       default:
         addOutput(
-          <span style={{ color: '#ff6b6b' }}>
-            Unknown subcommand: {subcommand}. Use "contact" for help.
-          </span>,
+          <Text color="red">Unknown subcommand: {subcommand}. Use "contact" for help.</Text>,
           'error'
         );
     }
@@ -92,9 +83,7 @@ const contactListExecute: Command['execute'] = (args, context) => {
 
   if (contactIds.length === 0) {
     addOutput(
-      <span style={{ color: '#888' }}>
-        No contacts found. Use "contact add &lt;name&gt;" to add one.
-      </span>
+      <Text dimColor>No contacts found. Use "contact add &lt;name&gt;" to add one.</Text>
     );
     return;
   }
@@ -112,10 +101,8 @@ const contactListExecute: Command['execute'] = (args, context) => {
   });
 
   addOutput(
-    <div>
-      <div style={{ marginBottom: 8, color: '#4ecdc4' }}>
-        Contacts ({filtered.length}):
-      </div>
+    <Box flexDirection="column">
+      <Text color="cyan">Contacts ({filtered.length}):</Text>
       {filtered.map((id) => {
         const record = contacts[id] as Record<string, unknown>;
         const name = getContactName(record);
@@ -123,21 +110,17 @@ const contactListExecute: Command['execute'] = (args, context) => {
         const email = record[VCARD.hasEmail] as string | undefined;
         const org = record[VCARD.hasOrganizationName] as string | undefined;
         return (
-          <div key={id} style={{ marginBottom: 4 }}>
-            <span style={{ color: contactIsAgent ? '#9b59b6' : '#fff' }}>
+          <Box key={id}>
+            <Text color={contactIsAgent ? 'magenta' : undefined}>
               {contactIsAgent ? '🤖 ' : '👤 '}
               {name}
-            </span>
-            {org && <span style={{ color: '#888', marginLeft: 8 }}>({org})</span>}
-            {email && (
-              <span style={{ color: '#666', marginLeft: 8, fontSize: '0.9em' }}>
-                {email.replace('mailto:', '')}
-              </span>
-            )}
-          </div>
+            </Text>
+            {org && <Text dimColor> ({org})</Text>}
+            {email && <Text dimColor> {email.replace('mailto:', '')}</Text>}
+          </Box>
         );
       })}
-    </div>
+    </Box>
   );
 };
 
@@ -151,9 +134,9 @@ const contactAddExecute: Command['execute'] = (args, context) => {
   const name = positional[0];
   if (!name) {
     addOutput(
-      <span style={{ color: '#ff6b6b' }}>
+      <Text color="red">
         Usage: contact add &lt;name&gt; [--email=...] [--phone=...] [--org=...] [--agent]
-      </span>,
+      </Text>,
       'error'
     );
     return;
@@ -182,10 +165,10 @@ const contactAddExecute: Command['execute'] = (args, context) => {
   setContact(store, contact);
 
   addOutput(
-    <div>
-      <div style={{ color: '#2ecc71' }}>Added contact: {name}</div>
-      <div style={{ color: '#888', fontSize: '0.9em' }}>ID: {id}</div>
-    </div>,
+    <Box flexDirection="column">
+      <Text color="green">Added contact: {name}</Text>
+      <Text dimColor>ID: {id}</Text>
+    </Box>,
     'success'
   );
 };
@@ -199,7 +182,7 @@ const contactShowExecute: Command['execute'] = (args, context) => {
 
   if (!idArg) {
     addOutput(
-      <span style={{ color: '#ff6b6b' }}>Usage: contact show &lt;id or name&gt;</span>,
+      <Text color="red">Usage: contact show &lt;id or name&gt;</Text>,
       'error'
     );
     return;
@@ -211,7 +194,7 @@ const contactShowExecute: Command['execute'] = (args, context) => {
 
   if (!contactId) {
     addOutput(
-      <span style={{ color: '#ff6b6b' }}>Contact not found: {idArg}</span>,
+      <Text color="red">Contact not found: {idArg}</Text>,
       'error'
     );
     return;
@@ -221,23 +204,21 @@ const contactShowExecute: Command['execute'] = (args, context) => {
   const contactIsAgent = isAgent(record);
 
   addOutput(
-    <div>
-      <div style={{ marginBottom: 8 }}>
-        <span style={{ color: '#4ecdc4', fontWeight: 'bold' }}>
+    <Box flexDirection="column">
+      <Box flexDirection="column" marginBottom={1}>
+        <Text color="cyan" bold>
           {contactIsAgent ? '🤖 ' : '👤 '}
           {getContactName(record)}
-        </span>
+        </Text>
         {contactIsAgent && (
-          <span style={{ color: '#9b59b6', marginLeft: 8, fontSize: '0.85em' }}>
-            (Agent)
-          </span>
+          <Text color="magenta"> (Agent)</Text>
         )}
-      </div>
+      </Box>
       <ContactDetails record={record} />
-      <div style={{ marginTop: 8, color: '#666', fontSize: '0.85em' }}>
-        ID: {contactId}
-      </div>
-    </div>
+      <Box marginTop={1}>
+        <Text dimColor>ID: {contactId}</Text>
+      </Box>
+    </Box>
   );
 };
 
@@ -258,7 +239,7 @@ const ContactDetails: React.FC<{ record: Record<string, unknown> }> = ({ record 
   ];
 
   return (
-    <div style={{ fontSize: '0.9em' }}>
+    <Box flexDirection="column">
       {fields.map(({ label, key }) => {
         const value = record[key];
         if (!value) return null;
@@ -266,13 +247,13 @@ const ContactDetails: React.FC<{ record: Record<string, unknown> }> = ({ record 
           ? value.replace(/^mailto:/, '').replace(/^tel:/, '')
           : JSON.stringify(value);
         return (
-          <div key={key} style={{ marginBottom: 2 }}>
-            <span style={{ color: '#888' }}>{label}:</span>{' '}
-            <span style={{ color: '#f5f5f5' }}>{displayValue}</span>
-          </div>
+          <Box key={key} marginBottom={1}>
+            <Text dimColor>{label}: </Text>
+            <Text>{displayValue}</Text>
+          </Box>
         );
       })}
-    </div>
+    </Box>
   );
 };
 
@@ -286,9 +267,9 @@ const contactEditExecute: Command['execute'] = (args, context) => {
   const idArg = positional[0];
   if (!idArg) {
     addOutput(
-      <span style={{ color: '#ff6b6b' }}>
+      <Text color="red">
         Usage: contact edit &lt;id&gt; [--name=...] [--email=...] [--phone=...] [--org=...]
-      </span>,
+      </Text>,
       'error'
     );
     return;
@@ -300,7 +281,7 @@ const contactEditExecute: Command['execute'] = (args, context) => {
 
   if (!contactId) {
     addOutput(
-      <span style={{ color: '#ff6b6b' }}>Contact not found: {idArg}</span>,
+      <Text color="red">Contact not found: {idArg}</Text>,
       'error'
     );
     return;
@@ -333,9 +314,9 @@ const contactEditExecute: Command['execute'] = (args, context) => {
 
   if (Object.keys(updates).length === 0) {
     addOutput(
-      <span style={{ color: '#f9ca24' }}>
+      <Text color="yellow">
         No changes specified. Use options like --name="New Name" --email="new@email.com"
-      </span>
+      </Text>
     );
     return;
   }
@@ -347,9 +328,7 @@ const contactEditExecute: Command['execute'] = (args, context) => {
 
   const updated = getContact(store, contactId);
   addOutput(
-    <div style={{ color: '#2ecc71' }}>
-      Updated contact: {getContactName(updated ?? {})}
-    </div>,
+    <Text color="green">Updated contact: {getContactName(updated ?? {})}</Text>,
     'success'
   );
 };
@@ -363,7 +342,7 @@ const contactDeleteExecute: Command['execute'] = (args, context) => {
 
   if (!idArg) {
     addOutput(
-      <span style={{ color: '#ff6b6b' }}>Usage: contact delete &lt;id or name&gt;</span>,
+      <Text color="red">Usage: contact delete &lt;id or name&gt;</Text>,
       'error'
     );
     return;
@@ -375,7 +354,7 @@ const contactDeleteExecute: Command['execute'] = (args, context) => {
 
   if (!contactId) {
     addOutput(
-      <span style={{ color: '#ff6b6b' }}>Contact not found: {idArg}</span>,
+      <Text color="red">Contact not found: {idArg}</Text>,
       'error'
     );
     return;
@@ -387,7 +366,7 @@ const contactDeleteExecute: Command['execute'] = (args, context) => {
   store.delRow(STORE_TABLES.CONTACTS, contactId);
 
   addOutput(
-    <span style={{ color: '#2ecc71' }}>Deleted contact: {name}</span>,
+    <Text color="green">Deleted contact: {name}</Text>,
     'success'
   );
 };
@@ -401,7 +380,7 @@ const contactSearchExecute: Command['execute'] = (args, context) => {
 
   if (!query) {
     addOutput(
-      <span style={{ color: '#ff6b6b' }}>Usage: contact search &lt;query&gt;</span>,
+      <Text color="red">Usage: contact search &lt;query&gt;</Text>,
       'error'
     );
     return;
@@ -431,35 +410,33 @@ const contactSearchExecute: Command['execute'] = (args, context) => {
 
   if (results.length === 0) {
     addOutput(
-      <span style={{ color: '#888' }}>No contacts matching "{query}"</span>
+      <Text dimColor>No contacts matching "{query}"</Text>
     );
     return;
   }
 
   addOutput(
-    <div>
-      <div style={{ marginBottom: 8, color: '#4ecdc4' }}>
-        Found {results.length} contact{results.length !== 1 ? 's' : ''}:
-      </div>
+    <Box flexDirection="column">
+      <Box flexDirection="column" marginBottom={1}>
+        <Text color="cyan">Found {results.length} contact{results.length !== 1 ? 's' : ''}:</Text>
+      </Box>
       {results.map(({ id, record }) => {
         const name = getContactName(record);
         const contactIsAgent = isAgent(record);
         const email = record[VCARD.hasEmail] as string | undefined;
         return (
-          <div key={id} style={{ marginBottom: 4 }}>
-            <span style={{ color: contactIsAgent ? '#9b59b6' : '#fff' }}>
+          <Box key={id} marginBottom={1}>
+            <Text color={contactIsAgent ? 'magenta' : undefined}>
               {contactIsAgent ? '🤖 ' : '👤 '}
               {name}
-            </span>
+            </Text>
             {email && (
-              <span style={{ color: '#666', marginLeft: 8, fontSize: '0.9em' }}>
-                {email.replace('mailto:', '')}
-              </span>
+              <Text dimColor> {email.replace('mailto:', '')}</Text>
             )}
-          </div>
+          </Box>
         );
       })}
-    </div>
+    </Box>
   );
 };
 
@@ -472,9 +449,9 @@ const contactLinkExecute: Command['execute'] = (args, context) => {
 
   if (!contactArg || !personaArg) {
     addOutput(
-      <span style={{ color: '#ff6b6b' }}>
+      <Text color="red">
         Usage: contact link &lt;contact-id&gt; &lt;persona-id&gt;
-      </span>,
+      </Text>,
       'error'
     );
     return;
@@ -486,19 +463,19 @@ const contactLinkExecute: Command['execute'] = (args, context) => {
 
   if (!contactId) {
     addOutput(
-      <span style={{ color: '#ff6b6b' }}>Contact not found: {contactArg}</span>,
+      <Text color="red">Contact not found: {contactArg}</Text>,
       'error'
     );
     return;
   }
 
   // Find persona
-  const personas = store.getTable('personas') || {};
+  const personas = store.getTable(STORE_TABLES.PERSONAS) || {};
   const personaId = findPersonaId(personas, personaArg);
 
   if (!personaId) {
     addOutput(
-      <span style={{ color: '#ff6b6b' }}>Persona not found: {personaArg}</span>,
+      <Text color="red">Persona not found: {personaArg}</Text>,
       'error'
     );
     return;
@@ -523,7 +500,7 @@ const contactLinkExecute: Command['execute'] = (args, context) => {
     });
     if (alreadyLinked) {
       addOutput(
-        <span style={{ color: '#f9ca24' }}>Contact is already linked to this persona</span>
+        <Text color="yellow">Contact is already linked to this persona</Text>
       );
       return;
     }
@@ -539,9 +516,9 @@ const contactLinkExecute: Command['execute'] = (args, context) => {
   const personaName = (personas[personaId] as Record<string, unknown>)['http://xmlns.com/foaf/0.1/name'] as string || 'persona';
 
   addOutput(
-    <span style={{ color: '#2ecc71' }}>
+    <Text color="green">
       Linked {contactName} to persona "{personaName}"
-    </span>,
+    </Text>,
     'success'
   );
 };
