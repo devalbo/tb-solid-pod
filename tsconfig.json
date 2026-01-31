@@ -16,6 +16,8 @@
 
     /* Linting */
     "strict": true,
+    // Enforce unused locals/params via TypeScript diagnostics.
+    // (ESLint unused-vars is disabled for TS/TSX to avoid duplicate reporting.)
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true,

@@ -22,6 +22,8 @@ export const STORE_TABLES = {
   GROUPS: 'groups',
   TYPE_INDEXES: 'typeIndexes',
   RESOURCES: 'resources',
+  /** Named command scripts (repeatable command sequences). */
+  CLI_SCRIPTS: 'cliScripts',
 } as const;
 
 export type StoreTableName = (typeof STORE_TABLES)[keyof typeof STORE_TABLES];
@@ -41,4 +43,5 @@ export const STORE_TABLE_NAMES: readonly StoreTableName[] = [
   STORE_TABLES.GROUPS,
   STORE_TABLES.TYPE_INDEXES,
   STORE_TABLES.RESOURCES,
+  STORE_TABLES.CLI_SCRIPTS,
 ] as const;

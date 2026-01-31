@@ -10,6 +10,7 @@ import { createStore } from 'tinybase';
 import { createIndexes } from 'tinybase';
 import type { Store } from 'tinybase';
 import type { Indexes } from 'tinybase';
+import type { Tables, Values } from 'tinybase';
 import { createFilePersister } from 'tinybase/persisters/persister-file';
 import { VirtualPod } from '../virtualPod';
 import { initializeDefaultTypeRegistrations } from '../utils/typeIndex';
@@ -26,7 +27,7 @@ export function getNodeStorePath(): string {
 }
 
 /** Default content when no file exists: resources table with root container. */
-export function getDefaultStoreContent(baseUrl: string): [Record<string, Record<string, Record<string, unknown>>>, Record<string, unknown>] {
+export function getDefaultStoreContent(baseUrl: string): [Tables, Values] {
   return [
     {
       [STORE_TABLES.RESOURCES]: {
@@ -36,8 +37,8 @@ export function getDefaultStoreContent(baseUrl: string): [Record<string, Record<
           updated: new Date().toISOString(),
         },
       },
-    },
-    {},
+    } as unknown as Tables,
+    {} as Values,
   ];
 }
 

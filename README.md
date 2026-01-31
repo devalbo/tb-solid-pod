@@ -179,6 +179,24 @@ npm install
 npm run dev
 ```
 
+## Quality checks (recommended)
+
+For a consistent “works on my machine” baseline, use the single repo gate:
+
+```bash
+npm run check
+```
+
+This runs:
+- `npm run lint` (ESLint)
+- `npm run typecheck` (TypeScript `tsc` using `tsconfig.json`, including unused locals/params)
+- `npm run test:run` (Vitest)
+
+### Pre-commit hook (first checkout friendly)
+
+On `npm install`, the repo installs a pre-commit hook (via Husky) that runs `npm run check`.
+If you ever need to re-install hooks: `npm run prepare`.
+
 ## Running the CLI in the terminal
 
 You can run the same CLI from a **real terminal** (Node.js) as well as in the browser’s Terminal tab:
@@ -196,6 +214,7 @@ npm run cli
 
 ```
 help                          Show available commands
+script list|show|save|append|run|delete  Save and run repeatable command scripts
 persona list|create|show [--full]|edit|delete|set-default|set-inbox|set-typeindex
 contact list|add|show|edit|delete|search|link
 group list|create|show|edit|delete|add-member|remove-member|list-members

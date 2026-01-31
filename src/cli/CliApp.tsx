@@ -9,7 +9,8 @@ import React, { useState, useCallback, useRef } from 'react';
 import { Box, Text, useInput } from 'ink';
 import type { Store } from 'tinybase';
 import type { VirtualPod } from './types';
-import { commands, executeCommand } from './registry';
+import { commands } from './registry';
+import { executeCommandLine } from './executor';
 import type { CliContext, OutputEntry } from './types';
 import { E2E_OUTPUT_LINES_SETTER_KEY } from './types';
 
@@ -111,10 +112,7 @@ export function CliApp({
       if (line) {
         addOutput(<Text dimColor>$ {inputLine}</Text>, 'input');
         addToHistory(line);
-        const result = executeCommand(line, context);
-        if (result instanceof Promise) {
-          result.catch(() => {});
-        }
+        executeCommandLine(line, context).catch(() => {});
       }
       setInputLine('');
       return;

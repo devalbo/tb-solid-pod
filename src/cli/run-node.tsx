@@ -10,7 +10,8 @@ import * as readline from 'readline';
 import type { Store } from 'tinybase';
 import type { VirtualPod } from '../virtualPod';
 import { createNodeStoreWithPersister } from './node-store';
-import { commands, executeCommand } from './registry';
+import { commands } from './registry';
+import { executeCommandLine } from './executor';
 import type { CliContext } from './types';
 import { CliApp } from './CliApp';
 
@@ -51,8 +52,7 @@ async function runBatchMode() {
     const trimmed = line.trim();
     if (!trimmed) continue;
     outputNodes.length = 0;
-    const result = executeCommand(trimmed, context);
-    if (result instanceof Promise) await result;
+    await executeCommandLine(trimmed, context, { silent: false });
     for (const node of outputNodes) {
       const text = extractText(node);
       if (text) process.stdout.write(text + '\n');
@@ -74,8 +74,7 @@ async function runSingleCommand(commandLine: string) {
     pod,
     commands,
   };
-  const result = executeCommand(commandLine.trim(), context);
-  if (result instanceof Promise) await result;
+  await executeCommandLine(commandLine.trim(), context, { silent: false });
   for (const node of outputNodes) {
     const text = extractText(node);
     if (text) process.stdout.write(text + '\n');

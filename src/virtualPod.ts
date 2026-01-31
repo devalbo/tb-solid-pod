@@ -7,6 +7,7 @@
 import type { Store } from 'tinybase';
 import type { Indexes } from 'tinybase';
 import { STORE_TABLES, STORE_INDEXES } from './storeLayout';
+import { validateName } from './cli/path';
 
 export interface ResourceRow {
   type?: string;
@@ -57,11 +58,54 @@ export class VirtualPod {
     url: string,
     options: RequestOptions = { method: 'GET' }
   ): Promise<RequestResult> {
+    const normalized = this._normalizeUrl(url);
+    if (!normalized.ok) {
+      return normalized.result;
+    }
+    const normalizedUrl = normalized.url;
+
     const method = (options.method ?? 'GET').toUpperCase();
-    if (method === 'GET') return this._get(url);
-    if (method === 'PUT') return this._put(url, options.body, options.headers);
-    if (method === 'DELETE') return this._delete(url);
+    if (method === 'GET') return this._get(normalizedUrl);
+    if (method === 'PUT') return this._put(normalizedUrl, options.body, options.headers);
+    if (method === 'DELETE') return this._delete(normalizedUrl);
     return { status: 405, body: 'Method Not Allowed' };
+  }
+
+  _normalizeUrl(url: string): { ok: true; url: string } | { ok: false; result: RequestResult } {
+    // Must be a valid absolute URL under baseUrl.
+    let u: URL;
+    try {
+      u = new URL(url);
+    } catch {
+      return { ok: false, result: { status: 400, body: 'Invalid URL' } };
+    }
+
+    const base = new URL(this.baseUrl).toString();
+    const full = u.toString();
+    if (!full.startsWith(base)) {
+      return { ok: false, result: { status: 403, body: 'Access denied: path outside pod' } };
+    }
+
+    // Validate each decoded segment name (safety net).
+    const rel = full.slice(base.length);
+    const segments = rel.split('/').filter((s) => s.length > 0);
+    for (const seg of segments) {
+      let decoded: string;
+      try {
+        decoded = decodeURIComponent(seg);
+      } catch {
+        return { ok: false, result: { status: 400, body: 'Invalid URL encoding' } };
+      }
+      if (decoded === '.' || decoded === '..') {
+        return { ok: false, result: { status: 400, body: 'Invalid path segment' } };
+      }
+      const err = validateName(decoded);
+      if (err) {
+        return { ok: false, result: { status: 400, body: err.error } };
+      }
+    }
+
+    return { ok: true, url: full };
   }
 
   _get(url: string): RequestResult {

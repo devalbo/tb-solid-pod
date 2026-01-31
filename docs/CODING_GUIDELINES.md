@@ -29,6 +29,15 @@ Keep the codebase maintainable: strict types, small units of work, and simple Re
 - **Avoid overly complex components.** Prefer many small components over one large one. Use composition.
 - **Props: typed and minimal.** Define a clear props interface; avoid spreading large objects “just in case.”
 
+## CLI commands as a composable layer
+
+- **Model operations as commands.** When adding new app functionality, consider whether it can be expressed as a CLI command. Commands provide a composable foundation that works in browser, terminal, and for AI agents.
+- **Environment-agnostic logic.** Command implementations should not check `typeof window` or rely on browser/Node-specific APIs. Isolate platform differences in adapters.
+- **Structured results.** Commands should return structured `CommandResult` objects for programmatic consumption, not just render output.
+- **Decomposability enables testability.** A command that can be tested in isolation—without UI, browser mocks, or complex fixtures—is easier to reason about. If you can test it in a small environment, you can predict how changes will affect it.
+
+This pattern is foundational, not mandatory—direct store access is fine for simple cases. See [CLI_COMMAND_UNIFICATION.md](../CLI_COMMAND_UNIFICATION.md) for the full architecture.
+
 ## General
 
 - **Naming:** Use clear, consistent names. Prefer `handleSubmit` over `onClick` for handlers passed as props; keep event handlers and callbacks obvious.

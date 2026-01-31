@@ -20,6 +20,29 @@ Store setup and table layout are described in the [README Integration Guide](../
 
 ---
 
+## Foundational approach: CLI commands as building blocks
+
+**CLI commands provide a composable foundation for app operations.** By decomposing interactions into commands, you get:
+
+- Consistent validation across UI, terminal, and programmatic use
+- Unified error codes and messages
+- Environment-agnostic logic (same code works in browser and Node)
+- A stable API for AI agents and automation
+- **Testability**: Commands can be tested in isolation without UI, browser mocks, or complex fixtures. If it's easier to test in a small environment, it's easier to reason about the ramifications of changes.
+
+This doesn't mean CLI commands are the only way—direct store access is fine for simple cases or when you need fine control. But modeling your app's operations as commands gives you a composable, testable layer that works across all environments.
+
+| Operation | Direct Store | CLI Command |
+|-----------|--------------|-------------|
+| Create persona | `store.setRow('personas', persona['@id'], persona)` | `useCliExecutor().exec('persona', ['create', name])` |
+| Delete contact | `store.delRow('contacts', id)` | `useCliExecutor().exec('contact', ['delete', id])` |
+| Create file | `pod.handleRequest(url, { method: 'PUT', body })` | `useCliExecutor().createFile(name, content, type)` |
+| Navigate | `setCurrentUrl(url)` | `useCliExecutor().navigate(path)` |
+
+For the full CLI command architecture, see [PRINCIPLES_AND_GOALS.md](PRINCIPLES_AND_GOALS.md#9-cli-as-the-single-command-interface) and [CLI_COMMAND_UNIFICATION.md](../CLI_COMMAND_UNIFICATION.md).
+
+---
+
 ## Users (personas)
 
 Personas are identity profiles: the “users” from the app author’s perspective are the personas the pod owner has created (e.g. “work”, “personal”, “anonymous”). One of them can be set as the default for authoring.

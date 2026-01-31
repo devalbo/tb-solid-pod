@@ -10,7 +10,7 @@ import {
 } from './utils/storeExport';
 import { initializeDefaultTypeRegistrations } from './utils/typeIndex';
 import { VirtualPod, type ResourceRow } from './virtualPod';
-import { CliTerminal } from './cli';
+import { CliTerminal, commands, exec, type CliContext } from './cli';
 import PersonaList from './components/PersonaList';
 import PersonaForm from './components/PersonaForm';
 import ContactList from './components/ContactList';
@@ -204,19 +204,6 @@ function DropdownMenu(props: {
       )}
     </div>
   );
-}
-
-function ensureTrailingSlash(url: string): string {
-  return url.endsWith('/') ? url : `${url}/`;
-}
-
-function makeChildUrl(parentContainerUrl: string, rawName: string, isContainer: boolean): string | null {
-  const name = rawName.trim();
-  if (!name) return null;
-  if (name.includes('/')) return null;
-  const encoded = encodeURIComponent(name);
-  const base = ensureTrailingSlash(parentContainerUrl);
-  return base + encoded + (isContainer ? '/' : '');
 }
 
 // Metadata for the Schemas view: descriptions and Solid doc links
@@ -672,34 +659,29 @@ export default function App() {
     setNewFolderName('');
   };
 
-  const submitNewFile = () => {
+  const submitNewFile = async () => {
     const name = newFileName.trim();
     if (!name || !pod) return;
-    const url = makeChildUrl(currentContainerUrl, name, false);
-    if (!url) {
-      alert('Invalid filename. Use a name without "/" characters.');
+    const ctx = createUiCliContext(currentContainerUrl);
+    const args: string[] = [name, '--type', 'text/plain'];
+    if (newFileContent) args.push('--content', newFileContent);
+    const result = await exec('touch', args, ctx, { silent: true });
+    if (!result.success) {
+      alert(result.error?.message || 'Failed to create file');
       return;
     }
-    pod.handleRequest(url, {
-      method: 'PUT',
-      body: newFileContent || '',
-      headers: { 'Content-Type': 'text/plain' }
-    });
     closeNewFileDialog();
   };
 
-  const submitNewFolder = () => {
+  const submitNewFolder = async () => {
     const name = newFolderName.trim();
     if (!name || !pod) return;
-    const url = makeChildUrl(currentContainerUrl, name, true);
-    if (!url) {
-      alert('Invalid folder name. Use a name without "/" characters.');
+    const ctx = createUiCliContext(currentContainerUrl);
+    const result = await exec('mkdir', [name], ctx, { silent: true });
+    if (!result.success) {
+      alert(result.error?.message || 'Failed to create folder');
       return;
     }
-    pod.handleRequest(url, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'text/turtle' },
-    });
     closeNewFolderDialog();
   };
 
@@ -709,16 +691,11 @@ export default function App() {
     try {
       const base64 = await readFileAsBase64(file);
       const name = file.name;
-      const url = makeChildUrl(currentContainerUrl, name, false);
-      if (!url) {
-        alert('Invalid filename.');
-        return;
+      const ctx = createUiCliContext(currentContainerUrl);
+      const result = await exec('touch', [name, '--content', base64, '--type', file.type, '--base64'], ctx, { silent: true });
+      if (!result.success) {
+        alert(result.error?.message || 'Failed to upload image');
       }
-      pod.handleRequest(url, {
-        method: 'PUT',
-        body: base64,
-        headers: { 'Content-Type': file.type }
-      });
     } catch {
       alert('Failed to upload image');
     }
@@ -763,6 +740,18 @@ export default function App() {
   if (!ready || !store || !indexes || !pod) {
     return <div style={styles.loading}>Loading…</div>;
   }
+
+  const createUiCliContext = (cwd: string): CliContext => ({
+    addOutput: () => {},
+    clearOutput: () => {},
+    setBusy: () => {},
+    currentUrl: cwd,
+    setCurrentUrl,
+    baseUrl: BASE_URL,
+    store,
+    pod,
+    commands,
+  });
 
   const createFolder = () => openNewFolderDialog();
 

@@ -50,6 +50,12 @@ const TABLE_SCHEMAS: Record<string, z.ZodType<unknown>> = {
   [STORE_TABLES.CONTACTS]: ContactSchema,
   [STORE_TABLES.GROUPS]: GroupSchema,
   [STORE_TABLES.TYPE_INDEXES]: TypeIndexRowSchema,
+  [STORE_TABLES.CLI_SCRIPTS]: z.object({
+    // Newline-delimited command lines (preserves spaces/quotes as typed).
+    script: z.string(),
+    createdAt: z.string(),
+    updatedAt: z.string(),
+  }),
   // resources table uses a simpler validation (not JSON-LD)
 };
 

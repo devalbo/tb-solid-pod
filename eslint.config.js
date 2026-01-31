@@ -55,7 +55,9 @@ export default defineConfig([
     },
     rules: {
       'no-unused-vars': 'off',
-      '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_', varsIgnorePattern: '^[A-Z_]' }],
+      // Unused locals/params are enforced by TypeScript (tsc) via tsconfig.json.
+      // Keep ESLint focused on non-typechecking rules to avoid duplicate diagnostics.
+      '@typescript-eslint/no-unused-vars': 'off',
       'no-empty-pattern': 'off',
       '@typescript-eslint/no-require-imports': 'off',
       'react-refresh/only-export-components': 'off',

@@ -33,7 +33,19 @@ export * from './utils/validation';
 export { VirtualPod, type ResourceRow } from './virtualPod';
 
 // CLI (terminal component, command registry, hooks, types)
-export { CliTerminal, commands, executeCommand, useCliInput, parseCliArgs, getOptionString, getOptionBoolean, generateId } from './cli';
+export {
+  CliTerminal,
+  commands,
+  executeCommand,
+  exec,
+  cliApi,
+  createApiContext,
+  useCliInput,
+  parseCliArgs,
+  getOptionString,
+  getOptionBoolean,
+  generateId,
+} from './cli';
 export type { Command, CliContext, OutputEntry, ParsedArgs } from './cli';
 
 // Components (React; default exports re-exported as named)

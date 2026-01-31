@@ -1,4 +1,5 @@
 import type { ParsedArgs } from './types';
+import type { CommandError } from './types';
 
 /**
  * Parse CLI arguments into positional args and options
@@ -69,6 +70,47 @@ export const getOptionBoolean = (
   key: string
 ): boolean => {
   return options[key] === true || options[key] === 'true';
+};
+
+/**
+ * Check if `--json` (or `-j`) flag is present.
+ */
+export const hasJsonFlag = (options: Record<string, string | boolean>): boolean => {
+  return options['json'] === true || options['j'] === true || options['json'] === 'true';
+};
+
+/**
+ * Get required positional argument or return a structured error.
+ */
+export const getRequiredArg = (
+  positional: string[],
+  index: number,
+  name: string
+): string | CommandError => {
+  if (index >= positional.length || !positional[index]) {
+    return { code: 'MISSING_ARGUMENT', message: `Missing required argument: ${name}` };
+  }
+  return positional[index]!;
+};
+
+/**
+ * Validate subcommand argument against a list.
+ */
+export const validateSubcommand = (
+  subcommand: string | undefined,
+  validSubcommands: string[],
+  commandName: string
+): CommandError | null => {
+  if (!subcommand) {
+    return { code: 'MISSING_ARGUMENT', message: `${commandName}: missing subcommand` };
+  }
+  if (!validSubcommands.includes(subcommand.toLowerCase())) {
+    return {
+      code: 'UNKNOWN_SUBCOMMAND',
+      message: `${commandName}: unknown subcommand: ${subcommand}`,
+    };
+  }
+  return null;
 };
 
 /**

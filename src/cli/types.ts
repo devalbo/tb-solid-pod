@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import type { Store } from 'tinybase';
+import { z } from 'zod';
 
 /**
  * VirtualPod interface - implemented by the class in virtualPod.ts
@@ -64,13 +65,112 @@ export interface CliContext {
 }
 
 /**
- * Command definition
+ * Standardized error codes for commands.
+ */
+export const errorCodeSchema = z.enum([
+  // Path errors
+  'INVALID_PATH',
+  'PATH_NOT_FOUND',
+  'NOT_A_DIRECTORY',
+  'NOT_A_FILE',
+  'ALREADY_EXISTS',
+  'PARENT_NOT_FOUND',
+  'DIRECTORY_NOT_EMPTY',
+  'ESCAPE_ATTEMPT',
+  // Entity errors
+  'ENTITY_NOT_FOUND',
+  'DUPLICATE_ENTITY',
+  'INVALID_ENTITY',
+  // Argument errors
+  'MISSING_ARGUMENT',
+  'INVALID_ARGUMENT',
+  'UNKNOWN_SUBCOMMAND',
+  // Operation errors
+  'OPERATION_FAILED',
+  'NOT_SUPPORTED',
+  'PERMISSION_DENIED',
+]);
+
+export type ErrorCode = z.infer<typeof errorCodeSchema>;
+
+export const commandErrorSchema = z.object({
+  code: errorCodeSchema,
+  message: z.string(),
+  details: z.unknown().optional(),
+});
+
+export type CommandError = z.infer<typeof commandErrorSchema>;
+
+export const commandResultSchema = z
+  .object({
+    success: z.boolean(),
+    data: z.unknown().optional(),
+    message: z.string().optional(),
+    error: commandErrorSchema.optional(),
+  })
+  .superRefine((val, ctx) => {
+    if (!val.success && !val.error) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'CommandResult with success=false must include an error',
+      });
+    }
+  });
+
+export type CommandResult<T = unknown> = Omit<
+  z.infer<typeof commandResultSchema>,
+  'data'
+> & { data?: T };
+
+export interface CommandOptions {
+  /** Suppress terminal output (useful for programmatic calls). */
+  silent?: boolean;
+  /** Output structured JSON to the terminal (when supported). */
+  json?: boolean;
+}
+
+export type CommandExecutionResult =
+  | void
+  | CommandResult
+  | Promise<void | CommandResult>;
+
+export interface SubcommandDef {
+  description: string;
+  usage: string;
+  execute: (
+    args: string[],
+    context: CliContext,
+    options?: CommandOptions
+  ) => CommandExecutionResult;
+}
+
+/**
+ * Command definition (enhanced).
  */
 export interface Command {
   name: string;
   description: string;
   usage: string;
-  execute: (args: string[], context: CliContext) => void | Promise<void>;
+
+  /**
+   * Execute the command. For interactive CLI usage, commands typically call
+   * context.addOutput(). For programmatic usage, commands can return a structured
+   * CommandResult and optionally suppress output via options.silent.
+   */
+  execute: (
+    args: string[],
+    context: CliContext,
+    options?: CommandOptions
+  ) => CommandExecutionResult;
+
+  /** Optional: validate arguments before execution. */
+  validate?: (args: string[], context: CliContext) => CommandError | null;
+
+  /** Optional: command supports JSON output mode (`--json` / `-j` or options.json). */
+  supportsJson?: boolean;
+
+  /** Optional: compound commands can expose subcommands for help and dispatch. */
+  subcommands?: Record<string, SubcommandDef>;
 }
 
 /**

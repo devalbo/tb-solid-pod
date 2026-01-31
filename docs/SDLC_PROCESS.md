@@ -2,16 +2,41 @@
 
 How changes are introduced, documented, and verified in tb-solid-pod.
 
+## Start Here
+
+| If you're... | Start with |
+|--------------|------------|
+| Looking for work to pick up | [BACKLOG.md](BACKLOG.md) — pending tasks with context |
+| Investigating a broken feature | [FEATURE_CHECKLIST.md](FEATURE_CHECKLIST.md) — verify what works, find what's broken |
+| New and want to understand the project | [PRINCIPLES_AND_GOALS.md](PRINCIPLES_AND_GOALS.md) — why we built it this way |
+| Wondering why something was built a certain way | [IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md) — phase history and rationale |
+| Checking if a change caused regressions | [FEATURE_CHECKLIST.md](FEATURE_CHECKLIST.md) — re-verify affected levels |
+| Reviewing or auditing the process | This doc — lifecycle stages, verification workflow, documentation review |
+
+---
+
 ## Lifecycle Overview
 
 The process flows from **feature/requirements** → **design/selection** → **implementation** → **verification and validation**:
 
 | Stage | What happens | Outputs |
 |-------|----------------|---------|
-| **Requirements** | Capture why, what “done” looks like, and how to test | Reason for change, acceptance criteria, testing strategy |
+| **Requirements** | Capture why, what "done" looks like, and how to test | Reason for change, acceptance criteria, testing strategy |
 | **Design/selection** | Decide approach; align docs and contracts | Updated DESIGN, IMPLEMENTATION_PLAN, SOLID_SERVER_STRATEGIES, etc. |
 | **Implementation** | Code and doc changes | Code, store layout, schemas, doc updates |
 | **Verification** | Automated tests + manual verification | Passing tests, checked Feature Checklist, resolved review items |
+
+### Where to Find Things
+
+| Question | Document |
+|----------|----------|
+| What needs to be done next? | [BACKLOG.md](BACKLOG.md) |
+| What's been completed in each phase? | [IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md) |
+| Does a feature actually work? | [FEATURE_CHECKLIST.md](FEATURE_CHECKLIST.md) |
+| What behavior must be preserved? | [FEATURE_CHECKLIST.md](FEATURE_CHECKLIST.md) |
+| What was done and how was it resolved? | [BACKLOG.md](BACKLOG.md) (Completed section) |
+
+The Feature Checklist serves two purposes: verifying new work and **defining behavior to preserve**. Before making changes, review affected checklist items—they represent working functionality that should not regress.
 
 For **code features**, “Documenting Changes” and “Verification Workflow” below apply. For **planning and documentation** (e.g. before or after a major phase), use the **Documentation review process** so design and docs stay coherent and gaps are tracked to closure.
 
@@ -208,6 +233,7 @@ Within each level, items are grouped by CLI / UI / Data where it makes sense.
 | Document | Purpose |
 |----------|---------|
 | [PRINCIPLES_AND_GOALS.md](PRINCIPLES_AND_GOALS.md) | Core principles and project goals |
+| [BACKLOG.md](BACKLOG.md) | Pending work items and completed task history |
 | [FEATURE_CHECKLIST.md](FEATURE_CHECKLIST.md) | Manual verification checklist |
 | [IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md) | Phase roadmap |
 | [CODING_GUIDELINES.md](CODING_GUIDELINES.md) | Code style |

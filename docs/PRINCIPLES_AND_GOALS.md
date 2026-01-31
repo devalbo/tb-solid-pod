@@ -109,6 +109,79 @@ This design supports multiple use patterns:
 
 The CLI is the **control surface** for the store. By exposing the same commands in every environment, we avoid the fragmentation of "browser SDK vs. server SDK vs. API" that plagues many libraries. An AI agent can learn the CLI once and use it everywhere.
 
+### 9. CLI Commands as Composable Building Blocks
+
+**Operations can be modeled as commands—providing composable building blocks that work in browser, terminal, and for AI agents.**
+
+By decomposing app interactions into commands, you get reusable pieces that can be:
+- Called from UI event handlers
+- Typed interactively in a terminal
+- Invoked programmatically by AI agents or scripts
+- Chained together for complex workflows
+
+**Decomposability leads to testability.** When an operation is a standalone command, you can test it in isolation without spinning up UI, mocking browsers, or setting up complex fixtures. If it's easier to test in a small environment, it's easier to reason about the ramifications of changes. A command that works in a unit test will work the same way when called from a button click or an AI agent.
+
+This is a **foundational pattern**, not a mandate. Direct store access is fine for simple cases or when you need fine control. But the command layer gives you a stable, composable, testable API when you need it.
+
+This architectural approach is documented in detail in [CLI_COMMAND_UNIFICATION.md](../CLI_COMMAND_UNIFICATION.md) and [VALID_PATHS.md](../VALID_PATHS.md). The key principles are:
+
+#### App Authors Can Decompose Interactions to Commands
+
+When building an app with tb-solid-pod, authors can model their app/document/data interactions as **commands**. Instead of calling `pod.handleRequest()` directly from UI code, the UI can call the CLI executor:
+
+```typescript
+// Instead of:
+await pod.handleRequest(url, { method: 'PUT', body: content });
+
+// Use:
+const { createFile } = useCliExecutor();
+await createFile(name, content, contentType);
+```
+
+This ensures:
+- **Consistent validation**: The same path and input validation applies everywhere.
+- **Unified error handling**: Standard error codes and messages across all entry points.
+- **Single audit trail**: All operations pass through one place for logging and debugging.
+- **Programmatic and interactive parity**: The same operation works from UI click, CLI command, or API call.
+
+#### Environment-Agnostic Logic
+
+The CLI command logic is **agnostic to whether we are running in browser or Node**:
+
+- Commands use the same `CliContext` interface regardless of environment.
+- Platform-specific behavior (e.g., file download vs. clipboard) is isolated to adapters.
+- The core command logic never checks `typeof window` or `process.env`.
+
+This means:
+- **Test once, run everywhere**: Command tests written for Node work identically in browser.
+- **Portable by design**: An app built with the CLI works without modification in Node, browser, or future environments (Electron, React Native, etc.).
+
+#### Structured Command Results
+
+Commands return structured results for programmatic consumption:
+
+```typescript
+interface CommandResult<T = unknown> {
+  success: boolean;
+  data?: T;
+  error?: { code: ErrorCode; message: string; };
+}
+```
+
+This enables:
+- **Silent mode**: UI code can call commands without terminal output.
+- **JSON output**: Commands support `--json` for machine-readable output.
+- **Chaining**: One command's result can feed into another programmatically.
+
+#### Single Source of Truth for Path Resolution
+
+All path handling flows through a centralized module (`src/cli/path.ts`):
+- Path validation rules are defined once and enforced everywhere.
+- URL encoding/decoding is consistent.
+- Invalid states (malformed URLs, escape attempts) are caught at the command layer.
+
+See [VALID_PATHS.md](../VALID_PATHS.md) for the full path resolution specification.
+
 ---
 
 ## Why TinyBase

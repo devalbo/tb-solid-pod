@@ -179,6 +179,77 @@ store.setRow(STORE_TABLES.GROUPS, group['@id'], group);
 
 ---
 
+## Decomposing App Operations to CLI Commands
+
+A key architectural principle (see [PRINCIPLES_AND_GOALS.md](PRINCIPLES_AND_GOALS.md#9-cli-as-the-single-command-interface)) is that **all app operations should flow through the CLI command layer**. This ensures consistent validation, error handling, and behavior across UI, terminal, and programmatic use.
+
+### Why Route Through CLI Commands?
+
+Instead of calling `pod.handleRequest()` or `store.setRow()` directly from UI code, route operations through the CLI executor:
+
+| Direct Approach (Avoid) | CLI Approach (Preferred) |
+|-------------------------|--------------------------|
+| UI code calls `pod.handleRequest()` | UI code calls `useCliExecutor().createFile()` |
+| Validation duplicated in UI and CLI | Validation happens once in the command |
+| Different error handling paths | Unified error codes and messages |
+| Hard to test UI operations | Commands testable in isolation |
+
+### Using the CLI Executor in UI Code
+
+```tsx
+import { useCliExecutor, useCommandHandler } from 'tb-solid-pod';  // or from your hooks
+
+function FileActions() {
+  const { createFile, deleteResource, navigate } = useCliExecutor();
+  const handle = useCommandHandler();
+
+  const handleCreate = async (name: string, content: string) => {
+    await handle(
+      () => createFile(name, content, 'text/plain'),
+      {
+        successMessage: `Created ${name}`,
+        onError: (err) => console.error(err.code, err.message),
+      }
+    );
+  };
+
+  return (
+    <button onClick={() => handleCreate('notes.txt', 'Hello')}>
+      Create File
+    </button>
+  );
+}
+```
+
+### Environment-Agnostic Commands
+
+The CLI command logic is **agnostic to browser vs. Node**:
+
+- The same command implementation runs in both environments.
+- Platform-specific behavior (file dialogs, clipboard) is handled by adapters, not command code.
+- Tests written for one environment work in the other.
+
+This means an app built with the CLI works without modification in:
+- Browser (React/web-ink)
+- Node terminal (Ink)
+- E2E tests (Playwright driving the browser or Node)
+- Future environments (Electron, React Native)
+
+### Mapping UI Operations to Commands
+
+| UI Operation | CLI Command | Executor Method |
+|--------------|-------------|-----------------|
+| Create file button | `touch <name>` | `createFile(name, content, type)` |
+| Create folder button | `mkdir <name>` | `createFolder(name)` |
+| Delete button | `rm <path>` | `deleteResource(path)` |
+| Navigate to folder | `cd <path>` | `navigate(path)` |
+| Set file title | `file set-title <path> <title>` | `setTitle(path, title)` |
+| View metadata | `file info <path>` | `getInfo(path)` |
+
+For the full operation mapping, see [CLI_COMMAND_UNIFICATION.md](../CLI_COMMAND_UNIFICATION.md).
+
+---
+
 ## Option 2: Use Just the Schemas
 
 If you only need the data structures without the UI:

@@ -10,3 +10,4 @@ export { fileCommand } from './file';
 export { configCommand } from './config';
 export { typeindexCommand } from './typeindex';
 export { exitCommand } from './exit';
+export { scriptCommand } from './script';
