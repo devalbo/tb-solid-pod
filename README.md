@@ -50,6 +50,9 @@ This library provides a complete foundation for **user-owned social data** in we
 - **Graphical UI**: Tab-based navigation with forms and lists. Personas, Contacts, and Groups tabs each have a **Create random** button that opens the form with sample data for quick try-out.
 - **CLI Terminal**: Full command-line interface for power users
 
+### App-Neutral Data Store
+In the Solid vision, your data belongs to you—not to any particular application. This library embraces that principle: whether you prefer a browser UI (no install, instant access from any device with a modern browser) or a terminal app (scripting, automation, headless operation, CI/CD pipelines), you work with the same data through the same commands. The interface is a matter of preference and context; the data is yours regardless of how you access it.
+
 ## Benefits for Social Applications
 
 See [docs/PRINCIPLES_AND_GOALS.md](docs/PRINCIPLES_AND_GOALS.md) for the full rationale (why TinyBase, why Solid, what we commit to).
@@ -57,6 +60,7 @@ See [docs/PRINCIPLES_AND_GOALS.md](docs/PRINCIPLES_AND_GOALS.md) for the full ra
 | Benefit | Summary |
 |---------|---------|
 | **User Data Ownership** | Data in browser LocalStorage; export as JSON-LD anytime. |
+| **App-Neutral Access** | Same data, same commands in browser UI or terminal—your data isn't tied to one interface. |
 | **Interoperable Schemas** | FOAF, vCard, Dublin Core, Schema.org, W3C Org—portable to Solid/RDF systems. |
 | **Relationship Modeling** | Personas + contacts + groups support friend/follower, team, org, and agent patterns. |
 | **Offline-First** | TinyBase + LocalStorage; no network required for core features. |

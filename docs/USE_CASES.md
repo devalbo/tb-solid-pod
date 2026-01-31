@@ -29,6 +29,7 @@ Store setup and table layout are described in the [README Integration Guide](../
 - Environment-agnostic logic (same code works in browser and Node)
 - A stable API for AI agents and automation
 - **Testability**: Commands can be tested in isolation without UI, browser mocks, or complex fixtures. If it's easier to test in a small environment, it's easier to reason about the ramifications of changes.
+- **App-neutral data access**: In the Solid vision, your data belongs to you—not to any particular application. Whether users prefer a browser UI (no install, instant access) or a terminal app (scripting, automation, CI/CD), they work with the same data through the same commands. The interface is a matter of preference; the data is theirs regardless of how they access it.
 
 This doesn't mean CLI commands are the only way—direct store access is fine for simple cases or when you need fine control. But modeling your app's operations as commands gives you a composable, testable layer that works across all environments.
 

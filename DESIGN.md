@@ -330,6 +330,22 @@ Non-RDF resources like documents, images, etc.
 
 ## Design Considerations
 
+### 0. App-Neutral Data Store
+
+**Your data belongs to you—not to any particular application or interface.**
+
+This is a core Solid principle that the project embraces throughout its design:
+
+- **Browser UI benefits**: No install required, instant access from any device with a modern browser, familiar graphical interface for exploration and editing.
+- **Terminal app benefits**: Scripting, automation, headless operation, CI/CD pipeline integration, ideal for power users and AI agents.
+- **Same data, same commands**: Both interfaces access the same TinyBase store and use the same CLI command layer. Changes made in the terminal appear immediately in the browser UI and vice versa.
+- **Interface as preference**: The choice of browser or terminal is a matter of context and personal preference—not a constraint imposed by the data model. This mirrors Solid's vision where multiple apps can read and write the same pod data.
+
+This principle influences several design decisions:
+- The CLI command layer is the single source of truth for operations (see Principle 9 in PRINCIPLES_AND_GOALS.md).
+- Platform-specific behavior (file dialogs, clipboard) is isolated to adapters, not core logic.
+- Export/import uses a portable format that works regardless of how data was created.
+
 ### 1. Use Real IRIs
 
 Even though WebIDs won't resolve externally yet, use real URLs based on your domain:

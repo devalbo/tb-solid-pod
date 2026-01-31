@@ -93,6 +93,8 @@ This principle is about **democratizing development**: if you have a vision for 
 
 The library includes a shared CLI built on [Ink](https://github.com/vadimdemedes/ink) (for Node terminal) and web-ink (for browser). This gives you:
 
+- **App-neutral data access**: In the Solid vision, your data belongs to you—not to any particular application. Whether you prefer a browser UI (no install, instant access from any device) or a terminal app (scripting, automation, CI/CD pipelines), you work with the same data through the same commands. The interface is a matter of preference; the data is yours regardless of how you access it.
+
 - **One command set**: `create-persona`, `list-contacts`, `add-to-group`, `export` work identically in the browser console and terminal.
 - **Human and agent interface**: The CLI is not just for developers—it's a stable API for AI coding agents to interact with the store programmatically.
 - **Interactive or scripted**: Use the CLI interactively for exploration, or script it for automation and testing.
@@ -302,6 +304,7 @@ See [SHORTCOMINGS.md](SHORTCOMINGS.md) for the full list.
 |-----------|-----------|
 | **Local-first** | Works from first page load, no server required. |
 | **Data sovereignty** | Users own and control their data. |
+| **App-neutral data** | Same data accessible via browser UI or terminal; your data isn't tied to one interface. |
 | **Sync later** | Connect a pod when ready; local data syncs to it. |
 | **Interoperable** | Standard vocabularies; data is portable beyond this app. |
 | **Offline-first** | No network needed for core features. |

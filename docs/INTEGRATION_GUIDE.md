@@ -296,6 +296,8 @@ Settings are stored in TinyBase **values** (not tables):
 
 The CLI runs in **two environments**: (1) in-app Terminal tab in the browser, and (2) from a real terminal (Node.js).
 
+**App-neutral data access**: In the Solid vision, your data belongs to you—not to any particular application. Whether your users prefer a browser UI (no install, instant access from any device) or a terminal app (scripting, automation, CI/CD pipelines), they work with the same data through the same commands. The interface is a matter of preference; the data is theirs regardless of how they access it.
+
 ### In the browser
 
 ```tsx
