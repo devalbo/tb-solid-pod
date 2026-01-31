@@ -6,11 +6,11 @@ How changes are introduced, documented, and verified in tb-solid-pod.
 
 | If you're... | Start with |
 |--------------|------------|
-| Looking for work to pick up | [BACKLOG.md](BACKLOG.md) — pending tasks with context |
-| Investigating a broken feature | [FEATURE_CHECKLIST.md](FEATURE_CHECKLIST.md) — verify what works, find what's broken |
 | New and want to understand the project | [PRINCIPLES_AND_GOALS.md](PRINCIPLES_AND_GOALS.md) — why we built it this way |
-| Wondering why something was built a certain way | [IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md) — phase history and rationale |
+| Investigating a broken feature | [FEATURE_CHECKLIST.md](FEATURE_CHECKLIST.md) — verify what works, find what's broken |
 | Checking if a change caused regressions | [FEATURE_CHECKLIST.md](FEATURE_CHECKLIST.md) — re-verify affected levels |
+| Looking for work to pick up | [BACKLOG.md](BACKLOG.md) — pending tasks with context |
+| Wondering why something was built a certain way | [IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md) — phase history and rationale |
 | Reviewing or auditing the process | This doc — lifecycle stages, verification workflow, documentation review |
 
 ---
