@@ -1,5 +1,65 @@
 # Test Suite Implementation Plan
 
+## Testing Requirements
+
+**Unit tests are required for all features.** This is not optional. See [PRINCIPLES_AND_GOALS.md](PRINCIPLES_AND_GOALS.md#technical-principles-testability-and-maintainability) for why.
+
+### Core Rules
+
+1. **Every feature must have unit tests.** Before a feature is considered complete, it must have tests that verify its behavior.
+
+2. **Refactor over complex tests.** If writing a test requires:
+   - Extensive mocking or setup
+   - Deep knowledge of unrelated systems
+   - More than a few lines of boilerplate
+
+   ...then **refactor the code**, don't write a more complex test. Hard-to-test code is hard-to-maintain code.
+
+3. **Tests document behavior.** Tests show how code is meant to be used. If a test is hard to read, the API is probably hard to use.
+
+4. **Tests enable safe refactoring.** The test suite should give confidence that changes don't break existing behavior. If you can't refactor safely, add more tests first.
+
+### What to Test
+
+| Layer | What to test | Example |
+|-------|--------------|---------|
+| **Schemas** | Validation, factory functions, edge cases | `PersonaSchema.safeParse()`, `createPersona()` |
+| **Utilities** | Pure functions, transformations | `resolvePath()`, `findPersona()` |
+| **CLI commands** | Command execution, structured results | `executeCommandLine('ls')` returns expected result |
+| **Components** | Rendering, user interactions | ContactList renders items, handles selection |
+
+### Use Tests as a Design Guide
+
+**Unit tests are feedback on your design.** If code is hard to test, that's a signal the design is getting too complex or convoluted. Use this feedback:
+
+- Easy to test → probably easy to understand, change, and reuse
+- Hard to test → probably too coupled, doing too much, or poorly factored
+
+Write the test first (or at least think about how you'd test it) before the implementation gets complicated. If you can't imagine a simple test, simplify the design.
+
+### When Tests Are Hard to Write
+
+If you find yourself struggling to test something, ask:
+
+- **Is this unit doing too much?** Split it into smaller pieces.
+- **Are there too many dependencies?** Inject them or extract pure logic.
+- **Is the state management tangled?** Separate state from behavior.
+- **Am I testing implementation details?** Test behavior, not internals.
+
+The answer is almost always "refactor the code" rather than "write a more elaborate test."
+
+### Exception: Performance-Critical Code
+
+Code optimized for performance may have a structure that's harder to test (e.g., inlined logic, avoiding allocations). This is acceptable **only if**:
+
+1. **Explicitly marked** — Comment explains why this code is performance-critical
+2. **Well bounded** — Small and focused on one thing
+3. **Isolated** — Minimal dependencies, clear interface
+
+Such code still needs tests, but they may test at the boundary (inputs → outputs) rather than internals. The isolation requirement ensures that hard-to-test performance code doesn't spread throughout the codebase.
+
+---
+
 ## Status: Complete
 
 ### Completed

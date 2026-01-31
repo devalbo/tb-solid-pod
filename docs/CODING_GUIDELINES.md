@@ -43,7 +43,9 @@ This pattern is foundational, not mandatory—direct store access is fine for si
 - **Naming:** Use clear, consistent names. Prefer `handleSubmit` over `onClick` for handlers passed as props; keep event handlers and callbacks obvious.
 - **File length:** If a file grows past roughly 200–300 lines, consider splitting (e.g. by component, by feature, or into a small folder).
 - **Comments:** Comment *why* when it’s not obvious from the code; avoid restating what the code does.
-- **Tests:** New behavior should have unit tests where practical. Follow existing patterns in `tests/unit/` and use the test helpers (e.g. `renderWithProviders`, `createTestStore`).
+- **Tests:** Unit tests are **required** for all features—not optional. Follow existing patterns in `tests/unit/` and use the test helpers (e.g. `renderWithProviders`, `createTestStore`). If a test is hard to write, refactor the code rather than writing a complex test. See [TEST_PLAN.md](TEST_PLAN.md#testing-requirements).
+- **Tests guide design:** Use testability as feedback on your design. If you can't imagine a simple test for something, simplify the design before implementation gets complicated. Easy to test = easy to understand and maintain.
+- **Exception for performance-critical code:** Code optimized for performance may be harder to test due to its structure. This is acceptable **only if** the code is: (1) explicitly marked as performance-critical with a comment explaining why, (2) well bounded—small and focused on one thing, and (3) isolated—minimal dependencies, clear interface. Such code still needs tests, but they may test at the boundary rather than internals.
 
 ## Dependencies
 

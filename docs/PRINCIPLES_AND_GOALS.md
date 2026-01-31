@@ -242,6 +242,36 @@ We simulate Solid concepts locally; adding a sync target gives full Solid protoc
 
 ---
 
+## Technical Principles: Testability and Maintainability
+
+**If it's hard to test, it's hard to maintain.** These principles enable the project to live for a long time with minimal cost, and make it feasible for new participants to make changes without high levels of risk.
+
+### Testability Drives Design
+
+1. **Unit tests required for all features.** Every feature must have unit tests. No exceptions.
+2. **Refactor over complex tests.** If a test requires extensive setup, mocking, or is hard to write, that's a signal to refactor the code—not to write a more complex test.
+3. **Small, isolated units.** Code that's easy to test in isolation is easy to understand, change, and reuse.
+4. **Tests as documentation.** Tests show how code is meant to be used. If the test is hard to read, the API is probably hard to use.
+
+### Maintainability Enables Longevity
+
+1. **Low barrier to change.** New contributors should be able to make changes confidently. Good tests catch mistakes before they ship.
+2. **Refactoring is safe.** Comprehensive tests let you restructure code without fear. If you can't refactor safely, the project calcifies.
+3. **Cost stays low over time.** Projects without tests accumulate risk with every change. Projects with tests can grow indefinitely.
+
+### How This Connects to Project Goals
+
+| Goal | How Testability/Maintainability Supports It |
+|------|---------------------------------------------|
+| **Vibe coding friendly** | New contributors can experiment knowing tests will catch regressions |
+| **Agent-ready** | AI agents can modify code and verify correctness via tests |
+| **Minimal setup for app authors** | Well-tested library code means fewer bugs for consumers to work around |
+| **CLI as composable building blocks** | Commands tested in isolation work reliably when composed |
+
+See [TEST_PLAN.md](TEST_PLAN.md) for testing requirements and [SDLC_PROCESS.md](SDLC_PROCESS.md) for the verification workflow.
+
+---
+
 ## What We Commit To
 
 | Commitment | What It Means |
@@ -278,6 +308,7 @@ See [SHORTCOMINGS.md](SHORTCOMINGS.md) for the full list.
 | **Minimal setup** | One install, no backend, use what you need. |
 | **Vibe coding friendly** | Experiment, hack, use AI tools—vision over polish. |
 | **Unified CLI** | Same commands in browser, terminal, and AI agents. |
+| **Testability = maintainability** | If it's hard to test, refactor. Tests enable safe change. |
 
 TinyBase makes local-first reactive and practical. Solid provides the vision for user-owned, interoperable data. The unified CLI gives humans and AI agents the same command surface in browser and terminal. Together, they let users start immediately and grow into full data sovereignty—whether you're a seasoned developer, someone with an idea and an AI assistant, or an AI agent driving the library programmatically.
 

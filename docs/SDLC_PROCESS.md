@@ -38,7 +38,18 @@ The process flows from **feature/requirements** → **design/selection** → **i
 
 The Feature Checklist serves two purposes: verifying new work and **defining behavior to preserve**. Before making changes, review affected checklist items—they represent working functionality that should not regress.
 
-For **code features**, “Documenting Changes” and “Verification Workflow” below apply. For **planning and documentation** (e.g. before or after a major phase), use the **Documentation review process** so design and docs stay coherent and gaps are tracked to closure.
+### Testability = Maintainability
+
+**If code is hard to test, it's hard to maintain.** This is a core technical principle (see [PRINCIPLES_AND_GOALS.md](PRINCIPLES_AND_GOALS.md#technical-principles-testability-and-maintainability)).
+
+- **Unit tests required for all features.** No exceptions. See [TEST_PLAN.md](TEST_PLAN.md#testing-requirements).
+- **Refactor over complex tests.** If a test needs extensive setup or mocking, refactor the code instead.
+- **Tests enable safe change.** New contributors can modify code confidently when tests catch regressions.
+- **Cost stays low.** Projects without tests accumulate risk. Projects with tests can grow indefinitely.
+
+This is what makes it feasible for new participants to make changes without high levels of risk, and what enables the project to live for a long time with minimal cost.
+
+For **code features**, "Documenting Changes" and "Verification Workflow" below apply. For **planning and documentation** (e.g. before or after a major phase), use the **Documentation review process** so design and docs stay coherent and gaps are tracked to closure.
 
 ---
 
