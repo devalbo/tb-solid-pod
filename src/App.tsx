@@ -109,10 +109,17 @@ function getBreadcrumbs(baseUrl: string, displayBaseUrl: string, currentUrl: str
     for (let i = 0; i < parts.length; i++) {
       const isLast = i === parts.length - 1;
       const seg = parts[i]!;
+      const label = (() => {
+        try {
+          return decodeURIComponent(seg);
+        } catch {
+          return seg;
+        }
+      })();
       // Containers always end in '/', files do not. We don't know which intermediate segments are containers,
       // but for this virtual pod UI, path segments are navigable as containers.
       const nextUrl = acc + seg + (isLast ? (isContainer ? '/' : '') : '/');
-      crumbs.push({ label: seg, url: nextUrl, isCurrent: isLast });
+      crumbs.push({ label, url: nextUrl, isCurrent: isLast });
       acc = acc + seg + '/';
     }
 
@@ -197,6 +204,19 @@ function DropdownMenu(props: {
       )}
     </div>
   );
+}
+
+function ensureTrailingSlash(url: string): string {
+  return url.endsWith('/') ? url : `${url}/`;
+}
+
+function makeChildUrl(parentContainerUrl: string, rawName: string, isContainer: boolean): string | null {
+  const name = rawName.trim();
+  if (!name) return null;
+  if (name.includes('/')) return null;
+  const encoded = encodeURIComponent(name);
+  const base = ensureTrailingSlash(parentContainerUrl);
+  return base + encoded + (isContainer ? '/' : '');
 }
 
 // Metadata for the Schemas view: descriptions and Solid doc links
@@ -366,7 +386,15 @@ interface FileItemProps {
 const FileItem: React.FC<FileItemProps> = ({ url, onNavigate }) => {
   const row = useRow('resources', url) as ResourceRow;
   const isDir = row?.type === 'Container';
-  const name = url.split('/').filter(Boolean).pop();
+  const rawName = url.split('/').filter(Boolean).pop();
+  const name = (() => {
+    if (!rawName) return rawName;
+    try {
+      return decodeURIComponent(rawName);
+    } catch {
+      return rawName;
+    }
+  })();
 
   return (
     <div
@@ -577,6 +605,8 @@ export default function App() {
   const [newFileOpen, setNewFileOpen] = useState(false);
   const [newFileName, setNewFileName] = useState('');
   const [newFileContent, setNewFileContent] = useState('');
+  const [newFolderOpen, setNewFolderOpen] = useState(false);
+  const [newFolderName, setNewFolderName] = useState('');
   const uploadImageInputRef = useRef<HTMLInputElement>(null);
   const importFileInputRef = useRef<HTMLInputElement>(null);
   const [copyStatus, setCopyStatus] = useState<'success' | 'error' | null>(null);
@@ -609,6 +639,7 @@ export default function App() {
   const row = useRow('resources', currentUrl, store ?? undefined) as ResourceRow | undefined;
   const isContainer = row?.type === 'Container';
   const parentUrl = row?.parentId;
+  const currentContainerUrl = isContainer ? currentUrl : (parentUrl ?? BASE_URL);
 
   // Persisted preference (via TinyBase LocalStorage persister).
   // Keep this in React state so the agent hint bar can be hidden "permanently".
@@ -631,15 +662,45 @@ export default function App() {
     setNewFileContent('');
   };
 
+  const openNewFolderDialog = () => {
+    setNewFolderName('');
+    setNewFolderOpen(true);
+  };
+
+  const closeNewFolderDialog = () => {
+    setNewFolderOpen(false);
+    setNewFolderName('');
+  };
+
   const submitNewFile = () => {
     const name = newFileName.trim();
     if (!name || !pod) return;
-    pod.handleRequest(`${currentUrl}${name}`, {
+    const url = makeChildUrl(currentContainerUrl, name, false);
+    if (!url) {
+      alert('Invalid filename. Use a name without "/" characters.');
+      return;
+    }
+    pod.handleRequest(url, {
       method: 'PUT',
       body: newFileContent || '',
       headers: { 'Content-Type': 'text/plain' }
     });
     closeNewFileDialog();
+  };
+
+  const submitNewFolder = () => {
+    const name = newFolderName.trim();
+    if (!name || !pod) return;
+    const url = makeChildUrl(currentContainerUrl, name, true);
+    if (!url) {
+      alert('Invalid folder name. Use a name without "/" characters.');
+      return;
+    }
+    pod.handleRequest(url, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'text/turtle' },
+    });
+    closeNewFolderDialog();
   };
 
   const onUploadImageSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -648,7 +709,12 @@ export default function App() {
     try {
       const base64 = await readFileAsBase64(file);
       const name = file.name;
-      pod.handleRequest(`${currentUrl}${name}`, {
+      const url = makeChildUrl(currentContainerUrl, name, false);
+      if (!url) {
+        alert('Invalid filename.');
+        return;
+      }
+      pod.handleRequest(url, {
         method: 'PUT',
         body: base64,
         headers: { 'Content-Type': file.type }
@@ -698,15 +764,7 @@ export default function App() {
     return <div style={styles.loading}>Loading…</div>;
   }
 
-  const createFolder = () => {
-    const name = prompt("Folder Name (e.g., notes):");
-    if (name) {
-      pod.handleRequest(`${currentUrl}${name}/`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'text/turtle' }
-      });
-    }
-  };
+  const createFolder = () => openNewFolderDialog();
 
   return (
     <Provider store={store} indexes={indexes}>
@@ -895,6 +953,34 @@ export default function App() {
                   <div style={styles.dialogActions}>
                     <button style={styles.dialogBtnCancel} onClick={closeNewFileDialog}>Cancel</button>
                     <button style={{ ...styles.dialogBtnSubmit, ...(!newFileName.trim() ? styles.dialogBtnSubmitDisabled : {}) }} onClick={submitNewFile} disabled={!newFileName.trim()}>Create</button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* New Folder dialog */}
+            {newFolderOpen && (
+              <div style={styles.dialogOverlay} onClick={closeNewFolderDialog}>
+                <div style={styles.dialog} onClick={e => e.stopPropagation()}>
+                  <h3 style={styles.dialogTitle}>New Folder</h3>
+                  <label style={styles.dialogLabel}>Folder name</label>
+                  <input
+                    type="text"
+                    placeholder="e.g. notes"
+                    value={newFolderName}
+                    onChange={e => setNewFolderName(e.target.value)}
+                    style={styles.dialogInput}
+                    autoFocus
+                  />
+                  <div style={styles.dialogActions}>
+                    <button style={styles.dialogBtnCancel} onClick={closeNewFolderDialog}>Cancel</button>
+                    <button
+                      style={{ ...styles.dialogBtnSubmit, ...(!newFolderName.trim() ? styles.dialogBtnSubmitDisabled : {}) }}
+                      onClick={submitNewFolder}
+                      disabled={!newFolderName.trim()}
+                    >
+                      Create
+                    </button>
                   </div>
                 </div>
               </div>
