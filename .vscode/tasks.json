@@ -1,0 +1,13 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "tb-solid-pod: check (lint + typecheck + tests)",
+      "type": "shell",
+      "command": "npm run check",
+      "group": "build",
+      "problemMatcher": []
+    }
+  ]
+}
+

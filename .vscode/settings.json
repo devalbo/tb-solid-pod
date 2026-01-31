@@ -1,0 +1,16 @@
+{
+  // Make editor diagnostics match CI scripts:
+  // - Lint: ESLint (npm run lint)
+  // - Types: TypeScript language service (same tsconfig as npm run typecheck)
+  "eslint.useFlatConfig": true,
+  "eslint.validate": ["javascript", "javascriptreact", "typescript", "typescriptreact"],
+  "eslint.workingDirectories": [{ "mode": "auto" }],
+  "eslint.run": "onType",
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": "never"
+  },
+  // Ensure VS Code uses the workspace TypeScript (same as tsc in scripts)
+  "typescript.tsdk": "node_modules/typescript/lib",
+  "typescript.enablePromptUseWorkspaceTsdk": true
+}
+

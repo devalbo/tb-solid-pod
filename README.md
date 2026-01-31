@@ -230,6 +230,10 @@ exit                          Exit the CLI (Node terminal only)
 ## Testing
 
 - **Unit tests (Vitest):** `npm test` or `npm run test:run`; coverage: `npm run test:coverage`
+- **Coverage report:** `npm run test:coverage` generates:
+  - terminal summary
+  - HTML report at `coverage/index.html`
+  - lcov at `coverage/lcov.info` (for CI tooling)
 - **Storybook:** `npm run storybook` → http://localhost:6006 (component development). See [docs/testing/](docs/testing/README.md).
 - **BDD / E2E (Playwright):** Generate specs from Gherkin, then run Playwright:
   ```bash

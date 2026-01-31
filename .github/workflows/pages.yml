@@ -29,7 +29,12 @@ jobs:
         run: npm run lint
 
       - name: Run unit tests
-        run: npm run test:run
+        run: npm run coverage:check
+
+      - name: CLI smoke test (Node)
+        env:
+          TB_SOLID_POD_DATA_PATH: ${{ runner.temp }}/tb-solid-pod-store.json
+        run: npm run cli:smoke
 
       - name: Generate JSON Schemas
         run: npm run generate:schemas

@@ -15,6 +15,8 @@ dist-ssr
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
+!.vscode/settings.json
+!.vscode/tasks.json
 .idea
 .DS_Store
 *.suo
@@ -31,3 +33,6 @@ storybook-static
 test-results
 playwright-report
 playwright/.cache
+
+# Vitest coverage output
+coverage

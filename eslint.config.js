@@ -8,7 +8,7 @@ import reactRefresh from 'eslint-plugin-react-refresh';
 import { defineConfig, globalIgnores } from 'eslint/config';
 
 export default defineConfig([
-  globalIgnores(['dist', '.features-gen']),
+  globalIgnores(['dist', '.features-gen', 'coverage']),
   // Node/Config files: process etc.
   {
     files: ['vite.config.js', 'vitest.config.ts', 'playwright.config.ts'],
