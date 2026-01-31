@@ -79,6 +79,7 @@ When someone wants to use this in an app they’re working on, point them to the
 - **docs/PRINCIPLES_AND_GOALS.md** – Core principles (local-first, data sovereignty, sync later, interoperability); why TinyBase and Solid; what we commit to. **Start here for the "why."**
 - **docs/INTEGRATION_GUIDE.md** – Step-by-step integration (install vs copy-paste), store setup, Provider, components, CLI.
 - **docs/USE_CASES.md** – How app authors access and manage users, groups, and documents.
+- **docs/VERSIONING.md** – Versioning strategy, build metadata, release process, and step-by-step instructions for cutting releases.
 - **docs/SHORTCOMINGS.md** – What the library does *not* provide (no WAC, no "shared with me," no p2p transport, etc.).
 - **docs/DOCUMENT_SHARING_SCENARIOS.md** – Sharing scenarios (Solid or ad hoc p2p).
 - **docs/SOLID_SERVER_STRATEGIES.md** – Sync design, authority modes, implementation order.

@@ -19,6 +19,7 @@ import GroupList from './components/GroupList';
 import GroupForm from './components/GroupForm';
 import MembershipManager from './components/MembershipManager';
 import FileMetadataPanel from './components/FileMetadataPanel';
+import { DemoFooter } from './components/DemoFooter';
 
 const DEFAULT_PERSONA_KEY = 'defaultPersonaId';
 
@@ -603,15 +604,6 @@ export default function App() {
               style={{ display: 'none' }}
               aria-hidden
             />
-            <a
-              href="https://github.com/devalbo/tb-solid-pod"
-              target="_blank"
-              rel="noopener noreferrer"
-              style={styles.navGitHubLink}
-              title="View repository on GitHub"
-            >
-              View on github
-            </a>
           </div>
         </div>
 
@@ -988,6 +980,7 @@ tryToJsonSchema(SomeZodSchema);`}</pre>
             />
           </div>
         )}
+        <DemoFooter />
       </div>
     </Provider>
   );
@@ -1011,7 +1004,6 @@ const styles: Record<string, CSSProperties> = {
   topNavTabs: { display: 'flex', gap: 0 },
   topNavActions: { display: 'flex', gap: 8, alignItems: 'center' },
   navExportBtn: { padding: '6px 12px', cursor: 'pointer', borderRadius: 4, border: '1px solid #444', background: '#2a2a2a', color: '#ccc', fontSize: 12, fontWeight: 500 },
-  navGitHubLink: { display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '6px 12px', borderRadius: 4, border: '1px solid #444', background: '#2a2a2a', color: '#ccc', textDecoration: 'none', marginLeft: 4, fontSize: 12, fontWeight: 500 },
   topNavTab: { padding: '14px 24px', border: 'none', background: 'transparent', color: '#888', cursor: 'pointer', fontSize: 14, fontWeight: 500, borderBottom: '2px solid transparent', transition: 'all 0.2s' },
   topNavTabActive: { color: '#4ecdc4', borderBottom: '2px solid #4ecdc4' },
   terminalView: { padding: 0, height: 'calc(100vh - 49px)', minHeight: 320, width: '100%', background: '#1e1e1e', display: 'flex', flexDirection: 'column' },

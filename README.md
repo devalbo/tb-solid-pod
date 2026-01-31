@@ -257,6 +257,25 @@ Feature files live under `tests/features/` (e.g. `cli-contacts.feature`, `app.fe
 
 For more detail (where results are stored, unit/BDD/Storybook guidelines), see **[docs/testing/](docs/testing/README.md)**. For coding standards (strict TypeScript, short functions, simple components), see **[docs/CODING_GUIDELINES.md](docs/CODING_GUIDELINES.md)**.
 
+## Documentation
+
+Comprehensive documentation is available in the `docs/` directory:
+
+- **[docs/PRINCIPLES_AND_GOALS.md](docs/PRINCIPLES_AND_GOALS.md)** – Core principles, why TinyBase and Solid, what we commit to
+- **[docs/INTEGRATION_GUIDE.md](docs/INTEGRATION_GUIDE.md)** – Step-by-step integration guide
+- **[docs/USE_CASES.md](docs/USE_CASES.md)** – How to access and manage users, groups, and documents
+- **[docs/VERSIONING.md](docs/VERSIONING.md)** – Versioning strategy, build metadata, and release process
+- **[docs/SHORTCOMINGS.md](docs/SHORTCOMINGS.md)** – What the library does not provide
+- **[docs/DOCUMENT_SHARING_SCENARIOS.md](docs/DOCUMENT_SHARING_SCENARIOS.md)** – Sharing scenarios
+- **[docs/SOLID_SERVER_STRATEGIES.md](docs/SOLID_SERVER_STRATEGIES.md)** – Sync design and strategies
+- **[docs/CODING_GUIDELINES.md](docs/CODING_GUIDELINES.md)** – TypeScript and React coding standards
+- **[docs/DOCUMENTATION_GUIDELINES.md](docs/DOCUMENTATION_GUIDELINES.md)** – How to write documentation
+- **[docs/IMPLEMENTATION_PLAN.md](docs/IMPLEMENTATION_PLAN.md)** – Feature phases and roadmap
+- **[docs/TEST_PLAN.md](docs/TEST_PLAN.md)** – Test phases and verification
+- **[docs/testing/](docs/testing/README.md)** – Unit, BDD/E2E, and Storybook guides
+- **[docs/SDLC_PROCESS.md](docs/SDLC_PROCESS.md)** – Development lifecycle and process
+- **[DESIGN.md](DESIGN.md)** – Design notes
+
 ## License
 
 AGPL-3.0-or-later. See [LICENSE](LICENSE).
