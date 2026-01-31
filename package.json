@@ -40,14 +40,16 @@
     "test": "vitest",
     "test:run": "vitest run",
     "test:ui": "vitest --ui",
-    "test:coverage": "vitest --coverage",
+    "test:coverage": "vitest run --coverage",
+    "coverage:check": "vitest run --coverage --config vitest.coverage-check.config.ts",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build",
     "test:e2e": "npx bddgen && playwright test",
     "test:e2e:headed": "npx bddgen && playwright test --headed",
     "test:e2e:terminal": "vitest run --config vitest.terminal-e2e.config.ts",
     "test:bdd": "npx bddgen && playwright test",
-    "cli": "tsx src/cli/run-node.tsx"
+    "cli": "tsx src/cli/run-node.tsx",
+    "cli:smoke": "node --import tsx src/cli/run-node.tsx help && node --import tsx src/cli/run-node.tsx pwd && node --import tsx src/cli/run-node.tsx ls"
   },
   "dependencies": {
     "@inrupt/vocab-common-rdf": "^1.0.5",
